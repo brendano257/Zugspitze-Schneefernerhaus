@@ -1,3 +1,12 @@
+from pathlib import Path
+
+from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey, DateTime, UniqueConstraint
+from sqlalchemy.orm import relationship
+
+from io.db import Base
+from utils.core import search_for_attr_value
+
+
 class Compound(Base):
     """
     Container for the measured value of a chemical species in a sample.
@@ -134,11 +143,11 @@ class LogFile(Base):
     data = relationship('Datum', uselist=False, foreign_keys=[data_id], back_populates='log')
 
     def __init__(self, date, sample_time, sample_flow, sample_type, backflush_time, desorb_temp, flashheat_time,
-                 inject_time,bakeout_temp, bakeout_time, carrier_flow, sample_flow_act, sample_num, ads_trap,
-                 sample_p_start,sample_p_during, gcheadp_start, gcheadp_during, wt_sample_start, wt_sample_end,
-                 ads_a_sample_start,ads_b_sample_start, ads_a_sample_end, ads_b_sample_end, trap_temp_fh,
-                 trap_temp_inject,trap_temp_bakeout, battv_inject, battv_bakeout, gc_start_temp, gc_oven_temp,
-                 wt_hot_temp, sample_code,mfc1_ramp, trapheatout_flashheat, trapheatout_inject, trapheatout_bakeout):
+                 inject_time, bakeout_temp, bakeout_time, carrier_flow, sample_flow_act, sample_num, ads_trap,
+                 sample_p_start, sample_p_during, gcheadp_start, gcheadp_during, wt_sample_start, wt_sample_end,
+                 ads_a_sample_start, ads_b_sample_start, ads_a_sample_end, ads_b_sample_end, trap_temp_fh,
+                 trap_temp_inject, trap_temp_bakeout, battv_inject, battv_bakeout, gc_start_temp, gc_oven_temp,
+                 wt_hot_temp, sample_code, mfc1_ramp, trapheatout_flashheat, trapheatout_inject, trapheatout_bakeout):
         """
         Create a LogFile with the given parameters.
 
