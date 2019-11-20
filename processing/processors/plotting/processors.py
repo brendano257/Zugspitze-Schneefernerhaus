@@ -28,7 +28,7 @@ def plot_new_data(logger):
         logger.error(f'Error {e.args} prevented connecting to the database in plot_new_data()')
         return False
 
-    plotdir = CORE_DIR / 'MR_plots'
+    plotdir = CORE_DIR / 'plotting/created/mr_plots'
     remotedir = BOULDAIR_BASE_PATH + '/MR_plots'
 
     compounds_to_plot = (session.query(Quantification.name)
@@ -103,7 +103,7 @@ def plot_history(logger):
         logger.error(f'Error {e.args} prevented connecting to the database in plot_history()')
         return False
 
-    plotdir = CORE_DIR / 'full_plots'
+    plotdir = CORE_DIR / 'plotting/created/full_plots'
     remotedir = BOULDAIR_BASE_PATH + '/full_plots'
 
     compounds_to_plot = (session.query(Quantification.name)
@@ -196,7 +196,7 @@ def plot_logdata(logger):
         logger.error(f'Error {e.args} prevented connecting to the database in plot_logdata()')
         return False
 
-    plotdir = CORE_DIR / 'logplots'
+    plotdir = CORE_DIR / 'plotting/created/logplots'
     remotedir = BOULDAIR_BASE_PATH + '/logplots'
 
     date_limits, major_ticks, minor_ticks = create_daily_ticks(14, minors_per_day=2)
@@ -400,7 +400,7 @@ def plot_dailydata(logger):
         logger.error(f'Error {e.args} prevented connecting to the database in plot_dailydata()')
         return False
 
-    plotdir = CORE_DIR / 'dailyplots'
+    plotdir = CORE_DIR / 'plotting/created/dailyplots'
     remotedir = BOULDAIR_BASE_PATH + '/dailyplots'
 
     date_limits, major_ticks, minor_ticks = create_daily_ticks(14, minors_per_day=2)
@@ -527,8 +527,8 @@ def plot_standard_and_ambient_peak_areas(logger):
     date_limits, major_ticks, minor_ticks = create_monthly_ticks(18)
     major_ticks[:] = [major for num, major in enumerate(major_ticks) if num % 2 == 0]  # utilize only 1/2 of the majors
 
-    pa_plotdir = CORE_DIR / 'PA_plots'
-    std_pa_plotdir = CORE_DIR / 'std_PA_plots'
+    pa_plotdir = CORE_DIR / 'plotting/created/PA_plots'
+    std_pa_plotdir = CORE_DIR / 'plotting/created/std_PA_plots'
 
     remote_padir = BOULDAIR_BASE_PATH + '/PA_plots'
     remote_stddir = BOULDAIR_BASE_PATH + '/std_PA_plots'
