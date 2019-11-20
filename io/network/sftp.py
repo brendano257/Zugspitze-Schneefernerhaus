@@ -1,3 +1,13 @@
+import json
+from stat import S_ISDIR
+from itertools import chain
+
+import paramiko
+
+from utils import gen_isempty
+from settings import CORE_DIR
+
+
 def connect_to_lightsail():
     """
     Uses paramiko to create a connection to Brendan's instance. Relies on authetication information from a JSON file.
@@ -59,7 +69,7 @@ def list_remote_files(con, directory):
     files = (file for file in files)  # create and return generators instead
     dirs = (dir_ for dir_ in dirs)
 
-    return (files, dirs)
+    return files, dirs
 
 
 def list_remote_files_recur(con, directory, files=None, dirs=None):

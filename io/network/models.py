@@ -1,3 +1,10 @@
+from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy.orm import relationship
+
+from io.db import Base
+from settings import CORE_DIR, REMOTE_BASE_PATH
+
+
 class LocalFile(Base):
     """
     A database-persisted file representation used for comparing local and remote files.
