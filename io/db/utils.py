@@ -1,18 +1,6 @@
-def connect_to_db(engine_str, directory):
-    """
-    Takes string name of the database to create/connect to, and the directory it should be in.
+from models.common import FileToUpload
 
-    :param str engine_str: connection string for the database
-    :param str directory: directory the database should be in
-        **will create database if specified incorrectly (or intentionally different than existing)
-    :return: engine, session
-    """
-    with TempDir(directory):
-        engine = create_engine(engine_str)
-    sessy = sessionmaker(bind=engine)
-    sess = sessy()
-
-    return engine, sess
+__all__ = ['add_or_ignore_plot']
 
 
 def add_or_ignore_plot(file, core_session):
@@ -23,6 +11,8 @@ def add_or_ignore_plot(file, core_session):
     :param Session core_session: a connected sqlalchemy.Session object
     :return None:
     """
+    # intentional abuse: avoiding doing str(path) after the property just gave path back Path(_path)
+    # noinspection PyProtectedMember
     files_in_db = [f[0] for f in core_session.query(FileToUpload._path).all()]
 
     if str(file.path.resolve()) not in files_in_db:
