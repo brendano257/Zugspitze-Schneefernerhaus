@@ -1,11 +1,13 @@
 """
 Run any portion of the processing or all of it at once from the command line.
 """
+import os
+import sys
 import argparse
 from datetime import datetime
 
 from settings import PROCESSOR_LOGS_DIR
-from processing import configure_logger
+from utils import configure_logger
 from processing.processors import *
 
 parser = argparse.ArgumentParser(description='Run part of all of the Zugpsitze Runtime in sequence.')
@@ -18,6 +20,8 @@ if args.all:
 
     # get a logger and save to a file with the current datetime of the run start
     logger = configure_logger(PROCESSOR_LOGS_DIR, datetime.now().strftime('%Y_%m_%d_%H%M_run'))
+
+    retrieve_new_files(logger)
 
     load_all_dailies(logger)
     load_all_logs(logger)

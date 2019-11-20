@@ -17,7 +17,7 @@ def connect_to_lightsail():
 
     :return SFTP_Client:
     """
-    with open('lightsail_server_info.json', 'r') as file:
+    with open(CORE_DIR / 'data/json/private/lightsail_server_info.json', 'r') as file:
         server_info = json.loads(file.read())
 
     key = paramiko.RSAKey.from_private_key_file(server_info.pop('pem_file'))  # grab pem_file and remove from dict
@@ -38,7 +38,7 @@ def connect_to_bouldair():
     Relies on authetication information from a JSON file.
     :return SFTP_Client:
     """
-    with open(CORE_DIR / 'bouldair_server_info.json', 'r') as file:
+    with open(CORE_DIR / 'data/json/private/bouldair_server_info.json', 'r') as file:
         server_info = json.loads(file.read())
 
     key = paramiko.RSAKey.from_private_key_file(server_info.pop('pem_file'))  # grab pem file and remove from dict

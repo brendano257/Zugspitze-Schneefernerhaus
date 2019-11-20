@@ -10,9 +10,9 @@ import numpy as np
 
 from settings import CORE_DIR, daily_dir, log_dir, gcms_dir
 from utils import search_for_attr_value
-from io import Base, connect_to_db, get_all_data_files
+from IO import Base, connect_to_db, get_all_data_files
 from processing.file_io import read_daily_file, read_log_file, read_gcms_file
-from models import Config, OldData, DailyFile, LogFile, Integration, Standard, Quantification
+from IO.db.models import Config, OldData, DailyFile, LogFile, Integration, Standard, Quantification
 
 __all__ = ['load_all_dailies', 'load_all_logs', 'load_all_integrations', 'load_standards', 'load_historic_data']
 
@@ -161,7 +161,7 @@ def load_standards(logger):
     :param logger: Active logger that function should log to
     :return bool: True if it exits without issue/concern
     """
-    standards_filepath = CORE_DIR / 'standards.json'
+    standards_filepath = CORE_DIR / 'data/json/private/standards.json'
 
     try:
         engine, session = connect_to_db('sqlite:///zugspitze.sqlite', CORE_DIR)
@@ -231,7 +231,7 @@ def load_historic_data(logger):
 
     if config.last_data_date == datetime(1900, 1, 1):  # it's never been run before
 
-        historic_sheet = CORE_DIR / 'datafiles/INSTAAR_mixing_ratios.xlsx'
+        historic_sheet = CORE_DIR / 'data/sheets/private/INSTAAR_mixing_ratios.xlsx'
 
         old_data = pd.read_excel(historic_sheet, header=0, sheet_name='AmbientMixingRatio')
         old_data['Time stamp'] = old_data['Time stamp'].replace('--', np.nan)

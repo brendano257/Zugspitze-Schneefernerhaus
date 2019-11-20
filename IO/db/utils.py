@@ -1,4 +1,4 @@
-from models.common import FileToUpload
+from IO.db.models import FileToUpload
 
 __all__ = ['add_or_ignore_plot']
 

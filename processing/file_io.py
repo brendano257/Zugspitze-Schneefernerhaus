@@ -1,6 +1,13 @@
+import os
+import sys
 from datetime import datetime
 
-from models import Daily, Compound
+from settings import CORE_DIR
+
+# sys.path.append(str((CORE_DIR / '..').resolve()))
+# print(sys.path)
+
+from IO.db.models import Daily, Compound
 
 __all__ = ['read_log_file', 'read_daily_line', 'read_daily_file', 'read_gcms_file']
 

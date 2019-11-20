@@ -1,7 +1,7 @@
 import datetime as dt
 from datetime import datetime
 
-from dateutil import relativedelta
+from dateutil.relativedelta import relativedelta
 
 __all__ = ['create_daily_ticks', 'create_monthly_ticks']
 

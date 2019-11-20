@@ -1,10 +1,10 @@
 import json
 
-from io import connect_to_db, add_or_ignore_plot
+from IO import connect_to_db, add_or_ignore_plot
 from settings import CORE_DIR, BOULDAIR_BASE_PATH
 from processing.constants import LOG_ATTRS, DAILY_ATTRS, ALL_COMPOUNDS
-from models import OldData, Daily, Compound, LogFile, Integration, GcRun, Standard, Quantification
-from models import FileToUpload, TempDir
+from IO.db.models import OldData, Daily, Compound, LogFile, Integration, GcRun, Standard, Quantification
+from IO.db import FileToUpload, TempDir
 from plotting.utils import create_monthly_ticks, create_daily_ticks
 from plotting.plots import zugspitze_mixing_plot, zugspitze_parameter_plot, zugspitze_twoaxis_parameter_plot
 from plotting.plots import zugspitze_pa_plot
@@ -38,7 +38,7 @@ def plot_new_data(logger):
 
     date_limits, major_ticks, minor_ticks = create_monthly_ticks(6)
 
-    with open('zug_plot_info.json', 'r') as file:
+    with open(CORE_DIR / 'data/json/public' / 'zug_plot_info.json', 'r') as file:
         compound_limits = json.loads(file.read())
 
     for name in compounds_to_plot:
@@ -115,7 +115,7 @@ def plot_history(logger):
 
     major_ticks = major_ticks[::6]
 
-    with open(CORE_DIR / 'zug_long_plot_info.json', 'r') as file:
+    with open(CORE_DIR / 'data/json/public' / 'zug_long_plot_info.json', 'r') as file:
         compound_limits = json.loads(file.read())
 
     for name in compounds_to_plot:

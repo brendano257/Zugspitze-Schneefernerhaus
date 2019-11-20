@@ -5,8 +5,8 @@ import datetime as dt
 from datetime import datetime
 
 from settings import CORE_DIR
-from io import Base, connect_to_db
-from models import Config, Compound, LogFile, Integration, GcRun, Standard, Quantification
+from IO import Base, connect_to_db
+from IO.db.models import Config, Compound, LogFile, Integration, GcRun, Standard, Quantification
 from processing import match_integrations_to_logs, blank_subtract
 from utils import search_for_attr_value, find_closest_date
 

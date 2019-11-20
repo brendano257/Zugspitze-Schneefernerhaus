@@ -4,35 +4,9 @@ import datetime as dt
 from pathlib import Path
 
 from utils import search_for_attr_value, find_closest_date
-from models import GcRun
+from IO.db.models import GcRun
 
-__all__ = ['configure_logger', 'match_integrations_to_logs', 'blank_subtract', 'get_mr_from_run']
-
-
-def configure_logger(rundir, name):
-    """
-    Create the project-specific logger. DEBUG and up is saved to the log, INFO and up appears in the console.
-
-    :param Path rundir: Path to create log sub-path in
-    :param str name: name for logfile
-    :return Logger: logger object
-    """
-    logfile = Path(rundir) / f'processor_logs/{name}.log'
-    logger = logging.getLogger(name)
-    logger.setLevel(logging.DEBUG)
-    fh = logging.FileHandler(logfile)
-    fh.setLevel(logging.DEBUG)
-
-    ch = logging.StreamHandler()
-    ch.setLevel(logging.INFO)
-
-    formatter = logging.Formatter('%(asctime)s -%(levelname)s- %(message)s')
-
-    [H.setFormatter(formatter) for H in [ch, fh]]
-    if not len(logger.handlers):
-        _ = [logger.addHandler(H) for H in [ch, fh]]
-
-    return logger
+__all__ = ['match_integrations_to_logs', 'blank_subtract', 'get_mr_from_run']
 
 
 def match_integrations_to_logs(integrations, logs):

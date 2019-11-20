@@ -1,13 +1,29 @@
+import os
+
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 
-from models.common import TempDir
-
-__all__ = ['Base', 'connect_to_db']
+__all__ = ['Base', 'connect_to_db', 'TempDir']
 
 # Sqlalchemy declarative base to be subclassed by all persisted types
 Base = declarative_base()
+
+
+class TempDir:
+    """
+    Context manager for working in a directory.
+    """
+
+    def __init__(self, path):
+        self.old_dir = os.getcwd()
+        self.new_dir = path
+
+    def __enter__(self):
+        os.chdir(self.new_dir)
+
+    def __exit__(self, *args):
+        os.chdir(self.old_dir)
 
 
 def connect_to_db(engine_str, directory):

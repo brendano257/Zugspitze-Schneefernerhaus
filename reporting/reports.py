@@ -7,7 +7,7 @@ import pandas as pd
 
 from xlsxwriter.utility import xl_rowcol_to_cell, xl_range
 
-from models import Compound, GcRun, Standard
+from IO.db.models import Compound, GcRun, Standard
 from IO.db import connect_to_db
 from settings import CORE_DIR
 from utils.core import search_for_attr_value

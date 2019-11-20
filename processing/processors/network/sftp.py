@@ -3,11 +3,10 @@ import datetime as dt
 from datetime import datetime
 
 from settings import CORE_DIR, REMOTE_BASE_PATH
-from io import Base, connect_to_db, connect_to_lightsail, connect_to_bouldair, send_files_sftp
-from io import list_files_recur, list_remote_files_recur, scan_and_create_dir_tree
-from io.network.models import RemoteFile, LocalFile
+from IO import Base, connect_to_db, connect_to_lightsail, connect_to_bouldair, send_files_sftp
+from IO import list_files_recur, list_remote_files_recur, scan_and_create_dir_tree
+from IO.db.models import RemoteFile, LocalFile, FileToUpload
 from utils import split_into_sets_of_n, search_for_attr_value
-from models import FileToUpload
 
 __all__ = ['retrieve_new_files', 'check_send_files']
 
@@ -19,14 +18,18 @@ def retrieve_new_files(logger):
     Uses a local SQLite database as part of the project to track remote and local files, pulling only those with changed
     file sizes. Only gets GCMS data for this month and the month it was 7 days ago (if different) as an optimization.
 
+    TODO: Need a better way of comparing local/remote paths; probably just a lookup or differencer? Local will
+        always be prefixed with /data now...
+        FOUND IT: relpath should be stripped properly in LocalFile...it currently is not.
+
     :param logger: Active logger that function should log to
     :return bool: True if it exits without issue/concern
     """
     logger.info('Running retrieve_new_files()')
-
-    con = connect_to_lightsail()
     engine, session = connect_to_db('sqlite:///zugspitze.sqlite', CORE_DIR)
     Base.metadata.create_all(engine)
+
+    con = connect_to_lightsail()
 
     paths_to_check = ['daily', 'log']
 
@@ -41,8 +44,7 @@ def retrieve_new_files(logger):
 
     for path in paths_to_check:
         logger.info(f'Processing {path} files.')
-
-        local_path = CORE_DIR / path
+        local_path = CORE_DIR / f'data/{path}'
         remote_path = REMOTE_BASE_PATH + f'/{path}'
 
         all_remote_files = list_remote_files_recur(con, remote_path)  # get a list of all SFTPAttributes + paths
@@ -90,7 +92,7 @@ def retrieve_new_files(logger):
 
         for remote_file in remote_files:
             if remote_file.local is None:
-                local_match = search_for_attr_value(local_files, 'relpath', remote_file.relpath)
+                local_match = search_for_attr_value(local_files, 'relpath', '/data' + remote_file.relpath)
                 if local_match:
                     remote_file.local = local_match
                     if remote_file.st_mtime > local_match.st_mtime:
@@ -116,7 +118,9 @@ def retrieve_new_files(logger):
                 logger.info(f'Remote file {remote_file.relpath} was updated.')
                 ct += 1
             else:
-                new_local_path = CORE_DIR / remote_file.relpath.lstrip('/')
+                print(remote_file.path)
+                print(remote_file.relpath)
+                new_local_path = CORE_DIR / 'data' / remote_file.relpath.lstrip('/')
 
                 scan_and_create_dir_tree(new_local_path)  # scan the path and create any needed folders
 

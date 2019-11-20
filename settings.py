@@ -7,6 +7,7 @@ TODO:
     2) Address plotting code; roll into classes and subclasses
     3) Address duplicate code snippets from db checking; can be factored out into 'check dates of type in sets of n'
     4) Change database name to a constant
+    5) Clean up Local/Remote files in processors.../sftp. Local/Remote classes need updating as well.
 """
 import os
 import json
@@ -23,7 +24,7 @@ REMOTE_BASE_PATH = PATHS_DATA.get('lightsail_base')  # base path for files on th
 BOULDAIR_BASE_PATH = PATHS_DATA.get('bouldair_base')  # base path on remote Bouldair website
 
 log_dir = CORE_DIR / 'data/log'  # TODO: REFACTOR_TO_CONSTANTS (after connected everywhere)
-gcms_dir = CORE_DIR / 'data/gcms'
+gcms_dir = CORE_DIR / 'data/GCMS'
 daily_dir = CORE_DIR / 'data/daily'
 
 PROCESSOR_LOGS_DIR = CORE_DIR / 'processing/processors/processor_logs'
