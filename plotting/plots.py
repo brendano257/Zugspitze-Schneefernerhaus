@@ -1,3 +1,11 @@
+import matplotlib.pyplot as plt
+from matplotlib.dates import DateFormatter
+from numpy.polynomial.polynomial import polyfit
+from pandas.plotting import register_matplotlib_converters
+
+# TODO: Room to simplify with classes/subclasses? Plenty of duplicate code.
+
+
 def zugspitze_mixing_plot(dates, compound_dict, limits=None, minor_ticks=None, major_ticks=None,
                           y_label_str='Mixing Ratio (pptv)', filename_suffix='', date_formatter_string='%Y-%m'):
     """
