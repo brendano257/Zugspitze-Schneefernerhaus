@@ -7,6 +7,9 @@ import paramiko
 from utils import gen_isempty
 from settings import CORE_DIR
 
+__all__ = ['connect_to_lightsail', 'connect_to_bouldair', 'list_remote_files',
+           'list_remote_files_recur', 'send_files_sftp']
+
 
 def connect_to_lightsail():
     """

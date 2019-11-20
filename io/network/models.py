@@ -4,6 +4,8 @@ from sqlalchemy.orm import relationship
 from io.db import Base
 from settings import CORE_DIR, REMOTE_BASE_PATH
 
+__all__ = ['LocalFile', 'RemoteFile']
+
 
 class LocalFile(Base):
     """
