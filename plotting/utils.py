@@ -1,3 +1,9 @@
+import datetime as dt
+from datetime import datetime
+
+from dateutil import relativedelta
+
+
 def create_daily_ticks(days_in_plot, minors_per_day=4, end_date=datetime.now()):
     """
     Takes a number of days to plot back, and creates major (1 day) and minor (6 hour) ticks by default.
