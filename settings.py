@@ -1,3 +1,7 @@
+"""
+Project-wide settings, currently limited to directories needed accross the project.
+"""
+
 import os
 import json
 from pathlib import Path

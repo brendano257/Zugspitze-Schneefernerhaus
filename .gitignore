@@ -1,2 +1,12 @@
 # Project exclude paths
 /venv/
+/data/json/private/bouldair_server_info.json
+/data/json/private/lightsail_server_info.json
+/data/json/private/paths.json
+/data/json/private/standards.json
+/scripts/private/
+/analyses/quantifications/summaries/
+/analyses/quantifications/completed/
+/data/daily/
+/data/gcms/
+/data/log/
