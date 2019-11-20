@@ -1,3 +1,10 @@
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime
+from sqlalchemy.orm import relationship
+
+from io.db import Base
+from utils.core import search_for_attr_value
+
+
 class Quantification(Base):
     """
     A container for storing quantification information for a standard.
@@ -116,6 +123,8 @@ class SampleQuant:
             print(f'No standard to quantify Sample for date {self.sample.date}.')
             return None
 
+        # PyCharm's type inspector does not like sqlalchemy relationships
+        # noinspection PyTypeChecker
         for quant in self.standard.quantifications:
             if quant.value is None:
                 continue
