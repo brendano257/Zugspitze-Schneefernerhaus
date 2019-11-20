@@ -1,3 +1,10 @@
+from datetime import datetime
+
+from models import Daily, Compound
+
+__all__ = ['read_log_file', 'read_daily_line', 'read_daily_file', 'read_gcms_file']
+
+
 def read_log_file(path):
     """
     Parse a LabView log file and return a dictionary of the parameters.
@@ -12,45 +19,45 @@ def read_log_file(path):
     """
     data = path.read_text().split('\n')
 
-    logdata = {}
-    logdata['date'] = datetime.strptime(data[18].split('\t')[0], '%Y%j%H%M%S')
-    logdata['sample_time'] = data[0].split('\t')[1]
-    logdata['sample_flow'] = data[1].split('\t')[1]
-    logdata['sample_type'] = data[2].split('\t')[1]
-    logdata['backflush_time'] = data[3].split('\t')[1]
-    logdata['desorb_temp'] = data[4].split('\t')[1]
-    logdata['flashheat_time'] = data[5].split('\t')[1]
-    logdata['inject_time'] = data[6].split('\t')[1]
-    logdata['bakeout_temp'] = data[7].split('\t')[1]
-    logdata['bakeout_time'] = data[8].split('\t')[1]
-    logdata['carrier_flow'] = data[9].split('\t')[1]
-    logdata['sample_flow_act'] = data[20].split('\t')[1]
-    logdata['sample_num'] = data[10].split('\t')[1]
-    logdata['ads_trap'] = data[12].split('\t')[1]
-    logdata['sample_p_start'] = data[13].split('\t')[1]
-    logdata['sample_p_during'] = data[19].split('\t')[1]
-    logdata['gcheadp_start'] = data[14].split('\t')[1]
-    logdata['gcheadp_during'] = data[31].split('\t')[1]
-    logdata['wt_sample_start'] = data[15].split('\t')[1]
-    logdata['wt_sample_end'] = data[21].split('\t')[1]
-    logdata['ads_a_sample_start'] = data[16].split('\t')[1]
-    logdata['ads_b_sample_start'] = data[17].split('\t')[1]
-    logdata['ads_a_sample_end'] = data[22].split('\t')[1]
-    logdata['ads_b_sample_end'] = data[23].split('\t')[1]
-    logdata['trap_temp_fh'] = data[24].split('\t')[1]
-    logdata['trap_temp_inject'] = data[26].split('\t')[1]
-    logdata['trap_temp_bakeout'] = data[28].split('\t')[1]
-    logdata['battv_inject'] = data[27].split('\t')[1]
-    logdata['battv_bakeout'] = data[29].split('\t')[1]
-    logdata['gc_start_temp'] = data[25].split('\t')[1]
-    logdata['gc_oven_temp'] = data[32].split('\t')[1]
-    logdata['wt_hot_temp'] = data[30].split('\t')[1]
-    logdata['sample_code'] = data[18].split('\t')[0]
-
-    logdata['mfc1_ramp'] = None
-    logdata['trapheatout_flashheat'] = None
-    logdata['trapheatout_inject'] = None
-    logdata['trapheatout_bakeout'] = None
+    logdata = {
+        'date': datetime.strptime(data[18].split('\t')[0], '%Y%j%H%M%S'),
+        'sample_time': data[0].split('\t')[1],
+        'sample_flow': data[1].split('\t')[1],
+        'sample_type': data[2].split('\t')[1],
+        'backflush_time': data[3].split('\t')[1],
+        'desorb_temp': data[4].split('\t')[1],
+        'flashheat_time': data[5].split('\t')[1],
+        'inject_time': data[6].split('\t')[1],
+        'bakeout_temp': data[7].split('\t')[1],
+        'bakeout_time': data[8].split('\t')[1],
+        'carrier_flow': data[9].split('\t')[1],
+        'sample_flow_act': data[20].split('\t')[1],
+        'sample_num': data[10].split('\t')[1],
+        'ads_trap': data[12].split('\t')[1],
+        'sample_p_start': data[13].split('\t')[1],
+        'sample_p_during': data[19].split('\t')[1],
+        'gcheadp_start': data[14].split('\t')[1],
+        'gcheadp_during': data[31].split('\t')[1],
+        'wt_sample_start': data[15].split('\t')[1],
+        'wt_sample_end': data[21].split('\t')[1],
+        'ads_a_sample_start': data[16].split('\t')[1],
+        'ads_b_sample_start': data[17].split('\t')[1],
+        'ads_a_sample_end': data[22].split('\t')[1],
+        'ads_b_sample_end': data[23].split('\t')[1],
+        'trap_temp_fh': data[24].split('\t')[1],
+        'trap_temp_inject': data[26].split('\t')[1],
+        'trap_temp_bakeout': data[28].split('\t')[1],
+        'battv_inject': data[27].split('\t')[1],
+        'battv_bakeout': data[29].split('\t')[1],
+        'gc_start_temp': data[25].split('\t')[1],
+        'gc_oven_temp': data[32].split('\t')[1],
+        'wt_hot_temp': data[30].split('\t')[1],
+        'sample_code': data[18].split('\t')[0],
+        'mfc1_ramp': None,
+        'trapheatout_flashheat': None,
+        'trapheatout_inject': None,
+        'trapheatout_bakeout': None
+    }
 
     try:
         logdata['mfc1_ramp'] = data[33].split('\t')[1]

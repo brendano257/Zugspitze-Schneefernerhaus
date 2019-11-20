@@ -1,4 +1,4 @@
-from sqlalchemy.ext.declarative import declarative_base
+__all__ = ['ALL_COMPOUNDS', 'LOG_ATTRS', 'DAILY_ATTRS']
 
 # list of all compounds processed by system; used frequently throughout for plotting etc
 ALL_COMPOUNDS = ('PFC-116', 'ethene', 'SF6', 'CFC-13', 'ethane', 'SO2F2', 'HFC-143a', 'PFC-218', 'HFC-125', 'OCS',
@@ -25,6 +25,3 @@ LOG_ATTRS = ('sample_time', 'sample_flow', 'sample_type', 'backflush_time', 'des
 DAILY_ATTRS = ('date', 'ads_xfer_temp', 'valves_temp', 'gc_xfer_temp', 'ebox_temp', 'catalyst_temp', 'molsieve_a_temp',
                'molsieve_b_temp', 'inlet_temp', 'room_temp', 'v5', 'mfc1', 'mfc2', 'mfc3', 'he_pressure', 'linep',
                'zerop')
-
-# Sqlalchemy declarative base to be subclassed by all persisted types
-Base = declarative_base()
