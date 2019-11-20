@@ -5,6 +5,9 @@ from pandas.plotting import register_matplotlib_converters
 
 # TODO: Room to simplify with classes/subclasses? Plenty of duplicate code.
 
+__all__ = ['zugspitze_mixing_plot', 'zugspitze_qc_plot', 'zugspitze_pa_plot', 'zugspitze_parameter_plot',
+           'zugspitze_twoaxis_parameter_plot', 'zugspitze_linearity_plot',]
+
 
 def zugspitze_mixing_plot(dates, compound_dict, limits=None, minor_ticks=None, major_ticks=None,
                           y_label_str='Mixing Ratio (pptv)', filename_suffix='', date_formatter_string='%Y-%m'):
