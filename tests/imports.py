@@ -1,6 +1,6 @@
 def test_import_select():
     import settings
-    import io
+    import IO
     import models
     import plotting
     import processing

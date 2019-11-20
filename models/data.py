@@ -3,7 +3,7 @@ from pathlib import Path
 from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey, DateTime, UniqueConstraint
 from sqlalchemy.orm import relationship
 
-from io.db import Base
+from IO.db import Base
 from utils.core import search_for_attr_value
 
 __all__ = ['Compound', 'LogFile', 'DailyFile', 'Daily', 'Integration', 'GcRun', 'Datum', 'OldData']

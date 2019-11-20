@@ -3,7 +3,7 @@ from pathlib import Path
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, DateTime, Boolean
 
-from io.db import Base
+from IO.db import Base
 
 __all__ = ['Config', 'FileToUpload', 'TempDir']
 

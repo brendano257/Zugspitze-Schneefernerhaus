@@ -11,7 +11,7 @@ import json
 from datetime import datetime
 
 from models import GcRun
-from io import connect_to_db
+from IO import connect_to_db
 from settings import CORE_DIR
 
 engine, session = connect_to_db('sqlite:///zugspitze.sqlite', CORE_DIR)
