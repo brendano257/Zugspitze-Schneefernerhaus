@@ -5,6 +5,8 @@ from sqlalchemy import Column, Integer, String, DateTime, Boolean
 
 from io.db import Base
 
+__all__ = ['Config', 'FileToUpload', 'TempDir']
+
 
 class Config(Base):
     """

@@ -6,6 +6,8 @@ from sqlalchemy.orm import relationship
 from io.db import Base
 from utils.core import search_for_attr_value
 
+__all__ = ['Compound', 'LogFile', 'DailyFile', 'Daily', 'Integration', 'GcRun', 'Datum', 'OldData']
+
 
 class Compound(Base):
     """
