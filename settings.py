@@ -11,4 +11,8 @@ PATHS_DATA = json.loads((CORE_DIR / 'data/json/private/paths.json').read_text())
 REMOTE_BASE_PATH = PATHS_DATA.get('lightsail_base')  # base path for files on the remote AWS Lightsail instance
 BOULDAIR_BASE_PATH = PATHS_DATA.get('bouldair_base')  # base path on remote Bouldair website
 
+log_dir = CORE_DIR / 'data/log'  # TODO: REFACTOR_TO_CONSTANTS (after connected everywhere)
+gcms_dir = CORE_DIR / 'data/gcms'
+daily_dir = CORE_DIR / 'data/daily'
+
 __all__ = [CORE_DIR, PATHS_DATA, REMOTE_BASE_PATH, BOULDAIR_BASE_PATH]
