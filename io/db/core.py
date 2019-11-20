@@ -1,4 +1,8 @@
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy import create_engine
+
+from models.common import TempDir
 
 __all__ = ['Base', 'connect_to_db']
 
@@ -21,5 +25,3 @@ def connect_to_db(engine_str, directory):
     sess = sessy()
 
     return engine, sess
-
-
