@@ -1,8 +1,11 @@
 """
 Run any portion of the processing or all of it at once from the command line.
 """
-import os
-import sys
+# import sys
+# print(sys.path)
+
+# TODO: Fiddle with adding sys.path here so it can be run from other folders.
+
 import argparse
 from datetime import datetime
 
@@ -10,34 +13,140 @@ from settings import PROCESSOR_LOGS_DIR
 from utils import configure_logger
 from processing.processors import *
 
-parser = argparse.ArgumentParser(description='Run part of all of the Zugpsitze Runtime in sequence.')
-parser.add_argument('-A', '--all', action='store_true')  # flag to run everything in sequence
+
+
+# get a logger and log to a file with the current datetime of the run start
+logger = configure_logger(PROCESSOR_LOGS_DIR, datetime.now().strftime('%Y_%m_%d_%H%M_run'))
+
+sequence = [
+    retrieve_new_files,
+    load_all_dailies,
+    load_all_logs,
+    load_all_integrations,
+    load_standards,
+    load_historic_data,
+    match_gcruns,
+    quantify_runs,
+    process_filters,
+    plot_new_data,
+    plot_logdata,
+    plot_dailydata,
+    plot_standard_and_ambient_peak_areas,
+    plot_history,
+    check_send_files
+]
+
+
+def run(ergs):
+    """
+    Run the entire sequence, with the option to not upload or download files.
+
+    :param ergs: arguments passed by calling subparser.func(args)
+    :return:
+    """
+    if ergs.no_download:
+        sequence.pop(0)  # remove the first element (always the download function, retrieve_new_files)
+
+    if ergs.no_upload:
+        sequence.pop(-1)  # remove the last element (always the upload function, check_send_files)
+
+    # Run the entire process from start to end
+    for proc in sequence:
+        proc(logger)
+
+
+def run_proc(ergs):
+    """
+    Run a subset of categorical tasks, eg loading data files or uploading new files.
+
+    Categories are somewhat arbitrary, but are grouped according to commond sets of tasks, such that if one wanted to
+    load all the data, they would need only use the flag --load instead of flags for
+    [load_all_dailies, load_all_logs, load_all_integrations, ...].
+
+    :param ergs:
+    :return:
+    """
+    if ergs.retrieve:
+        retrieve_new_files(logger)
+
+    if ergs.load:
+        load_all_dailies(logger)
+        load_all_logs(logger)
+        load_all_integrations(logger)
+        load_standards(logger)
+        load_historic_data(logger)
+
+    if ergs.match:
+        match_gcruns(logger)
+
+    if ergs.quantify:
+        quantify_runs(logger)
+        process_filters(logger)
+
+    if ergs.plot:
+        plot_new_data(logger)
+        plot_logdata(logger)
+        plot_dailydata(logger)
+        plot_standard_and_ambient_peak_areas(logger)
+        plot_history(logger)
+
+    if ergs.send:
+        check_send_files(logger)
+
+
+parser = argparse.ArgumentParser(description='Run part of or all of the Zugpsitze runtime in sequence.')
+
+subparsers = parser.add_subparsers(required=True,
+                                   title='Mandatory Subcommands',
+                                   help='Run the entire sequence (run), a set of processes (run-proc), '
+                                        + 'or one to many of the individual functions (one).')
+
+parser_run = subparsers.add_parser('run',
+                                   description='Run the entire sequence, with the ability to opt-out of uploading.')
+
+parser_run.add_argument('-D', '--no-download', action='store_true', dest='no_download',
+                        help='Do not download new files. '
+                         + 'This overrides --all by removing downloading from the sequence.')
+parser_run.add_argument('-U', '--no-upload', action='store_true', dest='no_upload',
+                        help='Do not upload any staged files. '
+                         +'This overrides --all by removing uploading from the sequence.')
+
+# if parser_run is used, run is set as it's func, such that args.func(args) can be called
+parser_run.set_defaults(func=run)
+
+parser_run_proc = subparsers.add_parser('run-proc',
+                                        description='Run a subset of processes, such as loading data or plotting.'
+                                        + ' Order of input is ignored.'
+                                        + ' Any added processes are run in their proper order, and are listed below '
+                                        + "in the order they'll be run in."
+                                        )
+
+# TODO: Add as a group that's required (one of+)
+parser_run_proc.add_argument('-R', '--retrieve', action='store_true', dest='retrieve',
+                             help='Run function(s) for retrieving new files from the Lightsail server.')
+
+parser_run_proc.add_argument('-L', '--load', action='store_true', dest='load',
+                             help='Run functions for reading all data in from files.')
+
+parser_run_proc.add_argument('-M', '--match', action='store_true', dest='match',
+                             help='Run functions for matching any existing data into GcRuns.')
+
+parser_run_proc.add_argument('-Q', '--quantify', action='store_true', dest='quantify',
+                             help='Run functions for quantifying data. Does NOT including matching existing data. '
+                             + 'Call --match and --quantify to process, then quantify existing data.')
+
+parser_run_proc.add_argument('-P', '--plot', action='store_true', dest='plot',
+                             help='Run functions for plotting sequentially. Will queue plots for uploading if created.')
+
+parser_run_proc.add_argument('-S', '--send', action='store_true', dest='send',
+                             help='Run function(s) for uploading any staged files to the Bouldair Website.')
+
+parser_run_proc.set_defaults(func=run_proc)
 
 args = parser.parse_args()
+args.func(args)
 
-if args.all:
-    """Run the entire process from start to end"""
 
-    # get a logger and save to a file with the current datetime of the run start
-    logger = configure_logger(PROCESSOR_LOGS_DIR, datetime.now().strftime('%Y_%m_%d_%H%M_run'))
 
-    retrieve_new_files(logger)
 
-    load_all_dailies(logger)
-    load_all_logs(logger)
-    load_all_integrations(logger)
-    match_gcruns(logger)
-    load_standards(logger)
 
-    quantify_runs(logger)
-
-    process_filters(logger)
-
-    plot_new_data(logger)
-    plot_logdata(logger)
-    plot_dailydata(logger)
-    plot_standard_and_ambient_peak_areas(logger)
-    load_historic_data(logger)
-    plot_history(logger)
-
-    # check_send_files(logger)

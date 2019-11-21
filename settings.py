@@ -4,10 +4,14 @@ Project-wide settings, currently limited to directories needed accross the proje
 TODO:
     # Notes about what general things should be done in the future
     1) Factor out some non-dynamic directory creation to here, eg the location of specific sheets
+        1.1) Make all directories if not exist .mkdir()
+            A fresh git clone should be able to run (with required JSON files)
     2) Address plotting code; roll into classes and subclasses
     3) Address duplicate code snippets from db checking; can be factored out into 'check dates of type in sets of n'
     4) Change database name to a constant
     5) Clean up Local/Remote files in processors.../sftp. Local/Remote classes need updating as well.
+    6) Clean up blank_subtract and make it a method of GcRuns and SampleQuants
+    7) Standardize .quantify() and make it a method shared by GcRuns and SampleQuants (it should call blank_subtract)
 """
 import os
 import json
