@@ -14,7 +14,6 @@ from utils import configure_logger
 from processing.processors import *
 
 
-
 # get a logger and log to a file with the current datetime of the run start
 logger = configure_logger(PROCESSOR_LOGS_DIR, datetime.now().strftime('%Y_%m_%d_%H%M_run'))
 
@@ -35,6 +34,8 @@ sequence = [
     plot_history,
     check_send_files
 ]
+
+
 
 
 def run(ergs):
@@ -109,7 +110,7 @@ parser_run.add_argument('-D', '--no-download', action='store_true', dest='no_dow
                          + 'This overrides --all by removing downloading from the sequence.')
 parser_run.add_argument('-U', '--no-upload', action='store_true', dest='no_upload',
                         help='Do not upload any staged files. '
-                         +'This overrides --all by removing uploading from the sequence.')
+                         + 'This overrides --all by removing uploading from the sequence.')
 
 # if parser_run is used, run is set as it's func, such that args.func(args) can be called
 parser_run.set_defaults(func=run)
@@ -118,8 +119,7 @@ parser_run_proc = subparsers.add_parser('run-proc',
                                         description='Run a subset of processes, such as loading data or plotting.'
                                         + ' Order of input is ignored.'
                                         + ' Any added processes are run in their proper order, and are listed below '
-                                        + "in the order they'll be run in."
-                                        )
+                                        + "in the order they'll be run in.")
 
 # TODO: Add as a group that's required (one of+)
 parser_run_proc.add_argument('-R', '--retrieve', action='store_true', dest='retrieve',
@@ -142,6 +142,12 @@ parser_run_proc.add_argument('-S', '--send', action='store_true', dest='send',
                              help='Run function(s) for uploading any staged files to the Bouldair Website.')
 
 parser_run_proc.set_defaults(func=run_proc)
+
+parser_run_one = subparsers.add_parser('run-one', description='Run a single function from the Zugspitze runtime.')
+
+parser_run_one.add_argument('-N', '--number', type=int,
+                            help='')
+
 
 args = parser.parse_args()
 args.func(args)
