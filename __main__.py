@@ -106,8 +106,8 @@ def run_proc(ergs):
 def run_one(ergs):
     """
     Run individual functions by their given index in the sequence.
-    :param ergs:
-    :return:
+    :param ergs: Args produced by parser.parse_args(), should include args.numbers = [...]
+    :return None:
     """
 
     procs = [sequence[int(index)] for index in ergs.numbers]
