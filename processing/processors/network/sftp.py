@@ -118,8 +118,6 @@ def retrieve_new_files(logger):
                 logger.info(f'Remote file {remote_file.relpath} was updated.')
                 ct += 1
             else:
-                print(remote_file.path)
-                print(remote_file.relpath)
                 new_local_path = CORE_DIR / 'data' / remote_file.relpath.lstrip('/')
 
                 scan_and_create_dir_tree(new_local_path)  # scan the path and create any needed folders
