@@ -2,7 +2,7 @@ import os
 import datetime as dt
 from datetime import datetime
 
-from settings import CORE_DIR, REMOTE_BASE_PATH
+from settings import CORE_DIR, DB_NAME, REMOTE_BASE_PATH
 from IO import Base, connect_to_db, connect_to_lightsail, connect_to_bouldair, send_files_sftp
 from IO import list_files_recur, list_remote_files_recur, scan_and_create_dir_tree
 from IO.db.models import RemoteFile, LocalFile, FileToUpload
@@ -26,7 +26,7 @@ def retrieve_new_files(logger):
     :return bool: True if it exits without issue/concern
     """
     logger.info('Running retrieve_new_files()')
-    engine, session = connect_to_db('sqlite:///zugspitze.sqlite', CORE_DIR)
+    engine, session = connect_to_db(DB_NAME, CORE_DIR)
     Base.metadata.create_all(engine)
 
     con = connect_to_lightsail()
@@ -156,7 +156,7 @@ def check_send_files(logger):
     logger.info('Running check_send_files()')
 
     try:
-        engine, session = connect_to_db('sqlite:///zugspitze.sqlite', CORE_DIR)
+        engine, session = connect_to_db(DB_NAME, CORE_DIR)
         con = connect_to_bouldair()
     except Exception as e:
         logger.error(f'Exception {e.args} prevented connection to the database in check_send_files()')

@@ -9,7 +9,7 @@ from xlsxwriter.utility import xl_rowcol_to_cell, xl_range
 
 from IO.db.models import Compound, GcRun, Standard
 from IO.db import connect_to_db
-from settings import CORE_DIR
+from settings import CORE_DIR, DB_NAME
 from utils.core import search_for_attr_value
 from processing import get_mr_from_run, ALL_COMPOUNDS
 
@@ -32,7 +32,7 @@ def get_df_with_filters(use_mrs, filters=None, compounds=None):
     :param list compounds: list of compounds to query for, defaults to all quantified compounds if not given
     :return pd.DataFrame:
     """
-    engine, session = connect_to_db('sqlite:///zugspitze.sqlite', CORE_DIR)
+    engine, session = connect_to_db(DB_NAME, CORE_DIR)
 
     if not compounds:
         standard = (session.query(Standard)

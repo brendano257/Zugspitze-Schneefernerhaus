@@ -1,7 +1,7 @@
 import json
 
 from IO import connect_to_db, add_or_ignore_plot
-from settings import CORE_DIR, BOULDAIR_BASE_PATH
+from settings import CORE_DIR, DB_NAME, BOULDAIR_BASE_PATH
 from processing.constants import LOG_ATTRS, DAILY_ATTRS, ALL_COMPOUNDS
 from IO.db.models import OldData, Daily, Compound, LogFile, Integration, GcRun, Standard, Quantification
 from IO.db import FileToUpload, TempDir
@@ -23,7 +23,7 @@ def plot_new_data(logger):
     """
     logger.info('Running plot_new_data()')
     try:
-        engine, session = connect_to_db('sqlite:///zugspitze.sqlite', CORE_DIR)
+        engine, session = connect_to_db(DB_NAME, CORE_DIR)
     except Exception as e:
         logger.error(f'Error {e.args} prevented connecting to the database in plot_new_data()')
         return False
@@ -98,7 +98,7 @@ def plot_history(logger):
     logger.info('Running plot_history()')
 
     try:
-        engine, session = connect_to_db('sqlite:///zugspitze.sqlite', CORE_DIR)
+        engine, session = connect_to_db(DB_NAME, CORE_DIR)
     except Exception as e:
         logger.error(f'Error {e.args} prevented connecting to the database in plot_history()')
         return False
@@ -191,7 +191,7 @@ def plot_logdata(logger):
     logger.info('Running plot_logdata()')
 
     try:
-        engine, session = connect_to_db('sqlite:///zugspitze.sqlite', CORE_DIR)
+        engine, session = connect_to_db(DB_NAME, CORE_DIR)
     except Exception as e:
         logger.error(f'Error {e.args} prevented connecting to the database in plot_logdata()')
         return False
@@ -395,7 +395,7 @@ def plot_dailydata(logger):
     logger.info('Running plot_dailydata()')
 
     try:
-        engine, session = connect_to_db('sqlite:///zugspitze.sqlite', CORE_DIR)
+        engine, session = connect_to_db(DB_NAME, CORE_DIR)
     except Exception as e:
         logger.error(f'Error {e.args} prevented connecting to the database in plot_dailydata()')
         return False
@@ -519,7 +519,7 @@ def plot_standard_and_ambient_peak_areas(logger):
     logger.info('Running plot_standard_and_ambient_peak_areas()')
 
     try:
-        engine, session = connect_to_db('sqlite:///zugspitze.sqlite', CORE_DIR)
+        engine, session = connect_to_db(DB_NAME, CORE_DIR)
     except Exception as e:
         logger.error(f'Error {e.args} prevented connecting to the database in plot_standard_and_ambient_peak_areas()')
         return False

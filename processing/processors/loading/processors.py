@@ -8,7 +8,7 @@ from datetime import datetime
 import pandas as pd
 import numpy as np
 
-from settings import CORE_DIR, daily_dir, log_dir, gcms_dir
+from settings import CORE_DIR, DB_NAME, daily_dir, log_dir, gcms_dir
 from utils import search_for_attr_value
 from IO import Base, connect_to_db, get_all_data_files
 from processing.file_io import read_daily_file, read_log_file, read_gcms_file
@@ -30,7 +30,7 @@ def load_all_dailies(logger):
     logger.info('Running load_all_dailies()')
 
     try:
-        engine, session = connect_to_db('sqlite:///zugspitze.sqlite', CORE_DIR)
+        engine, session = connect_to_db(DB_NAME, CORE_DIR)
         Base.metadata.create_all(engine)
     except Exception as e:
         print(f'Connecting to DB failed for reason {e.args}.')
@@ -82,7 +82,7 @@ def load_all_logs(logger):
     logger.info('Running load_all_logs()')
 
     try:
-        engine, session = connect_to_db('sqlite:///zugspitze.sqlite', CORE_DIR)
+        engine, session = connect_to_db(DB_NAME, CORE_DIR)
         Base.metadata.create_all(engine)
     except Exception as e:
         print(f'Connecting to DB failed for reason {e.args}.')
@@ -122,7 +122,7 @@ def load_all_integrations(logger):
     logger.info('Running load_all_integrations()')
 
     try:
-        engine, session = connect_to_db('sqlite:///zugspitze.sqlite', CORE_DIR)
+        engine, session = connect_to_db(DB_NAME, CORE_DIR)
         Base.metadata.create_all(engine)
     except Exception as e:
         print(f'Connecting to DB failed for reason {e.args}.')
@@ -164,7 +164,7 @@ def load_standards(logger):
     standards_filepath = CORE_DIR / 'data/json/private/standards.json'
 
     try:
-        engine, session = connect_to_db('sqlite:///zugspitze.sqlite', CORE_DIR)
+        engine, session = connect_to_db(DB_NAME, CORE_DIR)
         Base.metadata.create_all(engine)
     except Exception as e:
         print(f'Connecting to DB failed for reason {e.args}.')
@@ -219,7 +219,7 @@ def load_historic_data(logger):
 
     logger.info('Running load_historic_data()')
     try:
-        engine, session = connect_to_db('sqlite:///zugspitze.sqlite', CORE_DIR)
+        engine, session = connect_to_db(DB_NAME, CORE_DIR)
     except Exception as e:
         logger.error(f'Error {e.args} prevented connecting to the database in load_historic_data()')
         return False

@@ -4,7 +4,7 @@ import datetime as dt
 
 from datetime import datetime
 
-from settings import CORE_DIR
+from settings import CORE_DIR, DB_NAME
 from IO import Base, connect_to_db
 from IO.db.models import Config, Compound, LogFile, Integration, GcRun, Standard, Quantification
 from processing import match_integrations_to_logs, blank_subtract
@@ -23,7 +23,7 @@ def match_gcruns(logger):
     logger.info('Running match_gcruns()')
 
     try:
-        engine, session = connect_to_db('sqlite:///zugspitze.sqlite', CORE_DIR)
+        engine, session = connect_to_db(DB_NAME, CORE_DIR)
         Base.metadata.create_all(engine)
     except Exception as e:
         print(f'Connecting to DB failed for reason {e.args}.')
@@ -68,7 +68,7 @@ def quantify_runs(logger):
     logger.info('Running quantify_runs()')
 
     try:
-        engine, session = connect_to_db('sqlite:///zugspitze.sqlite', CORE_DIR)
+        engine, session = connect_to_db(DB_NAME, CORE_DIR)
         Base.metadata.create_all(engine)
     except Exception as e:
 
@@ -155,7 +155,7 @@ def process_filters(logger):
     logger.info("Running process_filters()")
 
     try:
-        engine, session = connect_to_db('sqlite:///zugspitze.sqlite', CORE_DIR)
+        engine, session = connect_to_db(DB_NAME, CORE_DIR)
         Base.metadata.create_all(engine)
     except Exception as e:
 

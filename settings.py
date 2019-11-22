@@ -23,6 +23,8 @@ __all__ = ['CORE_DIR', 'PATHS_DATA', 'REMOTE_BASE_PATH', 'BOULDAIR_BASE_PATH', '
 
 CORE_DIR = Path(os.getcwd())  # assign the project directory as the one that this was run in
 
+DB_NAME = 'sqlite:///zugspitze.sqlite'
+
 # path data from json file, consider temporary
 PATHS_DATA = json.loads((CORE_DIR / 'data/json/private/paths.json').read_text())
 REMOTE_BASE_PATH = PATHS_DATA.get('lightsail_base')  # base path for files on the remote AWS Lightsail instance

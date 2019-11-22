@@ -10,11 +10,11 @@ Filters created with this script will be read in and filtered on the next pass o
 import json
 from datetime import datetime
 
-from models import GcRun
+from IO.db.models import GcRun
 from IO import connect_to_db
-from settings import CORE_DIR
+from settings import CORE_DIR, DB_NAME
 
-engine, session = connect_to_db('sqlite:///zugspitze.sqlite', CORE_DIR)
+engine, session = connect_to_db(DB_NAME, CORE_DIR)
 
 filename = input('Filename for filter? (Do not include filetype) ')
 
