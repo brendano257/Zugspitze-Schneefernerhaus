@@ -35,7 +35,11 @@ sequence = [
     check_send_files
 ]
 
-
+run_one_desc = (
+    'Run one or more specific functions from the Zugspitze runtime.\n'
+    + "Use run-proc unless you know exactly what you're trying to accomplish.\n"
+    + '\n'.join([f'\t{ind} - {f.__name__}' for ind, f in enumerate(sequence)])
+)
 
 
 def run(ergs):
@@ -67,6 +71,10 @@ def run_proc(ergs):
     :param ergs:
     :return:
     """
+
+    if not any(vars(ergs.values())):  # check for at least one arg
+        parser.error('No arguments provided.')
+
     if ergs.retrieve:
         retrieve_new_files(logger)
 
@@ -95,33 +103,50 @@ def run_proc(ergs):
         check_send_files(logger)
 
 
-parser = argparse.ArgumentParser(description='Run part of or all of the Zugpsitze runtime in sequence.')
+def run_one(ergs):
+    """
+    Run individual functions by their given index in the sequence.
+    :param ergs:
+    :return:
+    """
+
+    procs = [sequence[int(index)] for index in ergs.numbers]
+
+    for proc in procs:
+        proc(logger)
+
+
+parser = argparse.ArgumentParser(
+    prog='zugspitze',
+    description='Run part of or all of the Zugpsitze runtime in sequence.'
+)
 
 subparsers = parser.add_subparsers(required=True,
                                    title='Mandatory Subcommands',
                                    help='Run the entire sequence (run), a set of processes (run-proc), '
                                         + 'or one to many of the individual functions (one).')
 
+# ----------------- Parser for running everything, optionally not downloading or uploading ----------------- #
 parser_run = subparsers.add_parser('run',
                                    description='Run the entire sequence, with the ability to opt-out of uploading.')
 
 parser_run.add_argument('-D', '--no-download', action='store_true', dest='no_download',
                         help='Do not download new files. '
-                         + 'This overrides --all by removing downloading from the sequence.')
+                        + 'This overrides --all by removing downloading from the sequence.')
 parser_run.add_argument('-U', '--no-upload', action='store_true', dest='no_upload',
                         help='Do not upload any staged files. '
-                         + 'This overrides --all by removing uploading from the sequence.')
+                        + 'This overrides --all by removing uploading from the sequence.')
 
 # if parser_run is used, run is set as it's func, such that args.func(args) can be called
 parser_run.set_defaults(func=run)
 
+# ----------------- Parser for running logical groups of functions ----------------- #
 parser_run_proc = subparsers.add_parser('run-proc',
                                         description='Run a subset of processes, such as loading data or plotting.'
                                         + ' Order of input is ignored.'
                                         + ' Any added processes are run in their proper order, and are listed below '
                                         + "in the order they'll be run in.")
 
-# TODO: Add as a group that's required (one of+)
 parser_run_proc.add_argument('-R', '--retrieve', action='store_true', dest='retrieve',
                              help='Run function(s) for retrieving new files from the Lightsail server.')
 
@@ -143,16 +168,16 @@ parser_run_proc.add_argument('-S', '--send', action='store_true', dest='send',
 
 parser_run_proc.set_defaults(func=run_proc)
 
-parser_run_one = subparsers.add_parser('run-one', description='Run a single function from the Zugspitze runtime.')
+# ------------------ Parser for running functions individually ------------------ #
+parser_run_one = subparsers.add_parser('run-one',
+                                       formatter_class=argparse.RawTextHelpFormatter,
+                                       description=run_one_desc)
 
-parser_run_one.add_argument('-N', '--number', type=int,
-                            help='')
+parser_run_one.add_argument('-N', '--number', nargs='+', required=True, dest='numbers',
+                            help=f'Choose a number from 0 - {len(sequence) - 1} to run that process.')
 
+parser_run_one.set_defaults(func=run_one)
 
+# ----------------------------- Finally, run it all ----------------------------- #
 args = parser.parse_args()
 args.func(args)
-
-
-
-
-
