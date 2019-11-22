@@ -5,7 +5,7 @@ from sqlalchemy import Column, Integer, String, DateTime, Boolean
 
 from IO.db import Base
 
-__all__ = ['Config', 'FileToUpload', 'TempDir']
+__all__ = ['Config', 'FileToUpload']
 
 
 class Config(Base):
@@ -96,19 +96,3 @@ class FileToUpload(Base):
     def name(self):
         """Get the name of the Path, e.g. file.txt"""
         return self._name
-
-
-class TempDir:
-    """
-    Context manager for working in a directory.
-    """
-
-    def __init__(self, path):
-        self.old_dir = os.getcwd()
-        self.new_dir = path
-
-    def __enter__(self):
-        os.chdir(self.new_dir)
-
-    def __exit__(self, *args):
-        os.chdir(self.old_dir)
