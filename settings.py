@@ -12,6 +12,7 @@ TODO:
     5) Clean up Local/Remote files in processors.../sftp. Local/Remote classes need updating as well.
     6) Clean up blank_subtract and make it a method of GcRuns and SampleQuants
     7) Standardize .quantify() and make it a method shared by GcRuns and SampleQuants (it should call blank_subtract)
+    8) Address sorting in args for run-one in the argparser
 """
 import os
 import json
