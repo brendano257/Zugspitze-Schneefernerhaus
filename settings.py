@@ -37,3 +37,13 @@ GCMS_DIR = CORE_DIR / 'data/GCMS'
 DAILY_DIR = CORE_DIR / 'data/daily'
 
 PROCESSOR_LOGS_DIR = CORE_DIR / 'processing/processors/processor_logs'
+
+MR_PLOT_DIR = CORE_DIR / 'plotting/created/mr_plots'
+FULL_PLOT_DIR = CORE_DIR / 'plotting/created/full_plots'
+LOG_PLOT_DIR = CORE_DIR / 'plotting/created/logplots'
+
+FILTER_DIRS = [
+    CORE_DIR / 'data/json/private/filters/final',  # get all finalized filters
+    CORE_DIR / 'data/json/private/filters/unprocessed',
+    # filter unprocessed points, but still check then and moved to final
+]
