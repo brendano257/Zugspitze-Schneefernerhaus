@@ -1,7 +1,8 @@
 import json
 
 from IO import connect_to_db, add_or_ignore_plot
-from settings import CORE_DIR, DB_NAME, BOULDAIR_BASE_PATH
+from settings import CORE_DIR, DB_NAME, BOULDAIR_BASE_PATH, DAILY_PLOT_DIR, MR_PLOT_DIR, FULL_PLOT_DIR
+from settings import LOG_PLOT_DIR, PA_PLOT_DIR, STD_PA_PLOT_DIR
 from processing.constants import LOG_ATTRS, DAILY_ATTRS, ALL_COMPOUNDS
 from IO.db.models import OldData, Daily, Compound, LogFile, Integration, GcRun, Standard, Quantification
 from IO.db import FileToUpload, TempDir
@@ -28,7 +29,6 @@ def plot_new_data(logger):
         logger.error(f'Error {e.args} prevented connecting to the database in plot_new_data()')
         return False
 
-    plotdir = CORE_DIR / 'plotting/created/mr_plots'
     remotedir = BOULDAIR_BASE_PATH + '/MR_plots'
 
     compounds_to_plot = (session.query(Quantification.name)
@@ -38,6 +38,7 @@ def plot_new_data(logger):
 
     date_limits, major_ticks, minor_ticks = create_monthly_ticks(6)
 
+    # TODO: REPLACE DIR w/ JSON_DIR /
     with open(CORE_DIR / 'data/json/public' / 'zug_plot_info.json', 'r') as file:
         compound_limits = json.loads(file.read())
 
@@ -58,7 +59,7 @@ def plot_new_data(logger):
             dates.append(result[1])
             mrs.append(result[0])
 
-        with TempDir(plotdir):
+        with TempDir(MR_PLOT_DIR):
             try:
                 compound_limits.get(name).get('bottom')
             except Exception:
@@ -73,7 +74,7 @@ def plot_new_data(logger):
                                               major_ticks=major_ticks,
                                               minor_ticks=minor_ticks)
 
-            file_to_upload = FileToUpload(plotdir / plot_name, remotedir, staged=True)
+            file_to_upload = FileToUpload(MR_PLOT_DIR / plot_name, remotedir, staged=True)
             add_or_ignore_plot(file_to_upload, session)
 
     session.commit()
@@ -103,7 +104,6 @@ def plot_history(logger):
         logger.error(f'Error {e.args} prevented connecting to the database in plot_history()')
         return False
 
-    plotdir = CORE_DIR / 'plotting/created/full_plots'
     remotedir = BOULDAIR_BASE_PATH + '/full_plots'
 
     compounds_to_plot = (session.query(Quantification.name)
@@ -141,7 +141,7 @@ def plot_history(logger):
             dates.append(result[1])
             mrs.append(result[0])
 
-        with TempDir(plotdir):
+        with TempDir(FULL_PLOT_DIR):
             try:
                 compound_limits.get(name).get('bottom')
             except Exception:
@@ -156,7 +156,7 @@ def plot_history(logger):
                                               major_ticks=major_ticks,
                                               minor_ticks=minor_ticks)
 
-            file_to_upload = FileToUpload(plotdir / plot_name, remotedir, staged=True)
+            file_to_upload = FileToUpload(FULL_PLOT_DIR / plot_name, remotedir, staged=True)
             add_or_ignore_plot(file_to_upload, session)
 
             zero_plot_name = zugspitze_mixing_plot(None, ({name: [dates, mrs]}),
@@ -168,7 +168,7 @@ def plot_history(logger):
                                                    minor_ticks=minor_ticks,
                                                    filename_suffix='_zeroed')
 
-            file_to_upload = FileToUpload(plotdir / zero_plot_name, remotedir, staged=True)
+            file_to_upload = FileToUpload(FULL_PLOT_DIR / zero_plot_name, remotedir, staged=True)
             add_or_ignore_plot(file_to_upload, session)
 
     session.commit()
@@ -196,7 +196,6 @@ def plot_logdata(logger):
         logger.error(f'Error {e.args} prevented connecting to the database in plot_logdata()')
         return False
 
-    plotdir = CORE_DIR / 'plotting/created/logplots'
     remotedir = BOULDAIR_BASE_PATH + '/logplots'
 
     date_limits, major_ticks, minor_ticks = create_daily_ticks(14, minors_per_day=2)
@@ -210,7 +209,7 @@ def plot_logdata(logger):
 
     dates = [l.date for l in logs]
 
-    with TempDir(plotdir):
+    with TempDir(LOG_PLOT_DIR):
         name = 'log_sample_pressure_flow.png'
         zugspitze_parameter_plot(dates,
                                  ({'Sample Pressure Start': [None, logdict.get('sample_p_start')],
@@ -225,7 +224,7 @@ def plot_logdata(logger):
                                  major_ticks=major_ticks,
                                  minor_ticks=minor_ticks)
 
-        file_to_upload = FileToUpload(plotdir / name, remotedir, staged=True)
+        file_to_upload = FileToUpload(LOG_PLOT_DIR / name, remotedir, staged=True)
         add_or_ignore_plot(file_to_upload, session)
 
         name = 'log_sample_pressure_during.png'
@@ -241,7 +240,7 @@ def plot_logdata(logger):
                                  major_ticks=major_ticks,
                                  minor_ticks=minor_ticks)
 
-        file_to_upload = FileToUpload(plotdir / name, remotedir, staged=True)
+        file_to_upload = FileToUpload(LOG_PLOT_DIR / name, remotedir, staged=True)
         add_or_ignore_plot(file_to_upload, session)
 
         name = 'log_gcheadp_pressures.png'
@@ -258,7 +257,7 @@ def plot_logdata(logger):
                                  major_ticks=major_ticks,
                                  minor_ticks=minor_ticks)
 
-        file_to_upload = FileToUpload(plotdir / name, remotedir, staged=True)
+        file_to_upload = FileToUpload(LOG_PLOT_DIR / name, remotedir, staged=True)
         add_or_ignore_plot(file_to_upload, session)
 
         name = 'log_wat_ads_active_traptemps.png'
@@ -276,7 +275,7 @@ def plot_logdata(logger):
                                  major_ticks=major_ticks,
                                  minor_ticks=minor_ticks)
 
-        file_to_upload = FileToUpload(plotdir / name, remotedir, staged=True)
+        file_to_upload = FileToUpload(LOG_PLOT_DIR / name, remotedir, staged=True)
         add_or_ignore_plot(file_to_upload, session)
 
         name = 'log_ads_inactive_traptemps.png'
@@ -293,7 +292,7 @@ def plot_logdata(logger):
                                  major_ticks=major_ticks,
                                  minor_ticks=minor_ticks)
 
-        file_to_upload = FileToUpload(plotdir / name, remotedir, staged=True)
+        file_to_upload = FileToUpload(LOG_PLOT_DIR / name, remotedir, staged=True)
         add_or_ignore_plot(file_to_upload, session)
 
         name = 'log_trap_temps.png'
@@ -308,7 +307,7 @@ def plot_logdata(logger):
                                  major_ticks=major_ticks,
                                  minor_ticks=minor_ticks)
 
-        file_to_upload = FileToUpload(plotdir / name, remotedir, staged=True)
+        file_to_upload = FileToUpload(LOG_PLOT_DIR / name, remotedir, staged=True)
         add_or_ignore_plot(file_to_upload, session)
 
         name = 'log_battery_voltages.png'
@@ -324,7 +323,7 @@ def plot_logdata(logger):
                                  major_ticks=major_ticks,
                                  minor_ticks=minor_ticks)
 
-        file_to_upload = FileToUpload(plotdir / name, remotedir, staged=True)
+        file_to_upload = FileToUpload(LOG_PLOT_DIR / name, remotedir, staged=True)
         add_or_ignore_plot(file_to_upload, session)
 
         name = 'log_gc_start_wthot_temps.png'
@@ -340,7 +339,7 @@ def plot_logdata(logger):
                                  major_ticks=major_ticks,
                                  minor_ticks=minor_ticks)
 
-        file_to_upload = FileToUpload(plotdir / name, remotedir, staged=True)
+        file_to_upload = FileToUpload(LOG_PLOT_DIR / name, remotedir, staged=True)
         add_or_ignore_plot(file_to_upload, session)
 
         name = 'log_heat_outs.png'
@@ -355,7 +354,7 @@ def plot_logdata(logger):
                                  major_ticks=major_ticks,
                                  minor_ticks=minor_ticks)
 
-        file_to_upload = FileToUpload(plotdir / name, remotedir, staged=True)
+        file_to_upload = FileToUpload(LOG_PLOT_DIR / name, remotedir, staged=True)
         add_or_ignore_plot(file_to_upload, session)
 
         name = 'log_oven_mfc_ramp.png'
@@ -374,7 +373,7 @@ def plot_logdata(logger):
                                          minor_ticks=minor_ticks,
                                          y2_label_str='MFC1 Ramp')
 
-        file_to_upload = FileToUpload(plotdir / name, remotedir, staged=True)
+        file_to_upload = FileToUpload(LOG_PLOT_DIR / name, remotedir, staged=True)
         add_or_ignore_plot(file_to_upload, session)
 
     session.commit()
@@ -400,7 +399,6 @@ def plot_dailydata(logger):
         logger.error(f'Error {e.args} prevented connecting to the database in plot_dailydata()')
         return False
 
-    plotdir = CORE_DIR / 'plotting/created/dailyplots'
     remotedir = BOULDAIR_BASE_PATH + '/dailyplots'
 
     date_limits, major_ticks, minor_ticks = create_daily_ticks(14, minors_per_day=2)
@@ -414,7 +412,7 @@ def plot_dailydata(logger):
     for param in DAILY_ATTRS:
         dailydict[param] = [getattr(d, param) for d in dailies]
 
-    with TempDir(plotdir):
+    with TempDir(DAILY_PLOT_DIR):
         name = 'daily_xfer_valve_ebox_temps.png'
         zugspitze_parameter_plot(dates,
                                  {'Ads Xfer Temp': [None, dailydict.get('ads_xfer_temp')],
@@ -430,7 +428,7 @@ def plot_dailydata(logger):
                                  major_ticks=major_ticks,
                                  minor_ticks=minor_ticks)
 
-        file_to_upload = FileToUpload(plotdir / name, remotedir, staged=True)
+        file_to_upload = FileToUpload(DAILY_PLOT_DIR / name, remotedir, staged=True)
         add_or_ignore_plot(file_to_upload, session)
 
         name = 'daily_catalyst_temp.png'
@@ -445,7 +443,7 @@ def plot_dailydata(logger):
                                  major_ticks=major_ticks,
                                  minor_ticks=minor_ticks)
 
-        file_to_upload = FileToUpload(plotdir / name, remotedir, staged=True)
+        file_to_upload = FileToUpload(DAILY_PLOT_DIR / name, remotedir, staged=True)
         add_or_ignore_plot(file_to_upload, session)
 
         name = 'daily_inlet_room_temp.png'
@@ -462,7 +460,7 @@ def plot_dailydata(logger):
                                  major_ticks=major_ticks,
                                  minor_ticks=minor_ticks)
 
-        file_to_upload = FileToUpload(plotdir / name, remotedir, staged=True)
+        file_to_upload = FileToUpload(DAILY_PLOT_DIR / name, remotedir, staged=True)
         add_or_ignore_plot(file_to_upload, session)
 
         name = 'daily_5v_mfc.png'
@@ -481,7 +479,7 @@ def plot_dailydata(logger):
                                  major_ticks=major_ticks,
                                  minor_ticks=minor_ticks)
 
-        file_to_upload = FileToUpload(plotdir / name, remotedir, staged=True)
+        file_to_upload = FileToUpload(DAILY_PLOT_DIR / name, remotedir, staged=True)
         add_or_ignore_plot(file_to_upload, session)
 
         name = 'daily_pressures.png'
@@ -498,7 +496,7 @@ def plot_dailydata(logger):
                                  major_ticks=major_ticks,
                                  minor_ticks=minor_ticks)
 
-        file_to_upload = FileToUpload(plotdir / name, remotedir, staged=True)
+        file_to_upload = FileToUpload(DAILY_PLOT_DIR / name, remotedir, staged=True)
         add_or_ignore_plot(file_to_upload, session)
 
     session.commit()
@@ -527,9 +525,6 @@ def plot_standard_and_ambient_peak_areas(logger):
     date_limits, major_ticks, minor_ticks = create_monthly_ticks(18)
     major_ticks[:] = [major for num, major in enumerate(major_ticks) if num % 2 == 0]  # utilize only 1/2 of the majors
 
-    pa_plotdir = CORE_DIR / 'plotting/created/PA_plots'
-    std_pa_plotdir = CORE_DIR / 'plotting/created/std_PA_plots'
-
     remote_padir = BOULDAIR_BASE_PATH + '/PA_plots'
     remote_stddir = BOULDAIR_BASE_PATH + '/std_PA_plots'
 
@@ -550,14 +545,14 @@ def plot_standard_and_ambient_peak_areas(logger):
             dates.append(result[1])
             pas.append(result[0])
 
-        with TempDir(pa_plotdir):
+        with TempDir(PA_PLOT_DIR):
             plot_name = zugspitze_pa_plot(None, ({compound: [dates, pas]}),
                                           limits={'right': date_limits.get('right', None),
                                                   'left': date_limits.get('left', None)},
                                           major_ticks=major_ticks,
                                           minor_ticks=minor_ticks)
 
-            file_to_upload = FileToUpload(pa_plotdir / plot_name, remote_padir, staged=True)
+            file_to_upload = FileToUpload(PA_PLOT_DIR / plot_name, remote_padir, staged=True)
             add_or_ignore_plot(file_to_upload, session)
 
         # Plot Standard Peak Areas
@@ -576,7 +571,7 @@ def plot_standard_and_ambient_peak_areas(logger):
             dates.append(result[1])
             pas.append(result[0])
 
-        with TempDir(std_pa_plotdir):
+        with TempDir(STD_PA_PLOT_DIR):
             plot_name = zugspitze_pa_plot(None, ({compound: [dates, pas]}),
                                           limits={'right': date_limits.get('right', None),
                                                   'left': date_limits.get('left', None)},
@@ -584,7 +579,7 @@ def plot_standard_and_ambient_peak_areas(logger):
                                           minor_ticks=minor_ticks,
                                           standard=True)
 
-            file_to_upload = FileToUpload(std_pa_plotdir / plot_name, remote_stddir, staged=True)
+            file_to_upload = FileToUpload(STD_PA_PLOT_DIR / plot_name, remote_stddir, staged=True)
             add_or_ignore_plot(file_to_upload, session)
 
     session.commit()

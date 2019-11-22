@@ -4,7 +4,7 @@ import datetime as dt
 
 from datetime import datetime
 
-from settings import CORE_DIR, DB_NAME
+from settings import CORE_DIR, DB_NAME, FILTER_DIRS
 from IO import Base, connect_to_db
 from IO.db.models import Config, Compound, LogFile, Integration, GcRun, Standard, Quantification
 from processing import match_integrations_to_logs, blank_subtract
@@ -163,14 +163,8 @@ def process_filters(logger):
         print(f'The full traceback is {traceback.format_exc()}')
         return
 
-    filter_dirs = [
-        CORE_DIR / 'data/json/private/filters/final',  # get all finalized filters
-        CORE_DIR / 'data/json/private/filters/unprocessed',
-        # filter unprocessed points, but still check then and moved to final
-    ]
-
     json_files = []
-    for d in filter_dirs:
+    for d in FILTER_DIRS:
         json_files.extend([f for f in d.iterdir() if f.is_file() and f.suffix == '.json'])
 
     # TODO: Ideally, only process filters when one or more has been changed; but all must be processed, per below

@@ -21,7 +21,8 @@ import json
 from pathlib import Path
 
 __all__ = ['CORE_DIR', 'PATHS_DATA', 'REMOTE_BASE_PATH', 'BOULDAIR_BASE_PATH', 'PROCESSOR_LOGS_DIR',
-           'LOG_DIR', 'GCMS_DIR', 'DAILY_DIR']
+           'LOG_DIR', 'GCMS_DIR', 'DAILY_DIR', 'DB_NAME', 'MR_PLOT_DIR', 'FULL_PLOT_DIR', 'LOG_PLOT_DIR',
+           'FILTER_DIRS']
 
 CORE_DIR = Path(os.getcwd())  # assign the project directory as the one that this was run in
 
@@ -39,11 +40,17 @@ DAILY_DIR = CORE_DIR / 'data/daily'
 PROCESSOR_LOGS_DIR = CORE_DIR / 'processing/processors/processor_logs'
 
 MR_PLOT_DIR = CORE_DIR / 'plotting/created/mr_plots'
+PA_PLOT_DIR = CORE_DIR / 'plotting/created/PA_plots'
+STD_PA_PLOT_DIR = CORE_DIR / 'plotting/created/std_PA_plots'
 FULL_PLOT_DIR = CORE_DIR / 'plotting/created/full_plots'
 LOG_PLOT_DIR = CORE_DIR / 'plotting/created/logplots'
+DAILY_PLOT_DIR = CORE_DIR / 'plotting/created/dailyplots'
+
 
 FILTER_DIRS = [
     CORE_DIR / 'data/json/private/filters/final',  # get all finalized filters
     CORE_DIR / 'data/json/private/filters/unprocessed',
     # filter unprocessed points, but still check then and moved to final
 ]
+
+# TODO: JSON DIR
