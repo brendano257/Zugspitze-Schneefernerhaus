@@ -8,7 +8,7 @@ from datetime import datetime
 import pandas as pd
 import numpy as np
 
-from settings import CORE_DIR, DB_NAME, daily_dir, log_dir, gcms_dir
+from settings import CORE_DIR, DB_NAME, DAILY_DIR, LOG_DIR, GCMS_DIR
 from utils import search_for_attr_value
 from IO import Base, connect_to_db, get_all_data_files
 from processing.file_io import read_daily_file, read_log_file, read_gcms_file
@@ -39,7 +39,7 @@ def load_all_dailies(logger):
 
     daily_files_in_db = session.query(DailyFile).all()
 
-    daily_files = [DailyFile(path) for path in sorted(get_all_data_files(daily_dir, '.txt'))]
+    daily_files = [DailyFile(path) for path in sorted(get_all_data_files(DAILY_DIR, '.txt'))]
 
     new_files = []
 
@@ -89,7 +89,7 @@ def load_all_logs(logger):
         print(f'The full traceback is {traceback.format_exc()}')
         return
 
-    logfiles = sorted([Path(file) for file in os.scandir(log_dir) if 'l.txt' in file.name])
+    logfiles = sorted([Path(file) for file in os.scandir(LOG_DIR) if 'l.txt' in file.name])
 
     logs = []
     for file in logfiles:
@@ -129,7 +129,7 @@ def load_all_integrations(logger):
         print(f'The full traceback is {traceback.format_exc()}')
         return
 
-    all_results = sorted(get_all_data_files(gcms_dir, 'integration_results.txt'))
+    all_results = sorted(get_all_data_files(GCMS_DIR, 'integration_results.txt'))
 
     integrations = []
     for file in all_results:
