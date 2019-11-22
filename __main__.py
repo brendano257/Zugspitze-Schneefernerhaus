@@ -105,12 +105,15 @@ def run_proc(ergs):
 
 def run_one(ergs):
     """
-    Run individual functions by their given index in the sequence.
+    Run individual functions by their given index in the sequence **sequentially**. Providing funcs out of order will
+    NOT force them to be run non-sequentially.
+    TODO: Add -U flag to force an unordered (as provided) sequence of functions to run.
+
     :param ergs: Args produced by parser.parse_args(), should include args.numbers = [...]
     :return None:
     """
-
-    procs = [sequence[int(index)] for index in ergs.numbers]
+    indices = sorted(int(index) for index in ergs.numbers)
+    procs = [sequence[index] for index in indices]
 
     for proc in procs:
         proc(logger)
