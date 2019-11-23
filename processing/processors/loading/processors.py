@@ -8,7 +8,7 @@ from datetime import datetime
 import pandas as pd
 import numpy as np
 
-from settings import CORE_DIR, DB_NAME, DAILY_DIR, LOG_DIR, GCMS_DIR
+from settings import CORE_DIR, DB_NAME, DAILY_DIR, LOG_DIR, GCMS_DIR, HISTORIC_DATA_SHEET
 from utils import search_for_attr_value
 from IO import Base, connect_to_db, get_all_data_files
 from processing.file_io import read_daily_file, read_log_file, read_gcms_file
@@ -231,9 +231,7 @@ def load_historic_data(logger):
 
     if config.last_data_date == datetime(1900, 1, 1):  # it's never been run before
 
-        historic_sheet = CORE_DIR / 'data/sheets/private/INSTAAR_mixing_ratios.xlsx'
-
-        old_data = pd.read_excel(historic_sheet, header=0, sheet_name='AmbientMixingRatio')
+        old_data = pd.read_excel(HISTORIC_DATA_SHEET, header=0, sheet_name='AmbientMixingRatio')
         old_data['Time stamp'] = old_data['Time stamp'].replace('--', np.nan)
         old_data['Time stamp'] = old_data['Time stamp'].str.lstrip()
         old_data.dropna(axis=0, subset=['Time stamp'], inplace=True)

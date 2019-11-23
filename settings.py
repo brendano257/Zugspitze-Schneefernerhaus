@@ -22,18 +22,21 @@ from pathlib import Path
 
 __all__ = ['CORE_DIR', 'PATHS_DATA', 'REMOTE_BASE_PATH', 'BOULDAIR_BASE_PATH', 'PROCESSOR_LOGS_DIR',
            'LOG_DIR', 'GCMS_DIR', 'DAILY_DIR', 'DB_NAME', 'MR_PLOT_DIR', 'FULL_PLOT_DIR', 'LOG_PLOT_DIR',
-           'FILTER_DIRS']
+           'DAILY_PLOT_DIR', 'PA_PLOT_DIR', 'STD_PA_PLOT_DIR', 'FILTER_DIRS', 'HISTORIC_DATA_SHEET', 'JSON_FILES']
 
 CORE_DIR = Path(os.getcwd())  # assign the project directory as the one that this was run in
 
 DB_NAME = 'sqlite:///zugspitze.sqlite'
 
 # path data from json file, consider temporary
-PATHS_DATA = json.loads((CORE_DIR / 'data/json/private/paths.json').read_text())
-REMOTE_BASE_PATH = PATHS_DATA.get('lightsail_base')  # base path for files on the remote AWS Lightsail instance
-BOULDAIR_BASE_PATH = PATHS_DATA.get('bouldair_base')  # base path on remote Bouldair website
+try:
+    PATHS_DATA = json.loads((CORE_DIR / 'data/json/private/paths.json').read_text())
+    REMOTE_BASE_PATH = PATHS_DATA.get('lightsail_base')  # base path for files on the remote AWS Lightsail instance
+    BOULDAIR_BASE_PATH = PATHS_DATA.get('bouldair_base')  # base path on remote Bouldair website
+except FileNotFoundError:
+    print('WARNING: Could not load path data for remote connections. Connecting to server and website will not work.')
 
-LOG_DIR = CORE_DIR / 'data/log'
+LOG_DIR = CORE_DIR / 'data/log/'
 GCMS_DIR = CORE_DIR / 'data/GCMS'
 DAILY_DIR = CORE_DIR / 'data/daily'
 
@@ -53,4 +56,23 @@ FILTER_DIRS = [
     # filter unprocessed points, but still check then and moved to final
 ]
 
-# TODO: JSON DIR
+# TODO: JSON DIRs should be used, search project for " / '"
+JSON_PRIVATE_DIR = CORE_DIR / 'data/json/private'
+JSON_PUBLIC_DIR = CORE_DIR / 'data/json/public'
+
+HISTORIC_DATA_SHEET = CORE_DIR / 'data/sheets/private/INSTAAR_mixing_ratios.xlsx'
+
+JSON_PRIVATE_FILES = ['standards.json', 'lightsail_server_fino.json', 'bouldair_server_info.json']
+JSON_PUBLIC_FILES = ['zug_long_plot_info.json', 'zug_plot_info.json']
+
+JSON_FILES = (
+    [JSON_PRIVATE_DIR / file for file in JSON_PRIVATE_FILES]
+    + [JSON_PUBLIC_DIR / file for file in JSON_PUBLIC_FILES]
+)
+
+for file in JSON_FILES:
+    if not file.exists():
+        print(f'WARNING: File {file} does not exist in project. Certain functions will not work.')
+
+# cannot access all Paths and check is_dir() because that returns False if it doesn't exist.
+# Maintain a list of all directories and if not .exists(), mkdir

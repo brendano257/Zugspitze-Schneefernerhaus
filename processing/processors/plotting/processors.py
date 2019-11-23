@@ -525,8 +525,8 @@ def plot_standard_and_ambient_peak_areas(logger):
     date_limits, major_ticks, minor_ticks = create_monthly_ticks(18)
     major_ticks[:] = [major for num, major in enumerate(major_ticks) if num % 2 == 0]  # utilize only 1/2 of the majors
 
-    remote_padir = BOULDAIR_BASE_PATH + '/PA_plots'
-    remote_stddir = BOULDAIR_BASE_PATH + '/std_PA_plots'
+    remote_pa_dir = BOULDAIR_BASE_PATH + '/PA_plots'
+    remote_std_dir = BOULDAIR_BASE_PATH + '/std_PA_plots'
 
     for compound in ALL_COMPOUNDS:
         # Plot Ambient Peak Areas
@@ -552,7 +552,7 @@ def plot_standard_and_ambient_peak_areas(logger):
                                           major_ticks=major_ticks,
                                           minor_ticks=minor_ticks)
 
-            file_to_upload = FileToUpload(PA_PLOT_DIR / plot_name, remote_padir, staged=True)
+            file_to_upload = FileToUpload(PA_PLOT_DIR / plot_name, remote_pa_dir, staged=True)
             add_or_ignore_plot(file_to_upload, session)
 
         # Plot Standard Peak Areas
@@ -579,7 +579,7 @@ def plot_standard_and_ambient_peak_areas(logger):
                                           minor_ticks=minor_ticks,
                                           standard=True)
 
-            file_to_upload = FileToUpload(STD_PA_PLOT_DIR / plot_name, remote_stddir, staged=True)
+            file_to_upload = FileToUpload(STD_PA_PLOT_DIR / plot_name, remote_std_dir, staged=True)
             add_or_ignore_plot(file_to_upload, session)
 
     session.commit()
