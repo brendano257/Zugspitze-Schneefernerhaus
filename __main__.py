@@ -107,12 +107,16 @@ def run_one(ergs):
     """
     Run individual functions by their given index in the sequence **sequentially**. Providing funcs out of order will
     NOT force them to be run non-sequentially.
-    TODO: Add -U flag to force an unordered (as provided) sequence of functions to run.
 
     :param ergs: Args produced by parser.parse_args(), should include args.numbers = [...]
     :return None:
     """
-    indices = sorted(int(index) for index in ergs.numbers)
+    indices = (int(num) for num in ergs.numbers)
+
+    # if not explictly asked to maintain the order they were given in, sort the provided numbers
+    if not ergs.ordered:
+        indices = sorted(indices)
+
     procs = [sequence[index] for index in indices]
 
     for proc in procs:
@@ -134,11 +138,9 @@ parser_run = subparsers.add_parser('run',
                                    description='Run the entire sequence, with the ability to opt-out of uploading.')
 
 parser_run.add_argument('-D', '--no-download', action='store_true', dest='no_download',
-                        help='Do not download new files. '
-                        + 'This overrides --all by removing downloading from the sequence.')
+                        help='Do not download new files when running all.')
 parser_run.add_argument('-U', '--no-upload', action='store_true', dest='no_upload',
-                        help='Do not upload any staged files. '
-                        + 'This overrides --all by removing uploading from the sequence.')
+                        help='Do not upload any staged files when running all.')
 
 # if parser_run is used, run is set as it's func, such that args.func(args) can be called
 parser_run.set_defaults(func=run)
@@ -178,6 +180,11 @@ parser_run_one = subparsers.add_parser('run-one',
 
 parser_run_one.add_argument('-N', '--number', nargs='+', required=True, dest='numbers',
                             help=f'Choose a number from 0 - {len(sequence) - 1} to run that process.')
+
+parser_run_one.add_argument('-O', '--ordered', action='store_true', dest='ordered',
+                            help='Force arguments to be run in the order they were provided.'
+                            + f'Eg "zugspitze run-one {len(sequence) - 1} 0" will upload files, THEN retrieve new ones.'
+                            + 'This should rarely, if ever, be necessary.')
 
 parser_run_one.set_defaults(func=run_one)
 
