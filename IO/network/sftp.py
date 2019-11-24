@@ -11,13 +11,14 @@ __all__ = ['connect_to_lightsail', 'connect_to_bouldair', 'list_remote_files',
            'list_remote_files_recur', 'send_files_sftp']
 
 
-def connect_to_lightsail():
+def open_sftp_from_json(filepath):
     """
-    Uses paramiko to create a connection to Brendan's instance. Relies on authetication information from a JSON file.
+    With a given filepath, create an open SFTP client to the details provided in the JSON file at filepath.
 
-    :return SFTP_Client:
+    :param Path filepath: pathlib Path (or str) to a json file containing the necessary information to connect.
+    :return:
     """
-    with open(JSON_PRIVATE_DIR / 'lightsail_server_info.json', 'r') as file:
+    with open(filepath, 'r') as file:
         server_info = json.loads(file.read())
 
     key = paramiko.RSAKey.from_private_key_file(server_info.pop('pem_file'))  # grab pem_file and remove from dict
@@ -31,24 +32,23 @@ def connect_to_lightsail():
     return client.open_sftp()
 
 
+def connect_to_lightsail():
+    """
+    Uses Paramiko to create a connection to Brendan's instance. Relies on authetication information from a JSON file.
+
+    :return SFTP_Client:
+    """
+    return open_sftp_from_json(JSON_PRIVATE_DIR / 'lightsail_server_info.json')
+
+
 def connect_to_bouldair():
     """
-    Uses paramiko to create a connection to the Bouldair website instance.
+    Uses Paramiko to create a connection to the Bouldair website.
 
     Relies on authetication information from a JSON file.
     :return SFTP_Client:
     """
-    with open(JSON_PRIVATE_DIR / 'bouldair_server_info.json', 'r') as file:
-        server_info = json.loads(file.read())
-
-    key = paramiko.RSAKey.from_private_key_file(server_info.pop('pem_file'))  # grab pem file and remove from dict
-    server_info['pkey'] = key
-
-    client = paramiko.SSHClient()
-    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    client.connect(**server_info)
-    client.get_transport().window_size = 3 * 1024 * 1024  # speed modification
-    return client.open_sftp()
+    return open_sftp_from_json(JSON_PRIVATE_DIR / 'bouldair_server_info.json')
 
 
 def list_remote_files(con, directory):
