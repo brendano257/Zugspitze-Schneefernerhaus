@@ -92,7 +92,7 @@ def retrieve_new_files(logger):
 
         for remote_file in remote_files:
             if remote_file.local is None:
-                local_match = search_for_attr_value(local_files, 'relpath', '/data' + remote_file.relpath)
+                local_match = search_for_attr_value(local_files, 'relpath', remote_file.relpath)
                 if local_match:
                     remote_file.local = local_match
                     if remote_file.st_mtime > local_match.st_mtime:
@@ -118,7 +118,7 @@ def retrieve_new_files(logger):
                 logger.info(f'Remote file {remote_file.relpath} was updated.')
                 ct += 1
             else:
-                new_local_path = CORE_DIR / 'data' / remote_file.relpath.lstrip('/')
+                new_local_path = CORE_DIR / remote_file.relpath.lstrip('/')
 
                 scan_and_create_dir_tree(new_local_path)  # scan the path and create any needed folders
 

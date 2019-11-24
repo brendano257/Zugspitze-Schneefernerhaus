@@ -6,6 +6,8 @@ from settings import CORE_DIR, REMOTE_BASE_PATH
 
 __all__ = ['LocalFile', 'RemoteFile']
 
+LOCAL_BASE_PATH = CORE_DIR / 'data'
+
 
 class LocalFile(Base):
     """
@@ -36,7 +38,7 @@ class LocalFile(Base):
         """
         self.st_mtime = st_mtime
         self.path = path
-        self.relpath = path.replace(str(CORE_DIR), '')
+        self.relpath = path.replace(str(LOCAL_BASE_PATH), '')
 
 
 class RemoteFile(Base):
