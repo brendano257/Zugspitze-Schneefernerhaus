@@ -1,11 +1,6 @@
 """
 Run any portion of the processing or all of it at once from the command line.
 """
-# import sys
-# print(sys.path)
-
-# TODO: Fiddle with adding sys.path here so it can be run from other folders.
-
 import argparse
 from datetime import datetime
 
@@ -47,7 +42,7 @@ def run(ergs):
     Run the entire sequence, with the option to not upload or download files.
 
     :param ergs: arguments passed by calling subparser.func(args)
-    :return:
+    :return None:
     """
     if ergs.no_download:
         sequence.pop(0)  # remove the first element (always the download function, retrieve_new_files)
