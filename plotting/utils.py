@@ -29,16 +29,14 @@ def create_daily_ticks(days_in_plot, minors_per_day=4, end_date=datetime.now()):
     return date_limits, major_ticks, minor_ticks
 
 
-def create_monthly_ticks(months_to_plot, minors_per_month=4, start=None):
+def create_monthly_ticks(months_to_plot, days_per_minor=7, start=None):
     """
     Creates ticks for months, then minor ticks for each whole week (restarting each month) by default.
 
     Alternatively, specifying a start date will create ticks for the given start date through start_date+months_to_plot.
 
-    TODO: Still definitely a better way, probably using timedelta_per_minor or something to create minor ticks.
-
     :param int months_to_plot: number of months to be displayed on the plot
-    :param int minors_per_month: number of minor ticks per month
+    :param int days_per_minor: number of days per minor tick, a falsy value will result in no minor ticks
     :param datetime start: optional datetime to start making ticks from
         if not given, defaults to start=datetime.now() and end=start-months_to_plot
     :return tuple: date_limits, major_ticks, minor_ticks
@@ -55,20 +53,17 @@ def create_monthly_ticks(months_to_plot, minors_per_month=4, start=None):
     date_limits['right'] = end
     date_limits['left'] = start
 
+    minor_ticks = []
     major_ticks = sorted([date_limits['right'] - relativedelta(months=x) for x in range(0, months_to_plot + 1)])
 
-    # determine how many days each minor tick should be, excepting the case where minors_per_month == 0
-    # because the month length isn't known ahead of time, always assume it's 31 days and account for it later[***]
-    minor_step = 31 // minors_per_month if minors_per_month else None
+    if days_per_minor:
+        # get maximum number of minor ticks possible in a month, given days_per_minor
+        max_possible_minors = 31 // days_per_minor
 
-    minor_ticks = []
-    if minor_step:  # if any minor ticks need to be created
-        for tick in major_ticks:
-            # for every major tick, create minors_per_month+1 minor ticks (the extra minor will sit on the major tick)
-            for step in range(1, minors_per_month + 1):
-                # create new tick by adding the current tick number within this major, multiplied by the minor_step
-                new_tick = tick + dt.timedelta(days=step*minor_step)
-                if new_tick.month <= tick.month:  # [***] if assuming the month was 31 days caused overflow, ignore it
-                    minor_ticks.append(new_tick)
+        for major in major_ticks:
+            for step in range(1, max_possible_minors + 1):
+                minor = major + relativedelta(days=days_per_minor * step)
+                if minor < major + relativedelta(months=1):
+                    minor_ticks.append(minor)
 
     return date_limits, major_ticks, minor_ticks

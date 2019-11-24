@@ -36,7 +36,7 @@ def plot_new_data(logger):
                          .filter(Standard.name == 'quantlist').all())
     compounds_to_plot[:] = [q.name for q in compounds_to_plot]
 
-    date_limits, major_ticks, minor_ticks = create_monthly_ticks(6)
+    date_limits, major_ticks, minor_ticks = create_monthly_ticks(6, days_per_minor=7)
 
     with open(JSON_PUBLIC_DIR / 'zug_plot_info.json', 'r') as file:
         compound_limits = json.loads(file.read())
@@ -110,7 +110,7 @@ def plot_history(logger):
                          .filter(Standard.name == 'quantlist').all())
     compounds_to_plot[:] = [q.name for q in compounds_to_plot]
 
-    date_limits, major_ticks, minor_ticks = create_monthly_ticks(84, minors_per_month=1)
+    date_limits, major_ticks, minor_ticks = create_monthly_ticks(84, days_per_minor=0)
 
     major_ticks = major_ticks[::6]
 
@@ -521,7 +521,7 @@ def plot_standard_and_ambient_peak_areas(logger):
         logger.error(f'Error {e.args} prevented connecting to the database in plot_standard_and_ambient_peak_areas()')
         return False
 
-    date_limits, major_ticks, minor_ticks = create_monthly_ticks(18)
+    date_limits, major_ticks, minor_ticks = create_monthly_ticks(18, days_per_minor=7)
     major_ticks[:] = [major for num, major in enumerate(major_ticks) if num % 2 == 0]  # utilize only 1/2 of the majors
 
     remote_pa_dir = BOULDAIR_BASE_PATH + '/PA_plots'
