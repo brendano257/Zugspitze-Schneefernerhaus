@@ -8,7 +8,7 @@ from datetime import datetime
 import pandas as pd
 import numpy as np
 
-from settings import CORE_DIR, DB_NAME, DAILY_DIR, LOG_DIR, GCMS_DIR, HISTORIC_DATA_SHEET
+from settings import CORE_DIR, JSON_PRIVATE_DIR, DB_NAME, DAILY_DIR, LOG_DIR, GCMS_DIR, HISTORIC_DATA_SHEET
 from utils import search_for_attr_value
 from IO import Base, connect_to_db, get_all_data_files
 from processing.file_io import read_daily_file, read_log_file, read_gcms_file
@@ -161,7 +161,7 @@ def load_standards(logger):
     :param logger: Active logger that function should log to
     :return bool: True if it exits without issue/concern
     """
-    standards_filepath = CORE_DIR / 'data/json/private/standards.json'
+    standards_filepath = JSON_PRIVATE_DIR / 'standards.json'
 
     try:
         engine, session = connect_to_db(DB_NAME, CORE_DIR)

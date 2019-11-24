@@ -1,7 +1,7 @@
 import json
 
 from IO import connect_to_db, add_or_ignore_plot
-from settings import CORE_DIR, DB_NAME, BOULDAIR_BASE_PATH, DAILY_PLOT_DIR, MR_PLOT_DIR, FULL_PLOT_DIR
+from settings import CORE_DIR, DB_NAME, BOULDAIR_BASE_PATH, DAILY_PLOT_DIR, MR_PLOT_DIR, FULL_PLOT_DIR, JSON_PUBLIC_DIR
 from settings import LOG_PLOT_DIR, PA_PLOT_DIR, STD_PA_PLOT_DIR
 from processing.constants import LOG_ATTRS, DAILY_ATTRS, ALL_COMPOUNDS
 from IO.db.models import OldData, Daily, Compound, LogFile, Integration, GcRun, Standard, Quantification
@@ -38,8 +38,7 @@ def plot_new_data(logger):
 
     date_limits, major_ticks, minor_ticks = create_monthly_ticks(6)
 
-    # TODO: REPLACE DIR w/ JSON_DIR /
-    with open(CORE_DIR / 'data/json/public' / 'zug_plot_info.json', 'r') as file:
+    with open(JSON_PUBLIC_DIR / 'zug_plot_info.json', 'r') as file:
         compound_limits = json.loads(file.read())
 
     for name in compounds_to_plot:
@@ -115,7 +114,7 @@ def plot_history(logger):
 
     major_ticks = major_ticks[::6]
 
-    with open(CORE_DIR / 'data/json/public' / 'zug_long_plot_info.json', 'r') as file:
+    with open(JSON_PUBLIC_DIR / 'zug_long_plot_info.json', 'r') as file:
         compound_limits = json.loads(file.read())
 
     for name in compounds_to_plot:

@@ -5,7 +5,7 @@ from itertools import chain
 import paramiko
 
 from utils import gen_isempty
-from settings import CORE_DIR
+from settings import JSON_PRIVATE_DIR
 
 __all__ = ['connect_to_lightsail', 'connect_to_bouldair', 'list_remote_files',
            'list_remote_files_recur', 'send_files_sftp']
@@ -17,7 +17,7 @@ def connect_to_lightsail():
 
     :return SFTP_Client:
     """
-    with open(CORE_DIR / 'data/json/private/lightsail_server_info.json', 'r') as file:
+    with open(JSON_PRIVATE_DIR / 'lightsail_server_info.json', 'r') as file:
         server_info = json.loads(file.read())
 
     key = paramiko.RSAKey.from_private_key_file(server_info.pop('pem_file'))  # grab pem_file and remove from dict
@@ -38,7 +38,7 @@ def connect_to_bouldair():
     Relies on authetication information from a JSON file.
     :return SFTP_Client:
     """
-    with open(CORE_DIR / 'data/json/private/bouldair_server_info.json', 'r') as file:
+    with open(JSON_PRIVATE_DIR / 'bouldair_server_info.json', 'r') as file:
         server_info = json.loads(file.read())
 
     key = paramiko.RSAKey.from_private_key_file(server_info.pop('pem_file'))  # grab pem file and remove from dict
