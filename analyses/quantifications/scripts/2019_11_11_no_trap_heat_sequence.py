@@ -20,7 +20,7 @@ standard_to_quantify_with = session.query(Standard).filter(Standard.name == 'cc4
 
 quantifier = (session.query(GcRun).join(Integration, Integration.run_id == GcRun.id)
               .filter(GcRun.date > datetime(2019, 11, 11), GcRun.date < datetime(2019, 11, 12))
-              .filter(Integration.filename.like('%CC416168.D'))
+              .filter(Integration.filename == '2019_11_11_CC416168.D')
               .order_by(GcRun.date)
               .one_or_none())
 
@@ -47,7 +47,7 @@ ambient_2 = session.merge(ambient_2)
 
 session.commit()  # save to DB so quantified values are kept for later use
 
-file = CORE_DIR / 'analyses/quantifications/2019_11_11_no_trap_dry.csv'
+file = CORE_DIR / 'analyses/quantifications/scripts/2019_11_11_no_trap_dry.csv'
 
 # Quick and dirty file IO for this...
 with file.open('w') as f:
