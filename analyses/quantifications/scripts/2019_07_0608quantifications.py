@@ -52,7 +52,7 @@ for day in days_with_standards:
 
     quant_runs.append(quant)
 
-compile_quant_report(quant_runs, 'SX3555', 'CC416168', certified_values_of_sample)
+compile_quant_report(quant_runs, 'SX3555', 'CC416168', certified_values_of_sample, date=datetime(2019, 7, 6))
 # report for SX3555 Qx CC416168 finished, values to be re-assigned for vice versa
 
 standard_to_quantify_with = session.query(Standard).filter(Standard.name == 'sx3555').one_or_none()
@@ -91,4 +91,4 @@ for day in days_with_standards:
 
     quant_runs.append(quant)
 
-compile_quant_report(quant_runs, 'CC416168', 'SX3555', certified_values_of_sample)
+compile_quant_report(quant_runs, 'CC416168', 'SX3555', certified_values_of_sample, date=datetime(2019, 7, 6))
