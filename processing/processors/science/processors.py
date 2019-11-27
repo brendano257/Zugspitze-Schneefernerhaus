@@ -4,7 +4,7 @@ import datetime as dt
 
 from datetime import datetime
 
-from settings import CORE_DIR, DB_NAME, FILTER_DIRS
+from settings import CORE_DIR, DB_NAME, FILTER_DIRS, JSON_PRIVATE_DIR
 from IO import Base, connect_to_db
 from IO.db.models import Config, Compound, LogFile, Integration, GcRun, Standard, Quantification
 from processing import match_integrations_to_logs, blank_subtract
@@ -230,7 +230,7 @@ def process_filters(logger):
                           .all())
 
     for config in all_filter_configs:
-        file = CORE_DIR / f'filters/{config.processor.replace("Filter::", "")}'  # recreate filename
+        file = JSON_PRIVATE_DIR / f'filters/{config.processor.replace("Filter::", "")}'  # recreate filename
         if not file.exists():
             logger.warning(f'Filter file {"/".join(file.parts[-2:])} was not found so its config was removed.')
             session.delete(config)
