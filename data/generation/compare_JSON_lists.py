@@ -29,7 +29,6 @@ for date, compounds in second.items():
     else:
         new_only[date] = compounds  # if not in master, all are new and need to be checked
 
-
 if new_only:
 
     if new_file.exists():
