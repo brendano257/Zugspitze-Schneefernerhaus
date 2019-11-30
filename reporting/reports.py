@@ -1,11 +1,13 @@
 import statistics as s
 from datetime import datetime
-from collections import OrderedDict
+from collections import OrderedDict, Sequence
 
 import xlsxwriter
 import pandas as pd
 
 from xlsxwriter.utility import xl_rowcol_to_cell, xl_range
+from sqlalchemy.orm.attributes import InstrumentedAttribute
+from sqlalchemy.sql.elements import BinaryExpression
 
 from IO.db.models import Compound, GcRun, Standard
 from IO.db import connect_to_db
@@ -13,14 +15,66 @@ from settings import CORE_DIR, DB_NAME
 from utils.core import search_for_attr_value
 from processing import get_mr_from_run, ALL_COMPOUNDS
 
-__all__ = ['get_df_with_filters', 'write_df_to_excel', 'compile_quant_report', 'compile_enhancement_comparison']
+from IO.db.meta import relations
+
+__all__ = ['get_df_with_filters', 'write_df_to_excel', 'compile_quant_report', 'compile_enhancement_comparison',
+           'abstract_query']
+
+
+def abstract_query(params, filters):
+    """
+    Make a query for one or many parameters with no knowledge of the project structure needed.
+
+    Easy query abstracts to the project layer and allows one to ignore the internal structure to a large degree. Making
+    a query for cross-class attributes is as easy as asking for [Integration.filename, Integration.date, LogFile.date].
+    A normal query would require a query for all three attributes and an explicit join of
+    .join(LogFile, LogFile.integration_id == LogFile.id), but easy_query handles this internally by referencing metadata
+    that's created after the models are defined, thus it will handle changes in the schema as well.
+
+    :param Sequence[InstrumentedAttribute] params: one or many parameters to be queried, params will be output in their
+        requested order
+    :param Sequence[BinaryExpression] filters: one or many filter expressions to apply,
+        eg [Integration.id != 1, Integration.filename.like('2019_%'), LogFile.date >= datetime(2019, 1, 1)];
+        filters *must* be given in their intended order of application
+    :return list: returns list of named tuples results
+    :raises NotImplementedError: if any class in params cannot be joined appropriately
+    """
+    engine, session = connect_to_db(DB_NAME, CORE_DIR)
+
+    q = session.query(*params)  # kick off the query
+
+    classes = []
+    for p in params:
+        parent_class = p.parent.class_
+        classes.append(parent_class) if parent_class not in classes else None  # need order, so hack around a set...
+
+    base = classes.pop(0)  # grab first class from list
+
+    if classes:  # any more classes?
+        for c in classes:
+            relations_for_c = relations.get(c.__name__)
+
+            if not relations_for_c:
+                msg = f'{c.__name__} does not have any defined relationships.'
+                raise NotImplementedError(msg)
+
+            relation = relations_for_c.get(base.__name__)
+
+            if relation:
+                q = q.join(c, relation.key == relation.fkey)
+            else:
+                msg = f'{c.__name__} is not directly related to {base} in the schema.'
+                raise NotImplementedError(msg)
+
+    for f in filters:
+        q = q.filter(f)
+
+    return q.all()
 
 
 def get_df_with_filters(use_mrs, filters=None, compounds=None):
     """
     Retrieves a dataframe from the database of all mixing ratios or peak areas for all compounds with optional filters.
-
-    TODO: Generalize even more. This could accept filter, additional params (date, mr, ...?), etc.
 
     Retrieves mixing ratios (or peak areas if use_mrs=False) for all compounds, and can be filtered with additional
     expressions. Expressions are added on a per-compound basis, so filtering for specific compounds is not yet possible.
@@ -85,8 +139,6 @@ def write_df_to_excel(df, header=None, filename_end=None, bold_row_0=False, bold
 
     Takes in an optional header and extra label for the filename.
     The first rows and columns can be bolded in the saved excel file with bold_[row/col]_0.
-
-    TODO: Needs to take a callback that does more prior to saving, ie adding charts after data is written
 
     :param pd.DataFrame df: Pandas dataframe to write to file
         **must have a datetime index
