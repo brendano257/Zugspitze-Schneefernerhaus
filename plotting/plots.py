@@ -122,6 +122,8 @@ class Plot2D(ABC):
 
         if self.show:
             self.figure.show()
+        else:
+            plt.close(self.figure)
 
 
 class TimeSeries(Plot2D):
