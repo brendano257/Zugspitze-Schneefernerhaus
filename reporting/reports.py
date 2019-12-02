@@ -21,7 +21,7 @@ __all__ = ['get_df_with_filters', 'write_df_to_excel', 'compile_quant_report', '
            'abstract_query']
 
 
-def abstract_query(params, filters):
+def abstract_query(params, filters, order=None):
     """
     Make a query for one or many parameters with no knowledge of the project structure needed.
 
@@ -36,8 +36,10 @@ def abstract_query(params, filters):
     :param Sequence[BinaryExpression] filters: one or many filter expressions to apply,
         eg [Integration.id != 1, Integration.filename.like('2019_%'), LogFile.date >= datetime(2019, 1, 1)];
         filters *must* be given in their intended order of application
+    :param InstrumentedAttribute order: parameter to order results by
     :return list: returns list of named tuples results
     :raises NotImplementedError: if any class in params cannot be joined appropriately
+    :raises ValueError: if order is not also in params
     """
     engine, session = connect_to_db(DB_NAME, CORE_DIR)
 
@@ -68,6 +70,13 @@ def abstract_query(params, filters):
 
     for f in filters:
         q = q.filter(f)
+
+    if order:
+        if not order in params:
+            msg = 'Order must be an InstrumentedAttribute and must also be in the queried parameters'
+            raise ValueError(msg)
+
+        q = q.order_by(order)
 
     return q.all()
 
