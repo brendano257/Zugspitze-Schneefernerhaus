@@ -33,16 +33,14 @@ data_series = {
     'propane': ([d.date for d in propane], [d.mr for d in propane])
 }
 
-data_series_c4 = {
+data_series_two_axis1 = {
     'i-butane': ([d.date for d in iButane], [d.mr for d in iButane]),
     'n-butane': ([d.date for d in nButane], [d.mr for d in nButane])
 }
 
-data_series_c4_2 = {
+data_series_two_axis2 = {
     'HFC-152a': ([d.date for d in hfc152a], [d.mr for d in hfc152a])
 }
-
-print(data_series_c4_2)
 
 limits, major, minor = create_daily_ticks(14, end_date=datetime(2019, 2, 14))
 
@@ -53,7 +51,7 @@ def test_timeseries():
 
 
 def test_twoaxis_timeseries():
-    t = TwoAxisTimeSeries(data_series_c4, data_series_c4_2, limits_y1=limits,
+    t = TwoAxisTimeSeries(data_series_two_axis1, data_series_two_axis2, limits_y1=limits,
                           limits_y2={'bottom': -20, 'top': 30},
                           major_ticks=major,
                           minor_ticks=minor, save=False, show=True)
