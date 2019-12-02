@@ -3,7 +3,8 @@ __package__ = None
 from datetime import datetime
 from random import randint
 
-from scratch_plotting import TimeSeries, TwoAxisTimeSeries, LinearityPlot
+from scratch_plotting import (TimeSeries, TwoAxisTimeSeries, LinearityPlot, MixingRatioPlot, PeakAreaPlot,
+                               StandardPeakAreaPlot)
 
 from IO.db.models import Compound, GcRun
 from plotting import create_daily_ticks
@@ -25,9 +26,13 @@ nButane = abstract_query([GcRun.date, Compound.mr], [Compound.name == 'n-butane'
                                                      GcRun.date.between(datetime(2019, 2, 1), datetime(2019, 2, 14)),
                                                      GcRun.type == 5, Compound.filtered == False])
 
-hfc152a = abstract_query([GcRun.date, Compound.mr], [Compound.name == 'HFC-152a',
+hfc152a = abstract_query([GcRun.date, Compound.mr, Compound.pa], [Compound.name == 'HFC-152a',
                                                        GcRun.date.between(datetime(2019, 2, 1), datetime(2019, 2, 14)),
                                                        GcRun.type == 5, Compound.filtered == False])
+
+hfc152a_stds = abstract_query([GcRun.date, Compound.mr, Compound.pa], [Compound.name == 'HFC-152a',
+                                                       GcRun.date.between(datetime(2019, 2, 1), datetime(2019, 2, 14)),
+                                                       GcRun.type == 2, Compound.filtered == False])
 
 data_series = {
     'ethane': ([d.date for d in ethane], [d.mr for d in ethane]),
@@ -41,6 +46,14 @@ data_series_two_axis1 = {
 
 data_series_two_axis2 = {
     'HFC-152a': ([d.date for d in hfc152a], [d.mr for d in hfc152a])
+}
+
+data_series_2 = {
+    'HFC-152a': ([d.date for d in hfc152a], [d.pa for d in hfc152a])
+}
+
+data_series_3 = {
+    'HFC-152a': ([d.date for d in hfc152a_stds], [d.pa for d in hfc152a_stds])
 }
 
 limits, major, minor = create_daily_ticks(14, end_date=datetime(2019, 2, 14))
@@ -64,10 +77,28 @@ def test_twoaxis_timeseries():
 
 def test_linearity_plot():
     t = LinearityPlot('Fake Compound', lin_data_x, lin_data_y,
-                      limits={'top': 6000, 'bottom': 0}, save=False, show=True)
+                      limits={'top': 6000, 'bottom': 0, 'left': 0}, save=False, show=True)
+    t.plot()
+
+
+def test_mixing_ratio_plot():
+    t = MixingRatioPlot(data_series_two_axis2)
+    t.plot()
+
+
+def test_peak_area_plot():
+    t = PeakAreaPlot(data_series_2, show=True, save=False)
+    t.plot()
+
+
+def test_std_peak_area_plot():
+    t = StandardPeakAreaPlot(data_series_3, show=True, save=False)
     t.plot()
 
 
 test_timeseries()
 test_twoaxis_timeseries()
 test_linearity_plot()
+test_mixing_ratio_plot()
+test_peak_area_plot()
+test_std_peak_area_plot()

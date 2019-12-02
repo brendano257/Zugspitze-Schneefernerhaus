@@ -170,7 +170,7 @@ class TimeSeries(Plot2D):
 
         self.figure = None  # these are defined here to keep all definitions in __init__
         self.primary_axis = None
-        self.safe_names = None
+        self.safe_names = []
 
         register_matplotlib_converters()
 
@@ -200,8 +200,11 @@ class TimeSeries(Plot2D):
 
     def _make_safe_names(self):
         """Remove common unsafe characters from parameter names to make them safe for filenames."""
+
         for k, _ in self.series.items():
             self.safe_names.append(k.replace('/', '_').replace(' ', '_'))
+
+        return self.safe_names
 
     def _add_and_format_ticks(self):
         """
@@ -217,6 +220,148 @@ class TimeSeries(Plot2D):
 
     def _set_legend(self, loc='upper left'):
         self.primary_axis.legend(self.series.keys(), loc=loc)
+
+
+class CompoundPlot(TimeSeries):
+    """
+    CompoundPlots contain the minimal styling to create a project plot for mixing ratios or peak areas.
+
+    CompoundPlots are rarely going to be used outside of subclassing. They're essentially the base for any plot that is
+    set up to plot a compound response (peak area or mixing ratio) against time.
+    """
+    def __init__(self, series, limits=None, major_ticks=None, minor_ticks=None, x_label_str=None,
+                 y_label_str=None, type_=None, title=None, date_format='%Y-%m-%d',
+                 filepath=None, save=True, show=False):
+        """
+        Create an instance, using next-to-no defaults.
+
+        :param dict series: data as {name: (xData, yData)}
+        :param dict limits: plot limits, containing any of 'top', 'bottom', 'right', 'left'
+        :param Sequence[datetime] major_ticks: major ticks for x axis
+        :param Sequence[datetime] minor_ticks: minor ticks for x axis
+        :param str x_label_str: string label for the x axis
+        :param str y_label_str: string label for the y axis
+        :param str type_: Usually 'Mixing Ratios' or 'Peak Areas'; becomes part of the title
+        :param str title: title to be displayed on plot
+        :param str date_format: C-format for date
+        :param str | Path filepath: path for saving the file; otherwise saved in the current working directory
+        :param bool save: save plot as png?
+        :param bool show: show plot with figure.show()?
+        """
+
+        if not title:
+            # title should be the names of whatever is plotting, plus the type of the plot, if any
+            title = f'Zugspitze {", ".join(series.keys())} {type_}'
+
+        super().__init__(series, limits, major_ticks, minor_ticks, x_label_str, y_label_str,
+                         title, date_format, filepath, save, show)
+
+    def _save_to_file(self):
+        """Override _save_to_file and make the path the filename-safe names of what's plotted + _plot.png"""
+        if not self.filepath:
+            plotted_names = self._make_safe_names()
+            self.filepath = f'{"_".join(plotted_names)}_plot.png'
+
+        super()._save_to_file()
+
+    def _set_legend(self, loc=None):
+        """Override _set_legend with loc=None to trigger matplotlibs auto-placement of the legend."""
+        super()._set_legend(loc)
+
+
+class MixingRatioPlot(CompoundPlot):
+
+    def __init__(self, series, limits=None, major_ticks=None, minor_ticks=None, x_label_str=None,
+                 y_label_str='Mixing Ratio (pptv)', type_='Mixing Ratios', title=None, date_format='%Y-%m-%d',
+                 filepath=None, save=True, show=False):
+        """
+        Create an instance, using defaults suitable for mixing ratio plots.
+
+        :param dict series: data as {name: (xData, yData)}
+        :param dict limits: plot limits, containing any of 'top', 'bottom', 'right', 'left'
+        :param Sequence[datetime] major_ticks: major ticks for x axis
+        :param Sequence[datetime] minor_ticks: minor ticks for x axis
+        :param str x_label_str: string label for the x axis
+        :param str y_label_str: string label for the y axis
+        :param str type_: Usually 'Mixing Ratios' or 'Peak Areas'; becomes part of the title
+        :param str title: title to be displayed on plot
+        :param str date_format: C-format for date
+        :param str | Path filepath: path for saving the file; otherwise saved in the current working directory
+        :param bool save: save plot as png?
+        :param bool show: show plot with figure.show()?
+        """
+
+        super().__init__(series, limits, major_ticks, minor_ticks, x_label_str,
+                         y_label_str, type_, title, date_format,
+                         filepath, save, show)
+
+
+class PeakAreaPlot(CompoundPlot):
+
+    def __init__(self, series, limits=None, major_ticks=None, minor_ticks=None, x_label_str=None,
+                 y_label_str='Peak Area', type_='Peak Areas', title=None, date_format='%Y-%m-%d',
+                 filepath=None, save=True, show=False):
+        """
+        Create an instance, using defaults suitable for peak area ratio plots.
+
+        :param dict series: data as {name: (xData, yData)}
+        :param dict limits: plot limits, containing any of 'top', 'bottom', 'right', 'left'
+        :param Sequence[datetime] major_ticks: major ticks for x axis
+        :param Sequence[datetime] minor_ticks: minor ticks for x axis
+        :param str x_label_str: string label for the x axis
+        :param str y_label_str: string label for the y axis
+        :param str type_: Usually 'Mixing Ratios' or 'Peak Areas'; becomes part of the title
+        :param str title: title to be displayed on plot
+        :param str date_format: C-format for date
+        :param str | Path filepath: path for saving the file; otherwise saved in the current working directory
+        :param bool save: save plot as png?
+        :param bool show: show plot with figure.show()?
+        """
+        super().__init__(series, limits, major_ticks, minor_ticks, x_label_str,
+                         y_label_str, type_, title, date_format,
+                         filepath, save, show)
+
+    def _save_to_file(self):
+        """Override _save_to_file and make the path the filename-safe names of what's plotted + _pa_plot.png"""
+        if not self.filepath:
+            plotted_names = self._make_safe_names()
+            self.filepath = f'{"_".join(plotted_names)}_pa_plot.png'
+
+        super()._save_to_file()
+
+
+class StandardPeakAreaPlot(CompoundPlot):
+
+    def __init__(self, series, limits=None, major_ticks=None, minor_ticks=None, x_label_str=None,
+                 y_label_str='Peak Area', type_='Standard Peak Areas', title=None, date_format='%Y-%m-%d',
+                 filepath=None, save=True, show=False):
+        """
+        Create an instance, using defaults suitable for standard peak area ratio plots.
+
+        :param dict series: data as {name: (xData, yData)}
+        :param dict limits: plot limits, containing any of 'top', 'bottom', 'right', 'left'
+        :param Sequence[datetime] major_ticks: major ticks for x axis
+        :param Sequence[datetime] minor_ticks: minor ticks for x axis
+        :param str x_label_str: string label for the x axis
+        :param str y_label_str: string label for the y axis
+        :param str type_: Usually 'Mixing Ratios' or 'Peak Areas'; becomes part of the title
+        :param str title: title to be displayed on plot
+        :param str date_format: C-format for date
+        :param str | Path filepath: path for saving the file; otherwise saved in the current working directory
+        :param bool save: save plot as png?
+        :param bool show: show plot with figure.show()?
+        """
+        super().__init__(series, limits, major_ticks, minor_ticks, x_label_str,
+                         y_label_str, type_, title, date_format,
+                         filepath, save, show)
+
+    def _save_to_file(self):
+        """Override _save_to_file and make the path the filename-safe names of what's plotted + _plot.png"""
+        if not self.filepath:
+            plotted_names = self._make_safe_names()
+            self.filepath = f'{"_".join(plotted_names)}_plot.png'
+
+        super()._save_to_file()
 
 
 class TwoAxisTimeSeries(TimeSeries):
@@ -287,6 +432,8 @@ class TwoAxisTimeSeries(TimeSeries):
 
         for k, _ in self.series2.items():
             self.safe_names2.append(k.replace('/', '_').replace(' ', '_'))
+
+        return self.safe_names2
 
     def _get_axes(self):
         """Get primary and secondary axes and assign to self."""
