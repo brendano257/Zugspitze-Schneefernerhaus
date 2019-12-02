@@ -1,6 +1,8 @@
 """
-Meta contains
-
+Meta contains my best attempt to make my life easier. At runtime, the database inspects itself to determine how the
+models are inter-related. This metadata is stored in a dictionary so other convenience methods across the project can
+let the user forget there's such a thing and just request data willy-nilly across tables without worrying about how to
+join them. That's all handled by things like /reporting.reports.abstract_query().
 """
 from collections import namedtuple, defaultdict
 
