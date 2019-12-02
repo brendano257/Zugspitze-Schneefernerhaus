@@ -1,8 +1,9 @@
 __package__ = None
 
 from datetime import datetime
+from random import randint
 
-from scratch_plotting import TimeSeries, TwoAxisTimeSeries
+from scratch_plotting import TimeSeries, TwoAxisTimeSeries, LinearityPlot
 
 from IO.db.models import Compound, GcRun
 from plotting import create_daily_ticks
@@ -44,6 +45,9 @@ data_series_two_axis2 = {
 
 limits, major, minor = create_daily_ticks(14, end_date=datetime(2019, 2, 14))
 
+lin_data_x = [n * 1000 for n in range(1, 9)]  # create 8 samples of increasing 'sample volume'
+lin_data_y = [.5 * x + randint(-750, 750) for x in lin_data_x]  # create y-data with variable offset from formula
+
 
 def test_timeseries():
     t = TimeSeries(data_series, limits=limits, major_ticks=major, minor_ticks=minor, save=False, show=True)
@@ -58,5 +62,12 @@ def test_twoaxis_timeseries():
     t.plot()
 
 
+def test_linearity_plot():
+    t = LinearityPlot('Fake Compound', lin_data_x, lin_data_y,
+                      limits={'top': 6000, 'bottom': 0}, save=False, show=True)
+    t.plot()
+
+
 test_timeseries()
 test_twoaxis_timeseries()
+test_linearity_plot()

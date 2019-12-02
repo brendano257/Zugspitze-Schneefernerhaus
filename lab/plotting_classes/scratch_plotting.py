@@ -9,7 +9,7 @@ from abc import ABC, abstractmethod
 
 import matplotlib.pyplot as plt
 from matplotlib.dates import DateFormatter
-# from numpy.polynomial.polynomial import polyfit
+from numpy.polynomial.polynomial import polyfit
 from pandas.plotting import register_matplotlib_converters
 
 # color_set_y1 = ('#e41a1c', '#377eb8', '#4daf4a', '#984ea3', '#ff7f00', '#ffff33', '#a65628', '#f781bf')
@@ -33,6 +33,7 @@ class Plot2D(ABC):
         outside __init__.
         """
         self.title = None
+        self.x_label_str = None
         self.y_label_str = None
         self.save = None
         self.show = None
@@ -99,10 +100,11 @@ class Plot2D(ABC):
             axis.set_xlim(**{k: v for k, v in limits.items() if k in ('right', 'left')})
             axis.set_ylim(**{k: v for k, v in limits.items() if k in ('top', 'bottom')})
 
-    def _set_y_labels(self):
-        """Set the y label on the primary axis."""
+    def axis(self):
+        """Set the axes labels on the primary axis."""
 
         self.primary_axis.set_ylabel(self.y_label_str, fontsize=20)
+        self.primary_axis.set_xlabel(self.x_label_str, fontsize=20)
 
     def _set_title(self):
         """Set the title for the plot."""
@@ -186,7 +188,7 @@ class TimeSeries(Plot2D):
         self._plot_all_series()
 
         self._set_axes_limits()  # limits must be set after plotting for limits of None to auto-scale
-        self._set_y_labels()
+        self.axis()
         self._set_legend()  # legend must be set after data is added
         self._set_title()
         self._save_to_file()
@@ -302,20 +304,100 @@ class TwoAxisTimeSeries(TimeSeries):
         super()._add_and_format_ticks()
         self.secondary_axis.tick_params(axis='both', which='major', size=8, width=2, labelsize=15)
 
-    def _set_y_labels(self, loc='upper right'):
-        """
-        Set y-labels for both axes,
-        :param str loc: Valid location string for Matplotlib legend
-        :return None:
-        """
-        super()._set_y_labels()
+    def axis(self):
+        """Set labels for both axes."""
+        super().axis()
         self.secondary_axis.set_ylabel(self.y2_label_str, fontsize=20)
 
     def _set_legend(self, loc='upper right'):
+        """Set legend on primary and secondary axes, putting legend in upper corner nearest each axis."""
         super()._set_legend()  # calls with upper left as the default to set primary axis legend
         self.secondary_axis.legend(self.series2.keys(), loc=loc)  # set secondary legend in other corner
 
     def _style_plot(self):
+        """Style line-widths of both axes, and format plot size."""
         super()._style_plot()
         for i in self.secondary_axis.spines.values():
             i.set_linewidth(2)
+
+
+class LinearityPlot(Plot2D):
+    """
+    A basic plot for checking the linearity of x and y data.
+
+    Default values are geared towards plotting peak area responses against sample times, but can be changed for a
+    variety of purposes.
+    """
+
+    def __init__(self, y_value_name, x, y, title=None, limits=None, minor_ticks=None, major_ticks=None,
+                 y_label_str='Peak Area', x_label_str='Sample Time (s)', save=False, show=False):
+        """
+        Create an instance with several defaults if they're not given.
+
+        :param str y_value_name: name of the y axis data
+        :param Sequence x: sequence of numeric data for the x axis
+        :param Sequence y: sequence of numeric data for the y axis
+        :param str title: title to be placed on plot; defaults to f'{y_value_name} Linearity Plot'
+        :param dict limits: plot limits, containing any of 'top', 'bottom', 'right', 'left'
+        :param Sequence minor_ticks: minor ticks for x axis
+        :param Sequence major_ticks: major ticks for x axis
+        :param str y_label_str: string label for the x axis
+        :param str x_label_str: string label for the y axis
+        :param bool save: save plot as png?
+        :param bool show: show plot with figure.show()?
+        """
+
+        super().__init__()  # useless but keeps IDE quiet
+        self.y_value_name = y_value_name
+        self.x = x
+        self.y = y
+        self.minor_ticks = minor_ticks
+        self.major_ticks = major_ticks
+        self.x_label_str = x_label_str
+        self.y_label_str = y_label_str
+        self.save = save
+        self.show = show
+
+        if not title:
+            title = f'{y_value_name} Linearity Plot'
+        self.title = title
+
+        if not limits:
+            limits = {}
+        self.limits = limits
+
+        self.reg_formula = None
+
+    def plot(self):
+        """Perform all formatting and plot data before saving or showing plot."""
+        self._get_axes()
+        self._add_and_format_ticks()
+
+        self._style_plot()
+
+        self._plot_data()
+        self._create_plot_regression()
+
+        self._set_axes_limits()  # limits must be set after plotting for limits of None to auto-scale
+        self.axis()
+        self._set_legend()  # legend must be set after data is added and reg_formula is defined
+        self._set_title()
+        self._save_to_file()
+
+    def _plot_data(self):
+        """Scatter the x and y data without connecting."""
+        self.primary_axis.scatter(self.x, self.y)
+
+    def _create_plot_regression(self):
+        """Fit a linear polynomial to the data and plot it's line. Save formula for use in legend."""
+        b, m = polyfit(self.x, self.y, 1)  # fit linear equation to data
+        y_regression = [m * x + b for x in self.x]  # create y data to plot regression line
+
+        self.primary_axis.plot(self.x, y_regression, '-')  # plot regression line
+
+        operator = '-' if b < 0 else '+'  # operator to put in formatted regression formula
+        self.reg_formula = f'y={m:.2f}x {operator} {abs(b):.2f}'  # use abs(b) and operator to get proper spacing
+
+    def _set_legend(self):
+        """Set the legend to the y data's name (y_value_name) and append the regression formula"""
+        self.primary_axis.legend([f'{self.y_value_name} | {self.reg_formula}'])
