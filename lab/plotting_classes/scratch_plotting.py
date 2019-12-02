@@ -222,12 +222,12 @@ class TimeSeries(Plot2D):
         self.primary_axis.legend(self.series.keys(), loc=loc)
 
 
-class CompoundPlot(TimeSeries):
+class ResponsePlot(TimeSeries):
     """
-    CompoundPlots contain the minimal styling to create a project plot for mixing ratios or peak areas.
+    ResponsePlots contain the minimal styling to create a project plot for mixing ratios or peak areas.
 
-    CompoundPlots are rarely going to be used outside of subclassing. They're essentially the base for any plot that is
-    set up to plot a compound response (peak area or mixing ratio) against time.
+    ResponsePlots are rarely going to be used outside of subclassing. They're essentially the base for any plot that is
+    set up to plot a response (peak area, mixing ratio, logged parameter) against time.
     """
     def __init__(self, series, limits=None, major_ticks=None, minor_ticks=None, x_label_str=None,
                  y_label_str=None, type_=None, title=None, date_format='%Y-%m-%d',
@@ -269,7 +269,7 @@ class CompoundPlot(TimeSeries):
         super()._set_legend(loc)
 
 
-class MixingRatioPlot(CompoundPlot):
+class MixingRatioPlot(ResponsePlot):
 
     def __init__(self, series, limits=None, major_ticks=None, minor_ticks=None, x_label_str=None,
                  y_label_str='Mixing Ratio (pptv)', type_='Mixing Ratios', title=None, date_format='%Y-%m-%d',
@@ -296,7 +296,7 @@ class MixingRatioPlot(CompoundPlot):
                          filepath, save, show)
 
 
-class PeakAreaPlot(CompoundPlot):
+class PeakAreaPlot(ResponsePlot):
 
     def __init__(self, series, limits=None, major_ticks=None, minor_ticks=None, x_label_str=None,
                  y_label_str='Peak Area', type_='Peak Areas', title=None, date_format='%Y-%m-%d',
@@ -330,7 +330,7 @@ class PeakAreaPlot(CompoundPlot):
         super()._save_to_file()
 
 
-class StandardPeakAreaPlot(CompoundPlot):
+class StandardPeakAreaPlot(ResponsePlot):
 
     def __init__(self, series, limits=None, major_ticks=None, minor_ticks=None, x_label_str=None,
                  y_label_str='Peak Area', type_='Standard Peak Areas', title=None, date_format='%Y-%m-%d',
@@ -362,6 +362,30 @@ class StandardPeakAreaPlot(CompoundPlot):
             self.filepath = f'{"_".join(plotted_names)}_plot.png'
 
         super()._save_to_file()
+
+
+class LogParameterPlot(ResponsePlot):
+
+    def __init__(self, series, title, filepath, limits=None, major_ticks=None, minor_ticks=None, x_label_str=None,
+                 y_label_str='Temperature (\xb0C)', date_format='%Y-%m-%d', save=True, show=False):
+        """
+        Create a ResponsePlot, but make the title and filepath mandatory for LogParameterPlot.
+
+        :param dict series: data as {name: (xData, yData)}
+        :param dict limits: plot limits, containing any of 'top', 'bottom', 'right', 'left'
+        :param Sequence[datetime] major_ticks: major ticks for x axis
+        :param Sequence[datetime] minor_ticks: minor ticks for x axis
+        :param str x_label_str: string label for the x axis
+        :param str y_label_str: string label for the y axis
+        :param str type_: Usually 'Mixing Ratios' or 'Peak Areas'; becomes part of the title
+        :param str date_format: C-format for date
+        :param str | Path filepath: path for saving the file; otherwise saved in the current working directory
+        :param bool save: save plot as png?
+        :param bool show: show plot with figure.show()?
+        """
+        super().__init__(series, limits, major_ticks, minor_ticks, x_label_str,
+                         y_label_str, '', title, date_format,
+                         filepath, save, show)
 
 
 class TwoAxisTimeSeries(TimeSeries):
