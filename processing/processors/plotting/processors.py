@@ -10,7 +10,15 @@ from plotting.utils import create_monthly_ticks, create_daily_ticks
 from plotting.plots import zugspitze_mixing_plot, zugspitze_parameter_plot, zugspitze_twoaxis_parameter_plot
 from plotting.plots import zugspitze_pa_plot
 
+from reporting import abstract_query
+from plotting.plots import MixingRatioPlot, PeakAreaPlot, LogParameterPlot, TwoAxisLogParameterPlot
+
 __all__ = ['plot_new_data', 'plot_history', 'plot_logdata', 'plot_dailydata', 'plot_standard_and_ambient_peak_areas']
+
+ambient_filters = [
+    GcRun.type == 5,
+    Compound.filtered == False,
+]
 
 
 def plot_new_data(logger):
@@ -42,39 +50,31 @@ def plot_new_data(logger):
         compound_limits = json.loads(file.read())
 
     for name in compounds_to_plot:
-        results = (session.query(Compound.mr, Integration.date)
-                   .join(Integration, Integration.id == Compound.integration_id)
-                   .join(GcRun, GcRun.id == Integration.run_id)
-                   .filter(Integration.date >= date_limits['left'])
-                   .filter(GcRun.type == 5)
-                   .filter(Compound.name == name)
-                   .filter(Compound.filtered == False)
-                   .order_by(Integration.date)
-                   .all())
+        params = (GcRun.date, Compound.mr)
+        filters = (
+            Compound.name == name,
+            GcRun.date >= date_limits['left'],
+            *ambient_filters
+        )
+        order = GcRun.date
 
-        dates = []
-        mrs = []
-        for result in results:
-            dates.append(result[1])
-            mrs.append(result[0])
+        results = abstract_query(params, filters, order)
 
-        with TempDir(MR_PLOT_DIR):
-            try:
-                compound_limits.get(name).get('bottom')
-            except Exception:
-                logger.warning(f'Compound {name} needs limits to plot!')
-                continue
+        dates = [r.date for r in results]
+        mrs = [r.mr for r in results]
 
-            plot_name = zugspitze_mixing_plot(None, ({name: [dates, mrs]}),
-                                              limits={'right': date_limits.get('right', None),
-                                                      'left': date_limits.get('left', None),
-                                                      'bottom': compound_limits.get(name).get('bottom'),
-                                                      'top': compound_limits.get(name).get('top')},
-                                              major_ticks=major_ticks,
-                                              minor_ticks=minor_ticks)
+        p = MixingRatioPlot(
+            {name: (dates, mrs)},
+            limits={**date_limits, **compound_limits[name]},
+            major_ticks=major_ticks,
+            minor_ticks=minor_ticks,
+            filepath=MR_PLOT_DIR / f'{name}_plot.png'
+        )
 
-            file_to_upload = FileToUpload(MR_PLOT_DIR / plot_name, remotedir, staged=True)
-            add_or_ignore_plot(file_to_upload, session)
+        p.plot()
+
+        file_to_upload = FileToUpload(p.filepath, remotedir, staged=True)
+        add_or_ignore_plot(file_to_upload, session)
 
     session.commit()
     session.close()
