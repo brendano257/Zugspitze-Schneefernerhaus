@@ -13,7 +13,7 @@ def create_daily_ticks(days_in_plot, minors_per_day=4, end_date=None):
     :param int days_in_plot: number of days to be displayed on the plot
     :param int minors_per_day: number of minor ticks per day
     :param datetime end_date: the final day that will be on the plot, defaults to today
-    :return tuple: date_limits, major_ticks, minor_ticks
+    :return tuple: (date_limits, major_ticks, minor_ticks)
     """
 
     if not end_date:
