@@ -4,7 +4,7 @@ from datetime import datetime
 from random import randint
 
 from scratch_plotting import (TimeSeries, TwoAxisTimeSeries, LinearityPlot, MixingRatioPlot, PeakAreaPlot,
-                               StandardPeakAreaPlot, LogParameterPlot)
+                               StandardPeakAreaPlot, LogParameterPlot, TwoAxisLogParameterPlot)
 
 from IO.db.models import Compound, GcRun, LogFile
 from plotting import create_daily_ticks
@@ -118,10 +118,17 @@ def test_log_parameter_plot():
     t.plot()
 
 
-test_timeseries()
-test_twoaxis_timeseries()
-test_linearity_plot()
-test_mixing_ratio_plot()
-test_peak_area_plot()
-test_std_peak_area_plot()
+def test_twoaxis_log_parameter_plot():
+    t = TwoAxisLogParameterPlot(param_series_2, param_series_3, 'Oven and Ramp', 'gc_oven_mfc_ramp.png',
+                                y2_label_str='Voltage', show=True, save=False)
+    t.plot()
+
+
+# test_timeseries()
+# test_twoaxis_timeseries()
+# test_linearity_plot()
+# test_mixing_ratio_plot()
+# test_peak_area_plot()
+# test_std_peak_area_plot()
 test_log_parameter_plot()
+test_twoaxis_log_parameter_plot()

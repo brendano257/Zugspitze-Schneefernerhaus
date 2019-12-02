@@ -270,6 +270,9 @@ class ResponsePlot(TimeSeries):
 
 
 class MixingRatioPlot(ResponsePlot):
+    """
+    MixingRatioPlots are the base for any plot of a compound's mixing ratios.
+    """
 
     def __init__(self, series, limits=None, major_ticks=None, minor_ticks=None, x_label_str=None,
                  y_label_str='Mixing Ratio (pptv)', type_='Mixing Ratios', title=None, date_format='%Y-%m-%d',
@@ -297,6 +300,9 @@ class MixingRatioPlot(ResponsePlot):
 
 
 class PeakAreaPlot(ResponsePlot):
+    """
+    MixingRatioPlots are the base for any plot of a compound's peak areas.
+    """
 
     def __init__(self, series, limits=None, major_ticks=None, minor_ticks=None, x_label_str=None,
                  y_label_str='Peak Area', type_='Peak Areas', title=None, date_format='%Y-%m-%d',
@@ -331,6 +337,11 @@ class PeakAreaPlot(ResponsePlot):
 
 
 class StandardPeakAreaPlot(ResponsePlot):
+    """
+    MixingRatioPlots are the base for any plot of a compound's peak areas from standards.
+
+    Overrides are only for file save name and changing default values in __init__.
+    """
 
     def __init__(self, series, limits=None, major_ticks=None, minor_ticks=None, x_label_str=None,
                  y_label_str='Peak Area', type_='Standard Peak Areas', title=None, date_format='%Y-%m-%d',
@@ -365,6 +376,7 @@ class StandardPeakAreaPlot(ResponsePlot):
 
 
 class LogParameterPlot(ResponsePlot):
+    """LogParameterPlots are the base for plotting any set of parameters on a single axis"""
 
     def __init__(self, series, title, filepath, limits=None, major_ticks=None, minor_ticks=None, x_label_str=None,
                  y_label_str='Temperature (\xb0C)', date_format='%Y-%m-%d', save=True, show=False):
@@ -377,7 +389,6 @@ class LogParameterPlot(ResponsePlot):
         :param Sequence[datetime] minor_ticks: minor ticks for x axis
         :param str x_label_str: string label for the x axis
         :param str y_label_str: string label for the y axis
-        :param str type_: Usually 'Mixing Ratios' or 'Peak Areas'; becomes part of the title
         :param str date_format: C-format for date
         :param str | Path filepath: path for saving the file; otherwise saved in the current working directory
         :param bool save: save plot as png?
@@ -392,7 +403,7 @@ class TwoAxisTimeSeries(TimeSeries):
     """
     A base class extending TimeSeries that creates a nearly unstyled plot with two y-axes.
 
-    Again, this is not likely to be instantiated, and instead will most often be used as a subclass.
+    Again, this is not likely to be instantiated, and instead will most often be subclassed.
     """
 
     def __init__(self, series1, series2, limits_y1=None, limits_y2=None, major_ticks=None, minor_ticks=None,
@@ -490,6 +501,96 @@ class TwoAxisTimeSeries(TimeSeries):
         super()._style_plot()
         for i in self.secondary_axis.spines.values():
             i.set_linewidth(2)
+
+
+class TwoAxisResponsePlot(TwoAxisTimeSeries):
+    """
+    TwoAxisResponsePlots contain the minimal styling to create a project plot for any response requiring two y axes.
+
+    TwoAxisResponsePlots are rarely going to be used outside of subclassing. They're essentially the base for any plot
+    that is set up to plot a response (peak area, mixing ratio, logged parameter) against time, but requires a second
+    y axis for scaling.
+    """
+
+    def __init__(self, series1, series2, limits_y1=None, limits_y2=None, major_ticks=None, minor_ticks=None,
+                 x_label_str=None, y_label_str=None, y2_label_str=None, title=None, date_format='%Y-%m-%d',
+                 filepath=None, save=True, show=False,
+                 color_set_y2=('#66c2a5', '#fc8d62', '#8da0cb', '#e78ac3', '#a6d854', '#ffd92f', '#e5c494', '#b3b3b3')):
+        """
+        Create the instance and define defaults.
+
+        :param dict series1: data for the primary (left) y axis as {name: (xData, yData)}
+        :param dict series2: data for the secondary (right) y axis as {name: (xData, yData)}
+        :param dict limits_y1: plot limits for the primary (left) y axis;
+            containing any of 'top', 'bottom', 'right', 'left'; if limits_y2 contains a right or left limit it *will*
+            overwrite any top/bottom limit given by limits_y1
+        :param dict limits_y2: plot limits for the secondary (right) y axis;
+            containing any of 'top', 'bottom', 'right', 'left'; if limits_y2 contains a right or left limit it *will*
+            overwrite any right/left limit given by limits_y1
+        :param Sequence[datetime] major_ticks: major ticks for x axis
+        :param Sequence[datetime] minor_ticks: minor ticks for x axis
+        :param str x_label_str: string label for the x axis
+        :param str y_label_str: string label for the primary (left) y axis
+        :param str y2_label_str: string label for the secondary (right) y axis
+        :param str title: title to be displayed on plot
+        :param str date_format: C-format for date
+        :param str|Path filepath: path for saving the file; otherwise saved in the current working directory
+        :param boolean save: save plot as png?
+        :param boolean show: show plot with figure.show()?
+        :param Sequence[str] color_set_y2: abitrary-length sequence of valid Matplotlib color values; defaulted to a
+            ColorBrewer set (http://colorbrewer2.org/#type=qualitative&scheme=Set2&n=8).
+        :raises StopIteration: if color_set_y2 is exhausted (ie: not len(color_set_y2) >= len(series2))
+        """
+
+        super().__init__(series1, series2, limits_y1, limits_y2, major_ticks, minor_ticks,
+                         x_label_str, y_label_str, y2_label_str, title, date_format,
+                         filepath, save, show, color_set_y2)
+
+    def _save_to_file(self):
+        """Override _save_to_file and make the path the filename-safe names of what's plotted + _plot.png"""
+        if not self.filepath:
+            self._make_safe_names()
+            self.filepath = f'{"_".join(self.safe_names + self.safe_names2)}_plot.png'
+
+        super()._save_to_file()
+
+
+class TwoAxisLogParameterPlot(TwoAxisResponsePlot):
+    """TwoAxisLogParameterPlots are the base for plotting any set of parameters on two separate y axes."""
+
+    def __init__(self, series1, series2, title, filepath, limits_y1=None, limits_y2=None, major_ticks=None,
+                 minor_ticks=None, x_label_str=None, y1_label_str='Temperature (\xb0C)',
+                 y2_label_str='Temperature (\xb0C)', date_format='%Y-%m-%d', save=True, show=False,
+                 color_set_y2=('#66c2a5', '#fc8d62', '#8da0cb', '#e78ac3', '#a6d854', '#ffd92f', '#e5c494', '#b3b3b3')):
+        """
+        Create the instance and define defaults.
+
+        :param dict series1: data for the primary (left) y axis as {name: (xData, yData)}
+        :param dict series2: data for the secondary (right) y axis as {name: (xData, yData)}
+        :param str title: title to be displayed on plot
+        :param str|Path filepath: path for saving the file; otherwise saved in the current working directory
+        :param dict limits_y1: plot limits for the primary (left) y axis;
+            containing any of 'top', 'bottom', 'right', 'left'; if limits_y2 contains a right or left limit it *will*
+            overwrite any top/bottom limit given by limits_y1
+        :param dict limits_y2: plot limits for the secondary (right) y axis;
+            containing any of 'top', 'bottom', 'right', 'left'; if limits_y2 contains a right or left limit it *will*
+            overwrite any right/left limit given by limits_y1
+        :param Sequence[datetime] major_ticks: major ticks for x axis
+        :param Sequence[datetime] minor_ticks: minor ticks for x axis
+        :param str x_label_str: string label for the x axis
+        :param str y_label_str: string label for the primary (left) y axis
+        :param str y2_label_str: string label for the secondary (right) y axis
+        :param str date_format: C-format for date
+        :param boolean save: save plot as png?
+        :param boolean show: show plot with figure.show()?
+        :param Sequence[str] color_set_y2: abitrary-length sequence of valid Matplotlib color values; defaulted to a
+            ColorBrewer set (http://colorbrewer2.org/#type=qualitative&scheme=Set2&n=8).
+        :raises StopIteration: if color_set_y2 is exhausted (ie: not len(color_set_y2) >= len(series2))
+        """
+
+        super().__init__(series1, series2, limits_y1, limits_y2, major_ticks, minor_ticks,
+                         x_label_str, y1_label_str, y2_label_str, title, date_format,
+                         filepath, save, show, color_set_y2)
 
 
 class LinearityPlot(Plot2D):
