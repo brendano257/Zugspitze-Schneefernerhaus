@@ -1,6 +1,9 @@
 """
 Plotting functions are a mess of duplicated and slightly modified code. This is an attempt to clean that up
 substantially with classes and subclasses.
+
+MOVED:
+    These classes have been added to /plotting/plots.py and will be used throughout the project now
 """
 from datetime import datetime
 from pathlib import Path
@@ -578,7 +581,7 @@ class TwoAxisLogParameterPlot(TwoAxisResponsePlot):
         :param Sequence[datetime] major_ticks: major ticks for x axis
         :param Sequence[datetime] minor_ticks: minor ticks for x axis
         :param str x_label_str: string label for the x axis
-        :param str y_label_str: string label for the primary (left) y axis
+        :param str y1_label_str: string label for the primary (left) y axis
         :param str y2_label_str: string label for the secondary (right) y axis
         :param str date_format: C-format for date
         :param boolean save: save plot as png?
