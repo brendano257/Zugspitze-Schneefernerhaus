@@ -72,6 +72,15 @@ def abstract_query(params, filters):
     return q.all()
 
 
+def get_df_from_results(results):
+    """
+    TODO: Make to recieve list of namedtuple results from abstract_query()
+    :param results:
+    :return:
+    """
+    pass
+
+
 def get_df_with_filters(use_mrs, filters=None, compounds=None):
     """
     Retrieves a dataframe from the database of all mixing ratios or peak areas for all compounds with optional filters.
