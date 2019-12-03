@@ -195,7 +195,7 @@ def plot_logdata(logger):
     remotedir = BOULDAIR_BASE_PATH + '/logplots'
 
     date_limits, major_ticks, minor_ticks = create_daily_ticks(14, minors_per_day=2)
-    major_ticks[:] = [major for num, major in enumerate(major_ticks) if num % 2 == 0]  # utilize only 1/2 of the majors
+    major_ticks[:] = [major for num, major in enumerate(major_ticks) if not num % 2]  # utilize only 1/2 of the majors
 
     logs = session.query(LogFile).filter(LogFile.date >= date_limits.get('left')).all()
 
@@ -205,172 +205,323 @@ def plot_logdata(logger):
 
     dates = [l.date for l in logs]
 
-    with TempDir(LOG_PLOT_DIR):
-        name = 'log_sample_pressure_flow.png'
-        zugspitze_parameter_plot(dates,
-                                 ({'Sample Pressure Start': [None, logdict.get('sample_p_start')],
-                                   'Sample Flow (V)': [None, logdict.get('sample_flow_act')]}),
-                                 'Zugspitze Sample Pressures',
-                                 name,
-                                 limits={'right': date_limits.get('right'),
-                                         'left': date_limits.get('left'),
-                                         'bottom': 0,
-                                         'top': 4},
-                                 y_label_str='',
-                                 major_ticks=major_ticks,
-                                 minor_ticks=minor_ticks)
+    all_plots = []
 
-        file_to_upload = FileToUpload(LOG_PLOT_DIR / name, remotedir, staged=True)
+    sample_pressure_plot = LogParameterPlot(
+        {'Sample Pressure Start': (dates, logdict.get('sample_p_start')),
+         'Sample Flow (V)': (dates, logdict.get('sample_flow_act'))},
+        title='Zugspitze Sample Pressures',
+        filepath=LOG_PLOT_DIR / 'log_sample_pressure_flow.png',
+        limits={**date_limits, 'bottom': 0, 'top': 4},
+        y_label_str='',
+        major_ticks=major_ticks,
+        minor_ticks=minor_ticks
+    )
+
+    sample_pressure_plot.plot()
+    all_plots.append(sample_pressure_plot)
+
+    sample_pressure_during_plot = LogParameterPlot(
+        {'Sample Pressure During': (dates, logdict.get('sample_p_during'))},
+        title='Zugspitze Sample Pressure During Run',
+        filepath=LOG_PLOT_DIR / 'log_sample_pressure_during.png',
+        limits={**date_limits, 'bottom': 4, 'top': 12},
+        y_label_str='Pressure (psi)',
+        major_ticks=major_ticks,
+        minor_ticks=minor_ticks
+    )
+
+    sample_pressure_during_plot.plot()
+    all_plots.append(sample_pressure_during_plot)
+
+    gchead_pressures_plot = LogParameterPlot(
+        {'GC HeadP Start': (dates, logdict.get('gcheadp_start')),
+         'GC HeadP During': (dates, logdict.get('gcheadp_during'))},
+        title='Zugspitze GC Head Pressures',
+        filepath=LOG_PLOT_DIR / 'log_gcheadp_pressures.png',
+        limits={**date_limits},
+        y_label_str='Pressure (psi)',
+        major_ticks=major_ticks,
+        minor_ticks=minor_ticks
+    )
+
+    gchead_pressures_plot.plot()
+    all_plots.append(gchead_pressures_plot)
+
+    active_wat_ads_traps_plot = LogParameterPlot(
+        {'WT @ Sample Start': (dates, logdict.get('wt_sample_start')),
+         'WT @ Sample End': (dates, logdict.get('wt_sample_end')),
+         'Ads A @ Sample Start': (dates, logdict.get('ads_a_sample_start')),
+         'Ads A @ Sample End': (dates, logdict.get('ads_a_sample_end'))},
+        title='Zugspitze Active Ads and Water Trap Temperatures',
+        filepath=LOG_PLOT_DIR / 'log_wat_ads_active_traptemps.png',
+        limits={**date_limits, 'bottom': -55, 'top': -30},
+        major_ticks=major_ticks,
+        minor_ticks=minor_ticks
+    )
+
+    active_wat_ads_traps_plot.plot()
+    all_plots.append(active_wat_ads_traps_plot)
+
+    inactive_wat_ads_traps_plot = LogParameterPlot(
+        {'Ads B @ Sample Start': (dates, logdict.get('ads_b_sample_start')),
+         'Ads B @ Sample End': (dates, logdict.get('ads_b_sample_end'))},
+        title='Zugspitze Inactive Ads Trap Temperatures',
+        filepath=LOG_PLOT_DIR / 'log_ads_inactive_traptemps.png',
+        limits={**date_limits, 'bottom': 15, 'top': 35},
+        major_ticks=major_ticks,
+        minor_ticks=minor_ticks
+    )
+
+    inactive_wat_ads_traps_plot.plot()
+    all_plots.append(inactive_wat_ads_traps_plot)
+
+    traps_temps_plot = LogParameterPlot(
+        {'Trap @ FH': (dates, logdict.get('trap_temp_fh')),
+         'Trap @ Inject': (dates, logdict.get('trap_temp_inject')),
+         'Trap @ Bakeout': (dates, logdict.get('trap_temp_bakeout'))},
+        title='Zugspitze Trap Temperatures',
+        filepath=LOG_PLOT_DIR / 'log_trap_temps.png',
+        limits={**date_limits},
+        major_ticks=major_ticks,
+        minor_ticks=minor_ticks
+    )
+
+    traps_temps_plot.plot()
+    all_plots.append(traps_temps_plot)
+
+    battery_voltages_plot = LogParameterPlot(
+        {'BattV @ Inject': (dates, logdict.get('battv_inject')),
+         'BattV @ Bakeout': (dates, logdict.get('battv_bakeout'))},
+        title='Zugspitze Battery Voltages',
+        filepath=LOG_PLOT_DIR / 'log_battery_voltages.png',
+        limits={**date_limits, 'bottom': 8, 'top': 14},
+        y_label_str='Voltage (V)',
+        major_ticks=major_ticks,
+        minor_ticks=minor_ticks
+    )
+
+    battery_voltages_plot.plot()
+    all_plots.append(battery_voltages_plot)
+
+    gc_start_wt_temps_plot = LogParameterPlot(
+        {'GC Start Temp': (dates, logdict.get('gc_start_temp')),
+         'WT Hot Temp': (dates, logdict.get('wt_hot_temp'))},
+        title='Zugspitze GC Start and WT Hot Temps',
+        filepath=LOG_PLOT_DIR / 'log_gc_start_wthot_temps.png',
+        limits={**date_limits, 'bottom': 0, 'top': 75},
+        major_ticks=major_ticks,
+        minor_ticks=minor_ticks
+    )
+
+    gc_start_wt_temps_plot.plot()
+    all_plots.append(gc_start_wt_temps_plot)
+
+    heat_outs_plot = LogParameterPlot(
+        {'HeatOut @ FH': (dates, logdict.get('trapheatout_flashheat')),
+         'HeatOut @ Inject': (dates, logdict.get('trapheatout_inject')),
+         'HeatOut @ Bakeout': (dates, logdict.get('trapheatout_bakeout'))},
+        title='Zugspitze Heat Outputs',
+        filepath=LOG_PLOT_DIR / 'log_heat_outs.png',
+        limits={**date_limits},
+        major_ticks=major_ticks,
+        minor_ticks=minor_ticks
+    )
+
+    heat_outs_plot.plot()
+    all_plots.append(heat_outs_plot)
+
+    oven_mfc_ramp_plot = TwoAxisLogParameterPlot(
+        {'GC Oven Temp': (dates, logdict.get('gc_oven_temp'))},
+        {'MFC1 Ramp': (dates, logdict.get('mfc1_ramp'))},
+        title='Zugspitze Oven Temperature and MFC1 Ramp',
+        filepath=LOG_PLOT_DIR / 'log_oven_mfc_ramp.png',
+        limits_y1={'right': date_limits.get('right'),
+                   'left': date_limits.get('left'),
+                   'bottom': 180,
+                   'top': 230},
+        limits_y2={'bottom': .65,
+                 'top': .85},
+        major_ticks=major_ticks,
+        minor_ticks=minor_ticks,
+        y2_label_str='MFC1 Ramp',
+        color_set_y2=('orange',)
+    )
+
+    oven_mfc_ramp_plot.plot()
+    all_plots.append(oven_mfc_ramp_plot)
+
+    for plot in all_plots:
+        file_to_upload = FileToUpload(plot.filepath, remotedir, staged=True)
         add_or_ignore_plot(file_to_upload, session)
 
-        name = 'log_sample_pressure_during.png'
-        zugspitze_parameter_plot(dates,
-                                 {'Sample Pressure During': [None, logdict.get('sample_p_during')]},
-                                 'Zugspitze Sample Pressure During Run',
-                                 name,
-                                 limits={'right': date_limits.get('right'),
-                                         'left': date_limits.get('left'),
-                                         'bottom': 4,
-                                         'top': 12},
-                                 y_label_str='Pressure (psi)',
-                                 major_ticks=major_ticks,
-                                 minor_ticks=minor_ticks)
 
-        file_to_upload = FileToUpload(LOG_PLOT_DIR / name, remotedir, staged=True)
-        add_or_ignore_plot(file_to_upload, session)
+    # with TempDir(LOG_PLOT_DIR):
+        # name = 'log_sample_pressure_flow.png'
+        # zugspitze_parameter_plot(dates,
+        #                          ({'Sample Pressure Start': [None, logdict.get('sample_p_start')],
+        #                            'Sample Flow (V)': [None, logdict.get('sample_flow_act')]}),
+        #                          'Zugspitze Sample Pressures',
+        #                          name,
+        #                          limits={'right': date_limits.get('right'),
+        #                                  'left': date_limits.get('left'),
+        #                                  'bottom': 0,
+        #                                  'top': 4},
+        #                          y_label_str='',
+        #                          major_ticks=major_ticks,
+        #                          minor_ticks=minor_ticks)
+        #
+        # file_to_upload = FileToUpload(LOG_PLOT_DIR / name, remotedir, staged=True)
+        # add_or_ignore_plot(file_to_upload, session)
 
-        name = 'log_gcheadp_pressures.png'
-        zugspitze_parameter_plot(dates,
-                                 {'GC HeadP Start': [None, logdict.get('gcheadp_start')],
-                                  'GC HeadP During': [None, logdict.get('gcheadp_during')]},
-                                 'Zugspitze GC Head Pressures',
-                                 name,
-                                 limits={'right': date_limits.get('right'),
-                                         'left': date_limits.get('left'),
-                                         'bottom': None,
-                                         'top': None},
-                                 y_label_str='Pressure (psi)',
-                                 major_ticks=major_ticks,
-                                 minor_ticks=minor_ticks)
+        # name = 'log_sample_pressure_during.png'
+        # zugspitze_parameter_plot(dates,
+        #                          {'Sample Pressure During': [None, logdict.get('sample_p_during')]},
+        #                          'Zugspitze Sample Pressure During Run',
+        #                          name,
+        #                          limits={'right': date_limits.get('right'),
+        #                                  'left': date_limits.get('left'),
+        #                                  'bottom': 4,
+        #                                  'top': 12},
+        #                          y_label_str='Pressure (psi)',
+        #                          major_ticks=major_ticks,
+        #                          minor_ticks=minor_ticks)
+        #
+        # file_to_upload = FileToUpload(LOG_PLOT_DIR / name, remotedir, staged=True)
+        # add_or_ignore_plot(file_to_upload, session)
 
-        file_to_upload = FileToUpload(LOG_PLOT_DIR / name, remotedir, staged=True)
-        add_or_ignore_plot(file_to_upload, session)
+        # name = 'log_gcheadp_pressures.png'
+        # zugspitze_parameter_plot(dates,
+        #                          {'GC HeadP Start': [None, logdict.get('gcheadp_start')],
+        #                           'GC HeadP During': [None, logdict.get('gcheadp_during')]},
+        #                          'Zugspitze GC Head Pressures',
+        #                          name,
+        #                          limits={'right': date_limits.get('right'),
+        #                                  'left': date_limits.get('left'),
+        #                                  'bottom': None,
+        #                                  'top': None},
+        #                          y_label_str='Pressure (psi)',
+        #                          major_ticks=major_ticks,
+        #                          minor_ticks=minor_ticks)
+        #
+        # file_to_upload = FileToUpload(LOG_PLOT_DIR / name, remotedir, staged=True)
+        # add_or_ignore_plot(file_to_upload, session)
 
-        name = 'log_wat_ads_active_traptemps.png'
-        zugspitze_parameter_plot(dates,
-                                 {'WT @ Sample Start': [None, logdict.get('wt_sample_start')],
-                                  'WT @ Sample End': [None, logdict.get('wt_sample_end')],
-                                  'Ads A @ Sample Start': [None, logdict.get('ads_a_sample_start')],
-                                  'Ads A @ Sample End': [None, logdict.get('ads_a_sample_end')]},
-                                 'Zugspitze Active Ads and Water Trap Temperatures',
-                                 name,
-                                 limits={'right': date_limits.get('right'),
-                                         'left': date_limits.get('left'),
-                                         'bottom': -55,
-                                         'top': -30},
-                                 major_ticks=major_ticks,
-                                 minor_ticks=minor_ticks)
+        # name = 'log_wat_ads_active_traptemps.png'
+        # zugspitze_parameter_plot(dates,
+        #                          {'WT @ Sample Start': [None, logdict.get('wt_sample_start')],
+        #                           'WT @ Sample End': [None, logdict.get('wt_sample_end')],
+        #                           'Ads A @ Sample Start': [None, logdict.get('ads_a_sample_start')],
+        #                           'Ads A @ Sample End': [None, logdict.get('ads_a_sample_end')]},
+        #                          'Zugspitze Active Ads and Water Trap Temperatures',
+        #                          name,
+        #                          limits={'right': date_limits.get('right'),
+        #                                  'left': date_limits.get('left'),
+        #                                  'bottom': -55,
+        #                                  'top': -30},
+        #                          major_ticks=major_ticks,
+        #                          minor_ticks=minor_ticks)
+        #
+        # file_to_upload = FileToUpload(LOG_PLOT_DIR / name, remotedir, staged=True)
+        # add_or_ignore_plot(file_to_upload, session)
 
-        file_to_upload = FileToUpload(LOG_PLOT_DIR / name, remotedir, staged=True)
-        add_or_ignore_plot(file_to_upload, session)
+        # name = 'log_ads_inactive_traptemps.png'
+        #
+        # zugspitze_parameter_plot(dates,
+        #                          {'Ads B @ Sample Start': [None, logdict.get('ads_b_sample_start')],
+        #                           'Ads B @ Sample End': [None, logdict.get('ads_b_sample_end')]},
+        #                          'Zugspitze Inactive Ads Trap Temperatures',
+        #                          name,
+        #                          limits={'right': date_limits.get('right'),
+        #                                  'left': date_limits.get('left'),
+        #                                  'bottom': 15,
+        #                                  'top': 35},
+        #                          major_ticks=major_ticks,
+        #                          minor_ticks=minor_ticks)
+        #
+        # file_to_upload = FileToUpload(LOG_PLOT_DIR / name, remotedir, staged=True)
+        # add_or_ignore_plot(file_to_upload, session)
 
-        name = 'log_ads_inactive_traptemps.png'
+        # name = 'log_trap_temps.png'
+        # zugspitze_parameter_plot(dates,
+        #                          {'Trap @ FH': [None, logdict.get('trap_temp_fh')],
+        #                           'Trap @ Inject': [None, logdict.get('trap_temp_inject')],
+        #                           'Trap @ Bakeout': [None, logdict.get('trap_temp_bakeout')]},
+        #                          'Zugspitze Trap Temperatures',
+        #                          name,
+        #                          limits={'right': date_limits.get('right'),
+        #                                  'left': date_limits.get('left')},
+        #                          major_ticks=major_ticks,
+        #                          minor_ticks=minor_ticks)
+        #
+        # file_to_upload = FileToUpload(LOG_PLOT_DIR / name, remotedir, staged=True)
+        # add_or_ignore_plot(file_to_upload, session)
 
-        zugspitze_parameter_plot(dates,
-                                 {'Ads B @ Sample Start': [None, logdict.get('ads_b_sample_start')],
-                                  'Ads B @ Sample End': [None, logdict.get('ads_b_sample_end')]},
-                                 'Zugspitze Inactive Ads Trap Temperatures',
-                                 name,
-                                 limits={'right': date_limits.get('right'),
-                                         'left': date_limits.get('left'),
-                                         'bottom': 15,
-                                         'top': 35},
-                                 major_ticks=major_ticks,
-                                 minor_ticks=minor_ticks)
+        # name = 'log_battery_voltages.png'
+        # zugspitze_parameter_plot(dates,
+        #                          {'BattV @ Inject': [None, logdict.get('battv_inject')],
+        #                           'BattV @ Bakeout': [None, logdict.get('battv_bakeout')]},
+        #                          'Zugspitze Battery Voltages',
+        #                          name,
+        #                          limits={'right': date_limits.get('right'),
+        #                                  'left': date_limits.get('left'),
+        #                                  'bottom': 8,
+        #                                  'top': 14},
+        #                          major_ticks=major_ticks,
+        #                          minor_ticks=minor_ticks)
+        #
+        # file_to_upload = FileToUpload(LOG_PLOT_DIR / name, remotedir, staged=True)
+        # add_or_ignore_plot(file_to_upload, session)
 
-        file_to_upload = FileToUpload(LOG_PLOT_DIR / name, remotedir, staged=True)
-        add_or_ignore_plot(file_to_upload, session)
+        # name = 'log_gc_start_wthot_temps.png'
+        # zugspitze_parameter_plot(dates,
+        #                          {'GC Start Temp': [None, logdict.get('gc_start_temp')],
+        #                           'WT Hot Temp': [None, logdict.get('wt_hot_temp')]},
+        #                          'Zugspitze GC Start and WT Hot Temps',
+        #                          name,
+        #                          limits={'right': date_limits.get('right'),
+        #                                  'left': date_limits.get('left'),
+        #                                  'bottom': 0,
+        #                                  'top': 75},
+        #                          major_ticks=major_ticks,
+        #                          minor_ticks=minor_ticks)
+        #
+        # file_to_upload = FileToUpload(LOG_PLOT_DIR / name, remotedir, staged=True)
+        # add_or_ignore_plot(file_to_upload, session)
 
-        name = 'log_trap_temps.png'
-        zugspitze_parameter_plot(dates,
-                                 {'Trap @ FH': [None, logdict.get('trap_temp_fh')],
-                                  'Trap @ Inject': [None, logdict.get('trap_temp_inject')],
-                                  'Trap @ Bakeout': [None, logdict.get('trap_temp_bakeout')]},
-                                 'Zugspitze Trap Temperatures',
-                                 name,
-                                 limits={'right': date_limits.get('right'),
-                                         'left': date_limits.get('left')},
-                                 major_ticks=major_ticks,
-                                 minor_ticks=minor_ticks)
+        # name = 'log_heat_outs.png'
+        # zugspitze_parameter_plot(dates,
+        #                          {'HeatOut @ FH': [None, logdict.get('trapheatout_flashheat')],
+        #                           'HeatOut @ Inject': [None, logdict.get('trapheatout_inject')],
+        #                           'HeatOut @ Bakeout': [None, logdict.get('trapheatout_bakeout')]},
+        #                          'Zugspitze Heat Outputs',
+        #                          name,
+        #                          limits={'right': date_limits.get('right'),
+        #                                  'left': date_limits.get('left')},
+        #                          major_ticks=major_ticks,
+        #                          minor_ticks=minor_ticks)
+        #
+        # file_to_upload = FileToUpload(LOG_PLOT_DIR / name, remotedir, staged=True)
+        # add_or_ignore_plot(file_to_upload, session)
 
-        file_to_upload = FileToUpload(LOG_PLOT_DIR / name, remotedir, staged=True)
-        add_or_ignore_plot(file_to_upload, session)
-
-        name = 'log_battery_voltages.png'
-        zugspitze_parameter_plot(dates,
-                                 {'BattV @ Inject': [None, logdict.get('battv_inject')],
-                                  'BattV @ Bakeout': [None, logdict.get('battv_bakeout')]},
-                                 'Zugspitze Battery Voltages',
-                                 name,
-                                 limits={'right': date_limits.get('right'),
-                                         'left': date_limits.get('left'),
-                                         'bottom': 8,
-                                         'top': 14},
-                                 major_ticks=major_ticks,
-                                 minor_ticks=minor_ticks)
-
-        file_to_upload = FileToUpload(LOG_PLOT_DIR / name, remotedir, staged=True)
-        add_or_ignore_plot(file_to_upload, session)
-
-        name = 'log_gc_start_wthot_temps.png'
-        zugspitze_parameter_plot(dates,
-                                 {'GC Start Temp': [None, logdict.get('gc_start_temp')],
-                                  'WT Hot Temp': [None, logdict.get('wt_hot_temp')]},
-                                 'Zugspitze GC Start and WT Hot Temps',
-                                 name,
-                                 limits={'right': date_limits.get('right'),
-                                         'left': date_limits.get('left'),
-                                         'bottom': 0,
-                                         'top': 75},
-                                 major_ticks=major_ticks,
-                                 minor_ticks=minor_ticks)
-
-        file_to_upload = FileToUpload(LOG_PLOT_DIR / name, remotedir, staged=True)
-        add_or_ignore_plot(file_to_upload, session)
-
-        name = 'log_heat_outs.png'
-        zugspitze_parameter_plot(dates,
-                                 {'HeatOut @ FH': [None, logdict.get('trapheatout_flashheat')],
-                                  'HeatOut @ Inject': [None, logdict.get('trapheatout_inject')],
-                                  'HeatOut @ Bakeout': [None, logdict.get('trapheatout_bakeout')]},
-                                 'Zugspitze Heat Outputs',
-                                 name,
-                                 limits={'right': date_limits.get('right'),
-                                         'left': date_limits.get('left')},
-                                 major_ticks=major_ticks,
-                                 minor_ticks=minor_ticks)
-
-        file_to_upload = FileToUpload(LOG_PLOT_DIR / name, remotedir, staged=True)
-        add_or_ignore_plot(file_to_upload, session)
-
-        name = 'log_oven_mfc_ramp.png'
-        zugspitze_twoaxis_parameter_plot(dates,
-                                         {'GC Oven Temp': [None, logdict.get('gc_oven_temp')]},
-                                         {'MFC1 Ramp': [None, logdict.get('mfc1_ramp')]},
-                                         'Zugspitze Oven Temperature and MFC1 Ramp',
-                                         name,
-                                         limits1={'right': date_limits.get('right'),
-                                                  'left': date_limits.get('left'),
-                                                  'bottom': 180,
-                                                  'top': 230},
-                                         limits2={'bottom': .65,
-                                                  'top': .85},
-                                         major_ticks=major_ticks,
-                                         minor_ticks=minor_ticks,
-                                         y2_label_str='MFC1 Ramp')
-
-        file_to_upload = FileToUpload(LOG_PLOT_DIR / name, remotedir, staged=True)
-        add_or_ignore_plot(file_to_upload, session)
+        # name = 'log_oven_mfc_ramp.png'
+        # zugspitze_twoaxis_parameter_plot(dates,
+        #                                  {'GC Oven Temp': [None, logdict.get('gc_oven_temp')]},
+        #                                  {'MFC1 Ramp': [None, logdict.get('mfc1_ramp')]},
+        #                                  'Zugspitze Oven Temperature and MFC1 Ramp',
+        #                                  name,
+        #                                  limits1={'right': date_limits.get('right'),
+        #                                           'left': date_limits.get('left'),
+        #                                           'bottom': 180,
+        #                                           'top': 230},
+        #                                  limits2={'bottom': .65,
+        #                                           'top': .85},
+        #                                  major_ticks=major_ticks,
+        #                                  minor_ticks=minor_ticks,
+        #                                  y2_label_str='MFC1 Ramp')
+        #
+        # file_to_upload = FileToUpload(LOG_PLOT_DIR / name, remotedir, staged=True)
+        # add_or_ignore_plot(file_to_upload, session)
 
     session.commit()
     session.close()
