@@ -177,7 +177,7 @@ parser_run_one.add_argument('-N', '--number', nargs='+', required=True, dest='nu
                             help=f'Choose a number from 0 - {len(sequence) - 1} to run that process.')
 
 parser_run_one.add_argument('-O', '--ordered', action='store_true', dest='ordered',
-                            help='Force arguments to be run in the order they were provided.'
+                            help='Force arguments to be run in the order they were provided. '
                             + f'Eg "zugspitze run-one {len(sequence) - 1} 0" will upload files, THEN retrieve new ones.'
                             + 'This should rarely, if ever, be necessary.')
 
