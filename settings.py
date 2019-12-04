@@ -9,17 +9,16 @@ TODO:
     6) Clean up blank_subtract and make it a method of GcRuns and SampleQuants
     7) Standardize .quantify() and make it a method shared by GcRuns and SampleQuants (it should call blank_subtract)
     9) Add checker for processor logs dir. Alert if over LOG_DIR_SIZE and allow for shrinking...
-        .
-    10) Move scripts and analyses over
+    xxxxxx 10) Move scripts and analyses over
 
 """
 import json
 from pathlib import Path
 
 __all__ = ['CORE_DIR', 'REMOTE_BASE_PATH', 'BOULDAIR_BASE_PATH', 'PROCESSOR_LOGS_DIR',
-           'LOG_DIR', 'GCMS_DIR', 'DAILY_DIR', 'DB_NAME', 'MR_PLOT_DIR', 'FULL_PLOT_DIR', 'LOG_PLOT_DIR',
-           'DAILY_PLOT_DIR', 'PA_PLOT_DIR', 'STD_PA_PLOT_DIR', 'FILTER_DIRS', 'HISTORIC_DATA_SHEET', 'JSON_FILES',
-           'JSON_PRIVATE_DIR', 'JSON_PUBLIC_DIR']
+           'LOG_DIR', 'GCMS_DIR', 'DAILY_DIR', 'LOCAL_BASE_PATH', 'DB_NAME', 'MR_PLOT_DIR', 'FULL_PLOT_DIR',
+           'LOG_PLOT_DIR', 'DAILY_PLOT_DIR', 'PA_PLOT_DIR', 'STD_PA_PLOT_DIR', 'FILTER_DIRS', 'HISTORIC_DATA_SHEET',
+           'JSON_FILES', 'JSON_PRIVATE_DIR', 'JSON_PUBLIC_DIR']
 
 CORE_DIR = Path('/home/brendan/PycharmProjects/Z')  # assign static project directory
 
@@ -29,6 +28,8 @@ DB_NAME = 'sqlite:///zugspitze.sqlite'
 LOG_DIR = CORE_DIR / 'data/log/'
 GCMS_DIR = CORE_DIR / 'data/GCMS'
 DAILY_DIR = CORE_DIR / 'data/daily'
+
+LOCAL_BASE_PATH = CORE_DIR / 'data'
 
 # directory to put logging data files in
 PROCESSOR_LOGS_DIR = CORE_DIR / 'processing/processors/processor_logs'

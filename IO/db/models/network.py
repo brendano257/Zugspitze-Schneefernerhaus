@@ -2,11 +2,10 @@ from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 
 from IO.db import Base
-from settings import CORE_DIR, REMOTE_BASE_PATH
+from settings import REMOTE_BASE_PATH, LOCAL_BASE_PATH
 
 __all__ = ['LocalFile', 'RemoteFile']
 
-LOCAL_BASE_PATH = CORE_DIR / 'data'
 
 
 class LocalFile(Base):

@@ -2,7 +2,7 @@ import os
 import datetime as dt
 from datetime import datetime
 
-from settings import CORE_DIR, DB_NAME, REMOTE_BASE_PATH
+from settings import CORE_DIR, DB_NAME, REMOTE_BASE_PATH, LOCAL_BASE_PATH
 from IO import Base, connect_to_db, connect_to_lightsail, connect_to_bouldair, send_files_sftp
 from IO import list_files_recur, list_remote_files_recur, scan_and_create_dir_tree
 from IO.db.models import RemoteFile, LocalFile, FileToUpload
@@ -118,11 +118,12 @@ def retrieve_new_files(logger):
                 logger.info(f'Remote file {remote_file.relpath} was updated.')
                 ct += 1
             else:
-                new_local_path = CORE_DIR / remote_file.relpath.lstrip('/')
+                new_local_path = LOCAL_BASE_PATH / remote_file.relpath.lstrip('/')
 
                 scan_and_create_dir_tree(new_local_path)  # scan the path and create any needed folders
 
-                new_local_path = str(new_local_path)  # revert to string
+                new_local_path = str(new_local_path)
+
                 con.get(remote_file.path, new_local_path)  # get file and put in it's relative place
 
                 new_local = LocalFile(remote_file.st_mtime, new_local_path)
