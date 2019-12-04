@@ -11,7 +11,8 @@ from plotting.plots import zugspitze_mixing_plot, zugspitze_parameter_plot, zugs
 from plotting.plots import zugspitze_pa_plot
 
 from reporting import abstract_query
-from plotting.plots import MixingRatioPlot, PeakAreaPlot, LogParameterPlot, TwoAxisLogParameterPlot
+from plotting.plots import (MixingRatioPlot, PeakAreaPlot, LogParameterPlot,
+                            TwoAxisLogParameterPlot, StandardPeakAreaPlot)
 
 __all__ = ['plot_new_data', 'plot_history', 'plot_logdata', 'plot_dailydata', 'plot_standard_and_ambient_peak_areas']
 
@@ -753,57 +754,90 @@ def plot_standard_and_ambient_peak_areas(logger):
 
     for compound in ALL_COMPOUNDS:
         # Plot Ambient Peak Areas
-        results = (session.query(Compound.pa, Integration.date)
-                   .join(Integration, Integration.id == Compound.integration_id)
-                   .join(GcRun, GcRun.id == Integration.run_id)
-                   .filter(Integration.date >= date_limits['left'])
-                   .filter(GcRun.type == 5)
-                   .filter(Compound.name == compound)
-                   .filter(Compound.filtered == False)
-                   .order_by(Integration.date)
-                   .all())
-        dates = []
-        pas = []
-        for result in results:
-            dates.append(result[1])
-            pas.append(result[0])
 
-        with TempDir(PA_PLOT_DIR):
-            plot_name = zugspitze_pa_plot(None, ({compound: [dates, pas]}),
-                                          limits={'right': date_limits.get('right', None),
-                                                  'left': date_limits.get('left', None)},
-                                          major_ticks=major_ticks,
-                                          minor_ticks=minor_ticks)
+        params = (GcRun.date, Compound.pa)
+        filters = (
+            *ambient_filters,
+            GcRun.date >= date_limits['left'],
+            Compound.name == compound
+        )
 
-            file_to_upload = FileToUpload(PA_PLOT_DIR / plot_name, remote_pa_dir, staged=True)
-            add_or_ignore_plot(file_to_upload, session)
+        results = abstract_query(params, filters, GcRun.date)
 
-        # Plot Standard Peak Areas
-        results = (session.query(Compound.pa, Integration.date)
-                   .join(Integration, Integration.id == Compound.integration_id)
-                   .join(GcRun, GcRun.id == Integration.run_id)
-                   .filter(Integration.date >= date_limits['left'])
-                   .filter(GcRun.type.in_([1, 2, 3]))
-                   .filter(Compound.name == compound)
-                   .order_by(Integration.date)
-                   .all())
+        dates = [r.date for r in results]
+        pas = [r.pa for r in results]
 
-        dates = []
-        pas = []
-        for result in results:
-            dates.append(result[1])
-            pas.append(result[0])
+        pa_plot = PeakAreaPlot(
+            {compound: [dates, pas]},
+            limits=date_limits,
+            major_ticks=major_ticks,
+            minor_ticks=minor_ticks,
+            filepath = PA_PLOT_DIR / f'{compound}_pa_plot.png'
+        )
 
-        with TempDir(STD_PA_PLOT_DIR):
-            plot_name = zugspitze_pa_plot(None, ({compound: [dates, pas]}),
-                                          limits={'right': date_limits.get('right', None),
-                                                  'left': date_limits.get('left', None)},
-                                          major_ticks=major_ticks,
-                                          minor_ticks=minor_ticks,
-                                          standard=True)
+        pa_plot.plot()
+        file_to_upload = FileToUpload(pa_plot.filepath, remote_pa_dir, staged=True)
+        add_or_ignore_plot(file_to_upload, session)
 
-            file_to_upload = FileToUpload(STD_PA_PLOT_DIR / plot_name, remote_std_dir, staged=True)
-            add_or_ignore_plot(file_to_upload, session)
+        filters=(
+            GcRun.date >= date_limits['left'],
+            GcRun.type.in_((1,2,3)),
+            Compound.name == compound
+        )
+
+        results = abstract_query(params, filters, GcRun.date)
+
+        dates = [r.date for r in results]
+        pas = [r.pa for r in results]
+
+        std_pa_plot = StandardPeakAreaPlot(
+            {compound: [dates, pas]},
+            limits=date_limits,
+            major_ticks=major_ticks,
+            minor_ticks=minor_ticks,
+            filepath = STD_PA_PLOT_DIR / f'{compound}_plot.png'
+        )
+
+        std_pa_plot.plot()
+        file_to_upload = FileToUpload(std_pa_plot.filepath, remote_std_dir, staged=True)
+        add_or_ignore_plot(file_to_upload, session)
+
+        # with TempDir(PA_PLOT_DIR):
+        #     plot_name = zugspitze_pa_plot(None, ({compound: [dates, pas]}),
+        #                                   limits={'right': date_limits.get('right', None),
+        #                                           'left': date_limits.get('left', None)},
+        #                                   major_ticks=major_ticks,
+        #                                   minor_ticks=minor_ticks)
+        #
+        #     file_to_upload = FileToUpload(PA_PLOT_DIR / plot_name, remote_pa_dir, staged=True)
+        #     add_or_ignore_plot(file_to_upload, session)
+        #
+        # # Plot Standard Peak Areas
+        # results = (session.query(Compound.pa, Integration.date)
+        #            .join(Integration, Integration.id == Compound.integration_id)
+        #            .join(GcRun, GcRun.id == Integration.run_id)
+        #            .filter(Integration.date >= date_limits['left'])
+        #            .filter(GcRun.type.in_([1, 2, 3]))
+        #            .filter(Compound.name == compound)
+        #            .order_by(Integration.date)
+        #            .all())
+        #
+        # dates = []
+        # pas = []
+        # for result in results:
+        #     dates.append(result[1])
+        #     pas.append(result[0])
+        #
+        # with TempDir(STD_PA_PLOT_DIR):
+        #     plot_name = zugspitze_pa_plot(None, ({compound: [dates, pas]}),
+        #                                   limits={'right': date_limits.get('right', None),
+        #                                           'left': date_limits.get('left', None)},
+        #                                   major_ticks=major_ticks,
+        #                                   minor_ticks=minor_ticks,
+        #                                   standard=True)
+        #
+        #     file_to_upload = FileToUpload(STD_PA_PLOT_DIR / plot_name, remote_std_dir, staged=True)
+        #     add_or_ignore_plot(file_to_upload, session)
 
     session.commit()
     session.close()
