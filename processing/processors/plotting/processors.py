@@ -559,92 +559,168 @@ def plot_dailydata(logger):
     for param in DAILY_ATTRS:
         dailydict[param] = [getattr(d, param) for d in dailies]
 
-    with TempDir(DAILY_PLOT_DIR):
-        name = 'daily_xfer_valve_ebox_temps.png'
-        zugspitze_parameter_plot(dates,
-                                 {'Ads Xfer Temp': [None, dailydict.get('ads_xfer_temp')],
-                                  'Valves Temp': [None, dailydict.get('valves_temp')],
-                                  'GC Xfer Temp': [None, dailydict.get('gc_xfer_temp')],
-                                  'Ebox Temp': [None, dailydict.get('ebox_temp')]},
-                                 'Zugspitze Daily Temperatures (Xfers, Valves, Ebox)',
-                                 name,
-                                 limits={'right': date_limits.get('right'),
-                                         'left': date_limits.get('left'),
-                                         'bottom': None,
-                                         'top': None},
-                                 major_ticks=major_ticks,
-                                 minor_ticks=minor_ticks)
+    all_daily_plots = []
 
-        file_to_upload = FileToUpload(DAILY_PLOT_DIR / name, remotedir, staged=True)
+    xfer_valve_ebox_plot = LogParameterPlot(
+        {'Ads Xfer Temp': (dates, dailydict.get('ads_xfer_temp')),
+         'Valves Temp': (dates, dailydict.get('valves_temp')),
+         'GC Xfer Temp': (dates, dailydict.get('gc_xfer_temp')),
+         'Ebox Temp': (dates, dailydict.get('ebox_temp'))},
+        title='Zugspitze Daily Temperatures (Xfers, Valves, Ebox)',
+        filepath=DAILY_PLOT_DIR / 'daily_xfer_valve_ebox_temps.png',
+        limits={**date_limits},
+        major_ticks=major_ticks,
+        minor_ticks=minor_ticks
+    )
+
+    xfer_valve_ebox_plot.plot()
+    all_daily_plots.append(xfer_valve_ebox_plot)
+
+    catalyst_temp_plot = LogParameterPlot(
+        {'Catalyst Temp': (dates, dailydict.get('catalyst_temp'))},
+        title='Zugspitze Daily Catalyst Temperature',
+        filepath=DAILY_PLOT_DIR / 'daily_catalyst_temp.png',
+        limits={**date_limits, 'bottom': 350, 'top': 490},
+        major_ticks=major_ticks,
+        minor_ticks=minor_ticks
+    )
+
+    catalyst_temp_plot.plot()
+    all_daily_plots.append(catalyst_temp_plot)
+
+    inlet_room_temp_plot = LogParameterPlot(
+        {'Inlet Temp': (dates, dailydict.get('inlet_temp')),
+         'Room Temp': (dates, dailydict.get('room_temp'))},
+        title='Zugspitze Daily Temperatures (Inlet, Room)',
+        filepath=DAILY_PLOT_DIR / 'daily_inlet_room_temp.png',
+        limits={**date_limits},
+        major_ticks=major_ticks,
+        minor_ticks=minor_ticks
+    )
+
+    inlet_room_temp_plot.plot()
+    all_daily_plots.append(inlet_room_temp_plot)
+
+    mfc_5v_plot = LogParameterPlot(
+        {'5V (v)': (dates, dailydict.get('v5')),
+         'MFC2': (dates, dailydict.get('mfc2')),
+         'MFC3': (dates, dailydict.get('mfc3')),
+         'MFC1': (dates, dailydict.get('mfc1'))},
+        title='Zugspitze Daily 5V and MFC Readings',
+        filepath=DAILY_PLOT_DIR / 'daily_5v_mfc.png',
+        limits={**date_limits},
+        y_label_str='',
+        major_ticks=major_ticks,
+        minor_ticks=minor_ticks
+    )
+
+    mfc_5v_plot.plot()
+    all_daily_plots.append(mfc_5v_plot)
+
+    line_zero_pressures_plot = LogParameterPlot(
+        {'LineP': (dates, dailydict.get('linep')),
+         'ZeroP': (dates, dailydict.get('zerop'))},
+        title='Zugspitze Daily Pressures',
+        filepath=DAILY_PLOT_DIR / 'daily_pressures.png',
+        limits={**date_limits},
+        y_label_str='Pressure (psi)',
+        major_ticks=major_ticks,
+        minor_ticks=minor_ticks
+    )
+
+    line_zero_pressures_plot.plot()
+    all_daily_plots.append(line_zero_pressures_plot)
+
+    for plot in all_daily_plots:
+        file_to_upload = FileToUpload(plot.filepath, remotedir, staged=True)
         add_or_ignore_plot(file_to_upload, session)
 
-        name = 'daily_catalyst_temp.png'
-        zugspitze_parameter_plot(dates,
-                                 {'Catalyst Temp': [None, dailydict.get('catalyst_temp')]},
-                                 'Zugspitze Daily Catalyst Temperature',
-                                 name,
-                                 limits={'right': date_limits.get('right'),
-                                         'left': date_limits.get('left'),
-                                         'bottom': 350,
-                                         'top': 490},
-                                 major_ticks=major_ticks,
-                                 minor_ticks=minor_ticks)
+    # with TempDir(DAILY_PLOT_DIR):
+        # name = 'daily_xfer_valve_ebox_temps.png'
+        # zugspitze_parameter_plot(dates,
+        #                          {'Ads Xfer Temp': [None, dailydict.get('ads_xfer_temp')],
+        #                           'Valves Temp': [None, dailydict.get('valves_temp')],
+        #                           'GC Xfer Temp': [None, dailydict.get('gc_xfer_temp')],
+        #                           'Ebox Temp': [None, dailydict.get('ebox_temp')]},
+        #                          'Zugspitze Daily Temperatures (Xfers, Valves, Ebox)',
+        #                          name,
+        #                          limits={'right': date_limits.get('right'),
+        #                                  'left': date_limits.get('left'),
+        #                                  'bottom': None,
+        #                                  'top': None},
+        #                          major_ticks=major_ticks,
+        #                          minor_ticks=minor_ticks)
+        #
+        # file_to_upload = FileToUpload(DAILY_PLOT_DIR / name, remotedir, staged=True)
+        # add_or_ignore_plot(file_to_upload, session)
 
-        file_to_upload = FileToUpload(DAILY_PLOT_DIR / name, remotedir, staged=True)
-        add_or_ignore_plot(file_to_upload, session)
+        # name = 'daily_catalyst_temp.png'
+        # zugspitze_parameter_plot(dates,
+        #                          {'Catalyst Temp': [None, dailydict.get('catalyst_temp')]},
+        #                          'Zugspitze Daily Catalyst Temperature',
+        #                          name,
+        #                          limits={'right': date_limits.get('right'),
+        #                                  'left': date_limits.get('left'),
+        #                                  'bottom': 350,
+        #                                  'top': 490},
+        #                          major_ticks=major_ticks,
+        #                          minor_ticks=minor_ticks)
+        #
+        # file_to_upload = FileToUpload(DAILY_PLOT_DIR / name, remotedir, staged=True)
+        # add_or_ignore_plot(file_to_upload, session)
 
-        name = 'daily_inlet_room_temp.png'
+        # name = 'daily_inlet_room_temp.png'
+        #
+        # zugspitze_parameter_plot(dates,
+        #                          {'Inlet Temp': [None, dailydict.get('inlet_temp')],
+        #                           'Room Temp': [None, dailydict.get('room_temp')]},
+        #                          'Zugspitze Daily Temperatures (Inlet, Room)',
+        #                          name,
+        #                          limits={'right': date_limits.get('right'),
+        #                                  'left': date_limits.get('left'),
+        #                                  'bottom': None,
+        #                                  'top': None},
+        #                          major_ticks=major_ticks,
+        #                          minor_ticks=minor_ticks)
+        #
+        # file_to_upload = FileToUpload(DAILY_PLOT_DIR / name, remotedir, staged=True)
+        # add_or_ignore_plot(file_to_upload, session)
 
-        zugspitze_parameter_plot(dates,
-                                 {'Inlet Temp': [None, dailydict.get('inlet_temp')],
-                                  'Room Temp': [None, dailydict.get('room_temp')]},
-                                 'Zugspitze Daily Temperatures (Inlet, Room)',
-                                 name,
-                                 limits={'right': date_limits.get('right'),
-                                         'left': date_limits.get('left'),
-                                         'bottom': None,
-                                         'top': None},
-                                 major_ticks=major_ticks,
-                                 minor_ticks=minor_ticks)
+        # name = 'daily_5v_mfc.png'
+        # zugspitze_parameter_plot(dates,
+        #                          {'5V (v)': [None, dailydict.get('v5')],
+        #                           'MFC2': [None, dailydict.get('mfc2')],
+        #                           'MFC3': [None, dailydict.get('mfc3')],
+        #                           'MFC1': [None, dailydict.get('mfc1')]},
+        #                          'Zugspitze Daily 5V and MFC Readings',
+        #                          name,
+        #                          limits={'right': date_limits.get('right'),
+        #                                  'left': date_limits.get('left'),
+        #                                  'bottom': None,
+        #                                  'top': None},
+        #                          y_label_str='',
+        #                          major_ticks=major_ticks,
+        #                          minor_ticks=minor_ticks)
 
-        file_to_upload = FileToUpload(DAILY_PLOT_DIR / name, remotedir, staged=True)
-        add_or_ignore_plot(file_to_upload, session)
+        # file_to_upload = FileToUpload(DAILY_PLOT_DIR / name, remotedir, staged=True)
+        # add_or_ignore_plot(file_to_upload, session)
 
-        name = 'daily_5v_mfc.png'
-        zugspitze_parameter_plot(dates,
-                                 {'5V (v)': [None, dailydict.get('v5')],
-                                  'MFC2': [None, dailydict.get('mfc2')],
-                                  'MFC3': [None, dailydict.get('mfc3')],
-                                  'MFC1': [None, dailydict.get('mfc1')]},
-                                 'Zugspitze Daily 5V and MFC Readings',
-                                 name,
-                                 limits={'right': date_limits.get('right'),
-                                         'left': date_limits.get('left'),
-                                         'bottom': None,
-                                         'top': None},
-                                 y_label_str='',
-                                 major_ticks=major_ticks,
-                                 minor_ticks=minor_ticks)
-
-        file_to_upload = FileToUpload(DAILY_PLOT_DIR / name, remotedir, staged=True)
-        add_or_ignore_plot(file_to_upload, session)
-
-        name = 'daily_pressures.png'
-        zugspitze_parameter_plot(dates,
-                                 {'LineP': [None, dailydict.get('linep')],
-                                  'ZeroP': [None, dailydict.get('zerop')]},
-                                 'Zugspitze Daily Pressures',
-                                 name,
-                                 limits={'right': date_limits.get('right'),
-                                         'left': date_limits.get('left'),
-                                         'bottom': None,
-                                         'top': None},
-                                 y_label_str='Pressure (psi)',
-                                 major_ticks=major_ticks,
-                                 minor_ticks=minor_ticks)
-
-        file_to_upload = FileToUpload(DAILY_PLOT_DIR / name, remotedir, staged=True)
-        add_or_ignore_plot(file_to_upload, session)
+        # name = 'daily_pressures.png'
+        # zugspitze_parameter_plot(dates,
+        #                          {'LineP': [None, dailydict.get('linep')],
+        #                           'ZeroP': [None, dailydict.get('zerop')]},
+        #                          'Zugspitze Daily Pressures',
+        #                          name,
+        #                          limits={'right': date_limits.get('right'),
+        #                                  'left': date_limits.get('left'),
+        #                                  'bottom': None,
+        #                                  'top': None},
+        #                          y_label_str='Pressure (psi)',
+        #                          major_ticks=major_ticks,
+        #                          minor_ticks=minor_ticks)
+        #
+        # file_to_upload = FileToUpload(DAILY_PLOT_DIR / name, remotedir, staged=True)
+        # add_or_ignore_plot(file_to_upload, session)
 
     session.commit()
     session.close()
