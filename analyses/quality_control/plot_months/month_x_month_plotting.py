@@ -14,7 +14,7 @@ import pandas as pd
 
 from settings import CORE_DIR, JSON_PUBLIC_DIR, DB_NAME
 from IO.db import connect_to_db, GcRun, Compound, Standard, TempDir
-from plotting import zugspitze_qc_plot, create_daily_ticks
+from plotting import zugspitze_qc_plot, create_daily_ticks, AnnotatedResponsePlot
 
 engine, session = connect_to_db(DB_NAME, CORE_DIR)
 
@@ -85,17 +85,18 @@ for month in date_ranges:
                 else:
                     annotations.append("")
 
-        with TempDir(month_dir):
-            zugspitze_qc_plot(None, {compound: [dates, mrs]},
-                              limits={'right': date_limits.get('right', None),
-                                      'left': date_limits.get('left', None),
-                                      'bottom': compound_limits.get(compound).get('bottom'),
-                                      'top': compound_limits.get(compound).get('top')},
-                              major_ticks=major_ticks,
-                              minor_ticks=minor_ticks,
-                              date_formatter_string='%m-%d')  # ,
-            # annotate_with=annotations,
-            # annotate_y=median)
+        p = AnnotatedResponsePlot(
+            {compound: [dates, mrs]},
+            limits={**date_limits, **compound_limits[compound]},
+            major_ticks=major_ticks,
+            minor_ticks=minor_ticks,
+            date_format='%m-%d',
+            filepath=month_dir / f'{compound}_plot.png',
+            # annotations=annotations,
+            # annotate_y=median
+        )
+
+        p.plot()
 
     print(f'Created plots for the month of {month.year:04d}/{month.month:02d}')
 
