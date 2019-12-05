@@ -9,7 +9,7 @@ from matplotlib.dates import DateFormatter
 from numpy.polynomial.polynomial import polyfit
 from pandas.plotting import register_matplotlib_converters
 
-__all__ = ['zugspitze_mixing_plot', 'zugspitze_qc_plot', 'zugspitze_pa_plot', 'zugspitze_parameter_plot',
+__all__ = ['zugspitze_qc_plot', 'zugspitze_pa_plot', 'zugspitze_parameter_plot',
            'zugspitze_twoaxis_parameter_plot', 'zugspitze_linearity_plot', 'Plot2D', 'TimeSeries', 'ResponsePlot',
            'MixingRatioPlot', 'PeakAreaPlot', 'StandardPeakAreaPlot', 'LogParameterPlot', 'TwoAxisTimeSeries',
            'TwoAxisResponsePlot', 'TwoAxisLogParameterPlot', 'LinearityPlot']
@@ -731,98 +731,98 @@ class LinearityPlot(Plot2D):
         self.primary_axis.legend([f'{self.y_value_name} | {self.reg_formula}'])
 
 
-def zugspitze_mixing_plot(dates, compound_dict, limits=None, minor_ticks=None, major_ticks=None,
-                          y_label_str='Mixing Ratio (pptv)', filename_suffix='', date_formatter_string='%Y-%m'):
-    """
-    Create a plot of the mixing ratios for a given set of compounds and data with optional axis limits and ticks.
-
-    Dates can be supplied for all compounds at once by providing a Truthy dates kwarg value, or for each compound
-    individually by providing a Falsy dates kwarg value and giving dates for each compound in compound_dict.
-
-    If unspecified, limits, and ticks will be auto-determined by Matplotlib.
-
-    :example:
-    All dates supplied:
-        zugspitze_mixing_plot((None, {'Ethane':[[date, date, date], [1, 2, 3]],
-                                'Propane':[[date, date, date], [.5, 1, 1.5]]}))
-
-    :example:
-    Single date list supplied:
-        zugspitze_mixing_plot([date, date, date], {'ethane':[None, [1, 2, 3]],
-                                'propane':[None, [.5, 1, 1.5]]})
-
-    :param list dates: list of Python datetimes; if set, this applies to all compounds.
-        If None, each compound supplies its own date values
-    :param dict compound_dict: dict of format {'compound_name':[dates, mrs]}
-        - keys: str, the name to be plotted and put into filename
-        - values: list, len(list) == 2, two parallel lists that are...
-            dates: list, of Python datetimes. If None, dates come from dates input parameter (for all compounds)
-            mrs: list, of [int/float/None]s; these are the mixing ratios to be plotted
-    :param dict limits: optional dictionary of limits including ['top', 'bottom', 'right', 'left']
-    :param list minor_ticks: list of major tick marks
-    :param list major_ticks: list of minor tick marks
-    :param str y_label_str: label for y-axis
-    :param str filename_suffix: what, if anything to append to filename before the filetype
-    :param str date_formatter_string: format string for the x-axis date labels, defaults to '%Y-%m'
-    :return None: Saves plot to the working directory
-    """
-    register_matplotlib_converters()
-
-    f1 = plt.figure()
-    ax = f1.gca()
-
-    if dates is None:  # dates supplied by individual compounds
-        for compound, val_list in compound_dict.items():
-            if val_list[0] and val_list[1]:
-                assert len(val_list[0]) > 0 and len(val_list[0]) == len(
-                    val_list[1]), 'Supplied dates were empty or lengths did not match'
-                ax.plot(val_list[0], val_list[1], '-o')
-            else:
-                pass
-
-    else:
-        for compound, val_list in compound_dict.items():
-            ax.plot(dates, val_list[1], '-o')
-
-    compounds_safe = []
-    for k, _ in compound_dict.items():
-        # Create a filename-safe list using the given legend items
-        compounds_safe.append(k.replace('/', '_')
-                              .replace(' ', '_'))
-
-    comp_list = ', '.join(compound_dict.keys())  # use real names for plot title
-    fn_list = '_'.join(compounds_safe)  # use 'safe' names for filename
-
-    if limits is not None:
-        ax.set_xlim(right=limits.get('right'))
-        ax.set_xlim(left=limits.get('left'))
-        ax.set_ylim(top=limits.get('top'))
-        ax.set_ylim(bottom=limits.get('bottom'))
-
-    if major_ticks is not None:
-        ax.set_xticks(major_ticks, minor=False)
-    if minor_ticks is not None:
-        ax.set_xticks(minor_ticks, minor=True)
-
-    date_form = DateFormatter(date_formatter_string)
-    ax.xaxis.set_major_formatter(date_form)
-
-    [i.set_linewidth(2) for i in ax.spines.values()]
-    ax.tick_params(axis='x', labelrotation=30)
-    ax.tick_params(axis='both', which='major', size=8, width=2, labelsize=15)
-    f1.set_size_inches(11.11, 7.406)
-
-    ax.set_ylabel(y_label_str, fontsize=20)
-    ax.set_title(f'Zugspitze {comp_list} Mixing Ratios', fontsize=24, y=1.02)
-    ax.legend(compound_dict.keys())
-
-    f1.subplots_adjust(bottom=.20)
-
-    plot_name = f'{fn_list}_plot{filename_suffix}.png'
-    f1.savefig(plot_name, dpi=150)
-    plt.close(f1)
-
-    return plot_name
+# def zugspitze_mixing_plot(dates, compound_dict, limits=None, minor_ticks=None, major_ticks=None,
+#                           y_label_str='Mixing Ratio (pptv)', filename_suffix='', date_formatter_string='%Y-%m'):
+#     """
+#     Create a plot of the mixing ratios for a given set of compounds and data with optional axis limits and ticks.
+#
+#     Dates can be supplied for all compounds at once by providing a Truthy dates kwarg value, or for each compound
+#     individually by providing a Falsy dates kwarg value and giving dates for each compound in compound_dict.
+#
+#     If unspecified, limits, and ticks will be auto-determined by Matplotlib.
+#
+#     :example:
+#     All dates supplied:
+#         zugspitze_mixing_plot((None, {'Ethane':[[date, date, date], [1, 2, 3]],
+#                                 'Propane':[[date, date, date], [.5, 1, 1.5]]}))
+#
+#     :example:
+#     Single date list supplied:
+#         zugspitze_mixing_plot([date, date, date], {'ethane':[None, [1, 2, 3]],
+#                                 'propane':[None, [.5, 1, 1.5]]})
+#
+#     :param list dates: list of Python datetimes; if set, this applies to all compounds.
+#         If None, each compound supplies its own date values
+#     :param dict compound_dict: dict of format {'compound_name':[dates, mrs]}
+#         - keys: str, the name to be plotted and put into filename
+#         - values: list, len(list) == 2, two parallel lists that are...
+#             dates: list, of Python datetimes. If None, dates come from dates input parameter (for all compounds)
+#             mrs: list, of [int/float/None]s; these are the mixing ratios to be plotted
+#     :param dict limits: optional dictionary of limits including ['top', 'bottom', 'right', 'left']
+#     :param list minor_ticks: list of major tick marks
+#     :param list major_ticks: list of minor tick marks
+#     :param str y_label_str: label for y-axis
+#     :param str filename_suffix: what, if anything to append to filename before the filetype
+#     :param str date_formatter_string: format string for the x-axis date labels, defaults to '%Y-%m'
+#     :return None: Saves plot to the working directory
+#     """
+#     register_matplotlib_converters()
+#
+#     f1 = plt.figure()
+#     ax = f1.gca()
+#
+#     if dates is None:  # dates supplied by individual compounds
+#         for compound, val_list in compound_dict.items():
+#             if val_list[0] and val_list[1]:
+#                 assert len(val_list[0]) > 0 and len(val_list[0]) == len(
+#                     val_list[1]), 'Supplied dates were empty or lengths did not match'
+#                 ax.plot(val_list[0], val_list[1], '-o')
+#             else:
+#                 pass
+#
+#     else:
+#         for compound, val_list in compound_dict.items():
+#             ax.plot(dates, val_list[1], '-o')
+#
+#     compounds_safe = []
+#     for k, _ in compound_dict.items():
+#         # Create a filename-safe list using the given legend items
+#         compounds_safe.append(k.replace('/', '_')
+#                               .replace(' ', '_'))
+#
+#     comp_list = ', '.join(compound_dict.keys())  # use real names for plot title
+#     fn_list = '_'.join(compounds_safe)  # use 'safe' names for filename
+#
+#     if limits is not None:
+#         ax.set_xlim(right=limits.get('right'))
+#         ax.set_xlim(left=limits.get('left'))
+#         ax.set_ylim(top=limits.get('top'))
+#         ax.set_ylim(bottom=limits.get('bottom'))
+#
+#     if major_ticks is not None:
+#         ax.set_xticks(major_ticks, minor=False)
+#     if minor_ticks is not None:
+#         ax.set_xticks(minor_ticks, minor=True)
+#
+#     date_form = DateFormatter(date_formatter_string)
+#     ax.xaxis.set_major_formatter(date_form)
+#
+#     [i.set_linewidth(2) for i in ax.spines.values()]
+#     ax.tick_params(axis='x', labelrotation=30)
+#     ax.tick_params(axis='both', which='major', size=8, width=2, labelsize=15)
+#     f1.set_size_inches(11.11, 7.406)
+#
+#     ax.set_ylabel(y_label_str, fontsize=20)
+#     ax.set_title(f'Zugspitze {comp_list} Mixing Ratios', fontsize=24, y=1.02)
+#     ax.legend(compound_dict.keys())
+#
+#     f1.subplots_adjust(bottom=.20)
+#
+#     plot_name = f'{fn_list}_plot{filename_suffix}.png'
+#     f1.savefig(plot_name, dpi=150)
+#     plt.close(f1)
+#
+#     return plot_name
 
 
 def zugspitze_qc_plot(dates, compound_dict, limits=None, minor_ticks=None, major_ticks=None,
