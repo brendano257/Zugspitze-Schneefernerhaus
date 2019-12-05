@@ -13,8 +13,8 @@ from datetime import datetime
 from sqlalchemy.sql.expression import extract, not_
 
 from settings import CORE_DIR, DB_NAME, JSON_PUBLIC_DIR
-from IO.db import GcRun, Standard, Quantification, Compound, OldData, Integration, TempDir, connect_to_db
-from plotting import zugspitze_mixing_plot, create_monthly_ticks
+from IO.db import GcRun, Standard, Quantification, Compound, OldData, Integration, connect_to_db
+from plotting import create_monthly_ticks, MixingRatioPlot
 
 PLOTDIR = CORE_DIR / 'analyses/quality_control/history_plots/plots'
 PLOT_INFO = JSON_PUBLIC_DIR / 'zug_long_plot_info.json'
@@ -23,7 +23,7 @@ PLOT_INFO = JSON_PUBLIC_DIR / 'zug_long_plot_info.json'
 def plot_history():
     try:
         engine, session = connect_to_db(DB_NAME, CORE_DIR)
-    except Exception:
+    except Exception as e:
         return False
 
     compounds_to_plot = (session.query(Quantification.name)
@@ -32,7 +32,7 @@ def plot_history():
 
     compounds_to_plot[:] = [q.name for q in compounds_to_plot]
 
-    date_limits, major_ticks, minor_ticks = create_monthly_ticks(72, days_per_minor=0, start=datetime(2013,1,1))
+    date_limits, major_ticks, minor_ticks = create_monthly_ticks(72, days_per_minor=0, start=datetime(2013, 1, 1))
 
     major_ticks = major_ticks[::4]
 
@@ -62,24 +62,19 @@ def plot_history():
 
         dates = [o.date for o in old_results]
         mrs = [o.mr for o in old_results]
-        for result in new_results:
-            dates.append(result[1])
-            mrs.append(result[0])
 
-        with TempDir(PLOTDIR):
-            try:
-                compound_limits.get(name).get('bottom')
-            except:
-                print(f'Compound {name} needs limits to plot!')
-                continue
+        dates.extend([n.date for n in new_results])
+        mrs.extend([n.mr for n in new_results])
 
-            zugspitze_mixing_plot(None, ({name: [dates, mrs]}),
-                                          limits={'right': date_limits.get('right', None),
-                                                  'left': date_limits.get('left', None),
-                                                  'bottom': compound_limits.get(name).get('bottom'),
-                                                  'top': compound_limits.get(name).get('top')},
-                                          major_ticks=major_ticks,
-                                          minor_ticks=minor_ticks)
+        p = MixingRatioPlot(
+            {name: [dates, mrs]},
+            limits={**date_limits, **compound_limits[name]},
+            major_ticks=major_ticks,
+            minor_ticks=minor_ticks,
+            filepath=PLOTDIR / f'{name}_plot.png'
+        )
+
+        p.plot()
 
     session.commit()
     session.close()
