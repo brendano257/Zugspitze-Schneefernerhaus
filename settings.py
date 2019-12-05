@@ -4,7 +4,7 @@ Project-wide settings, currently limited to directories needed accross the proje
 TODO:
     # Notes about what general things should be done in the future
         .
-    2) Address plotting code; roll into classes and subclasses
+    xxxxxx 2) Address plotting code; roll into classes and subclasses
     3) Address duplicate code snippets from db checking; can be factored out into 'check dates of type in sets of n'
     6) Clean up blank_subtract and make it a method of GcRuns and SampleQuants
     7) Standardize .quantify() and make it a method shared by GcRuns and SampleQuants (it should call blank_subtract)
@@ -46,7 +46,7 @@ DAILY_PLOT_DIR = CORE_DIR / 'plotting/created/dailyplots'
 FILTER_DIRS = [
     CORE_DIR / 'data/json/private/filters/final',  # get all finalized filters
     CORE_DIR / 'data/json/private/filters/unprocessed',
-    # filter unprocessed points, but still check then and moved to final
+    # filter unprocessed points, but still check them and move to final after
 ]
 
 # directories containing JSON files for various purposes
