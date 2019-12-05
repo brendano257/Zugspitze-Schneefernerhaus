@@ -99,7 +99,7 @@ class Plot2D(ABC):
             axis.set_xlim(**{k: v for k, v in limits.items() if k in ('right', 'left')})
             axis.set_ylim(**{k: v for k, v in limits.items() if k in ('top', 'bottom')})
 
-    def axis(self):
+    def _label_axes(self):
         """Set the axes labels on the primary axis."""
 
         self.primary_axis.set_ylabel(self.y_label_str, fontsize=20)
@@ -189,7 +189,7 @@ class TimeSeries(Plot2D):
         self._plot_all_series()
 
         self._set_axes_limits()  # limits must be set after plotting for limits of None to auto-scale
-        self.axis()
+        self._label_axes()
         self._set_legend()  # legend must be set after data is added
         self._set_title()
         self._save_to_file()
@@ -252,7 +252,11 @@ class ResponsePlot(TimeSeries):
 
         if not title:
             # title should be the names of whatever is plotting, plus the type of the plot, if any
-            title = f'Zugspitze {", ".join(series.keys())} {type_}'
+            title = f'Zugspitze {", ".join(series.keys())}'
+
+            if type_:
+                title = title + f' {type_}'
+
 
         super().__init__(series, limits, major_ticks, minor_ticks, x_label_str, y_label_str,
                          title, date_format, filepath, save, show)
@@ -376,6 +380,57 @@ class StandardPeakAreaPlot(ResponsePlot):
         super()._save_to_file()
 
 
+class AnnotatedResponsePlot(ResponsePlot):
+
+    def __init__(self, series, limits=None, major_ticks=None, minor_ticks=None, x_label_str=None, y_label_str=None,
+                 type_=None, title=None, date_format='%Y-%m-%d', filepath=None, save=True, show=False, annotations=None,
+                 annotate_y=None):
+        """
+        Create an instance, using next-to-no defaults.
+
+        :param dict series: data as {name: (xData, yData)}
+        :param dict limits: plot limits, containing any of 'top', 'bottom', 'right', 'left'
+        :param Sequence[datetime] major_ticks: major ticks for x axis
+        :param Sequence[datetime] minor_ticks: minor ticks for x axis
+        :param str x_label_str: string label for the x axis
+        :param str y_label_str: string label for the y axis
+        :param str type_: Usually 'Mixing Ratios' or 'Peak Areas'; becomes part of the title
+        :param str title: title to be displayed on plot
+        :param str date_format: C-format for date
+        :param str | Path filepath: path for saving the file; otherwise saved in the current working directory
+        :param bool save: save plot as png?
+        :param bool show: show plot with figure.show()?
+        :param Sequence annotations: Sequence of any stringable data to annotate with.
+        :param annotate_y: Single value on the y-scale to plot all annotations at. Otherwise plotted at the data point.
+        :raises ValueError: if annotations is not of a matching length to first set of data in series
+        """
+
+        super().__init__(series, limits, major_ticks, minor_ticks, x_label_str, y_label_str, type_, title, date_format,
+                         filepath, save, show)
+
+        self.annotations = annotations
+        self.annotate_y = annotate_y
+
+    def _plot_all_series(self):
+        super()._plot_all_series()
+
+        if self.annotations:  # essentially pass if no annotations provided
+            dates, ydata = next(iter(self.series.values()))  # get data of the plotted series
+
+            if len(self.annotations) != len(dates):
+                msg = 'Annotations sequence must be of same length as first set of provided data'
+                raise ValueError(msg)
+
+            if not self.annotate_y:
+                self.annotate_y = ydata  # use ydata of the series if no set height was given
+            elif self.annotate_y:
+                y = self.annotate_y  # if a single value was given, create a list of them for plotting
+                self.annotate_y = [y for _ in range(len(dates))]
+
+            for i, anno in enumerate(self.annotations):  # add all annotations
+                self.primary_axis.annotate(str(anno), (dates[i], self.annotate_y[i]), rotation=80)
+
+
 class LogParameterPlot(ResponsePlot):
     """LogParameterPlots are the base for plotting any set of parameters on a single axis"""
 
@@ -487,9 +542,9 @@ class TwoAxisTimeSeries(TimeSeries):
         super()._add_and_format_ticks()
         self.secondary_axis.tick_params(axis='both', which='major', size=8, width=2, labelsize=15)
 
-    def axis(self):
+    def _label_axes(self):
         """Set labels for both axes."""
-        super().axis()
+        super()._label_axes()
         self.secondary_axis.set_ylabel(self.y2_label_str, fontsize=20)
 
     def _set_legend(self, loc='upper right'):
@@ -652,7 +707,7 @@ class LinearityPlot(Plot2D):
         self._create_plot_regression()
 
         self._set_axes_limits()  # limits must be set after plotting for limits of None to auto-scale
-        self.axis()
+        self._label_axes()
         self._set_legend()  # legend must be set after data is added and reg_formula is defined
         self._set_title()
         self._save_to_file()
@@ -1211,3 +1266,31 @@ def zugspitze_linearity_plot(compound, sampletimes, peak_areas, limits=None, min
 
     f1.savefig(f'{compound}_linearity_plot.jpeg', dpi=150)
     plt.close(f1)
+
+
+def test_annotated_plots():
+    import datetime as dt
+    from datetime import datetime
+    from random import randint
+
+    now = datetime.now()
+
+    xdata = [now + dt.timedelta(days=x) for x in range(45)]
+    ydata = [1000 + randint(-1000, 1000) for _ in range(45)]
+
+    p1 = AnnotatedResponsePlot({'Data': (xdata, ydata)}, annotate_y=None, annotations=ydata, save=False, show=True)
+    p1.plot()
+
+    p2 = AnnotatedResponsePlot({'Data': (xdata, ydata)}, annotate_y=1000, annotations=ydata, save=False, show=True)
+    p2.plot()
+
+    p3 = AnnotatedResponsePlot({'Data': (xdata, ydata)}, annotate_y=None, annotations=ydata[:-3], save=False, show=True)
+
+    try:
+        p3.plot()
+    except ValueError as e:
+        print(f"ValueError expected and was caught: {e.args}")
+
+
+if __name__ == '__main__':
+    test_annotated_plots()
