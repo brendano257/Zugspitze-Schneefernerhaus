@@ -3,7 +3,7 @@ __package__ = 'Z'
 from datetime import datetime
 
 from settings import CORE_DIR, DB_NAME
-from plotting import zugspitze_mixing_plot, create_daily_ticks
+from plotting import create_daily_ticks, MixingRatioPlot
 from IO.db import connect_to_db, Standard, Compound, GcRun, TempDir
 
 SELF_DIR = CORE_DIR / 'analyses/quality_control/2018_05_shifts'
@@ -40,10 +40,12 @@ for compound in compounds:
     date_limits, major_ticks, minor_ticks = create_daily_ticks(days, minors_per_day=2, end_date=limits[1])
     major_ticks = [m for ind, m in enumerate(major_ticks) if not ind % 4]
 
-    with TempDir(ALL_COMPOUND_PLOTS):
-        zugspitze_mixing_plot(dates, {compound: [None, mrs]},
-                              limits={'left': date_limits.get('left'),
-                                      'right': date_limits.get('right')},
-                              major_ticks=major_ticks, minor_ticks=minor_ticks,
-                              date_formatter_string='%Y-%m-%d',
-                              filename_suffix='working_std_shift_qc')
+    p = MixingRatioPlot(
+        {compound: [dates, mrs]},
+        limits={'left': date_limits.get('left'),
+                'right': date_limits.get('right')},
+        major_ticks=major_ticks, minor_ticks=minor_ticks,
+        filepath=ALL_COMPOUND_PLOTS / f'{compound}_plot_working_std_shift_qc.png'
+    )
+
+    p.plot()
