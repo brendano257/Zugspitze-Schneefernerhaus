@@ -7,8 +7,6 @@ from processing.constants import LOG_ATTRS, DAILY_ATTRS, ALL_COMPOUNDS
 from IO.db.models import OldData, Daily, Compound, LogFile, Integration, GcRun, Standard, Quantification
 from IO.db import FileToUpload, TempDir
 from plotting.utils import create_monthly_ticks, create_daily_ticks
-from plotting.plots import zugspitze_mixing_plot, zugspitze_parameter_plot, zugspitze_twoaxis_parameter_plot
-from plotting.plots import zugspitze_pa_plot
 
 from reporting import abstract_query
 from plotting.plots import (MixingRatioPlot, PeakAreaPlot, LogParameterPlot,
