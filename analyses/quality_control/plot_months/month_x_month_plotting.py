@@ -13,8 +13,8 @@ from calendar import monthrange
 import pandas as pd
 
 from settings import CORE_DIR, JSON_PUBLIC_DIR, DB_NAME
-from IO.db import connect_to_db, GcRun, Compound, Standard, TempDir
-from plotting import zugspitze_qc_plot, create_daily_ticks, AnnotatedResponsePlot
+from IO.db import connect_to_db, GcRun, Compound, Standard
+from plotting import create_daily_ticks, AnnotatedResponsePlot
 
 engine, session = connect_to_db(DB_NAME, CORE_DIR)
 
