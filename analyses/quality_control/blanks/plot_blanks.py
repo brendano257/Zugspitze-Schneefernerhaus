@@ -9,7 +9,7 @@ from datetime import datetime
 
 from settings import CORE_DIR, JSON_PUBLIC_DIR, DB_NAME
 from IO.db import connect_to_db, GcRun, Standard, Quantification, Compound, Integration, TempDir
-from plotting import zugspitze_mixing_plot, create_monthly_ticks
+from plotting import create_monthly_ticks, MixingRatioPlot
 
 PLOT_DIR = CORE_DIR / "analyses/quality_control/blanks/plots"
 
@@ -46,28 +46,19 @@ def plot_blank_data(logger):
                           .order_by(Integration.date)
                           .all())
 
-        dates = []
-        mrs = []
-        for result in results:
-            dates.append(result[1])
-            mrs.append(result[0])
+        dates = [r.date for r in results]
+        mrs = [r.mr for r in results]
 
-        with TempDir(PLOT_DIR):
-            try:
-                compound_limits.get(name).get('bottom')
-            except:
-                print(f'Compound {name} needs limits to plot!')
-                continue
+        p = MixingRatioPlot(
+            {name: [dates, mrs]},
+            limits={**date_limits, 'bottom': 0, 'top': compound_limits.get(name).get('top') * .10},
+            # plotting from 0 to 10% of the max value for each compound for good blank scaling
+            major_ticks=major_ticks,
+            minor_ticks=minor_ticks,
+            filepath=PLOT_DIR / f'{name}_plot.png'
+        )
 
-            _ = zugspitze_mixing_plot(None, ({name: [dates, mrs]}),
-                                      limits={'right': date_limits.get('right', None),
-                                              'left': date_limits.get('left', None),
-                                              'bottom': 0,
-                                              'top': compound_limits.get(name).get('top') * .10},
-                                      # plotting from 0 to 10% of the max value for each compound for good scale
-                                      major_ticks=major_ticks,
-                                      minor_ticks=minor_ticks,
-                                      date_formatter_string='%Y-%m-%d')
+        p.plot()
 
     session.commit()
     session.close()
