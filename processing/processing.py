@@ -1,83 +1,9 @@
 import datetime as dt
 
-from abc import ABC, abstractmethod
-
-from settings import CORE_DIR, DB_NAME
 from utils import search_for_attr_value, find_closest_date
-from IO.db import connect_to_db, GcRun
+from IO.db import GcRun
 
 __all__ = ['match_integrations_to_logs', 'blank_subtract', 'get_mr_from_run']
-
-
-class BlankSubtractedMixin(ABC):
-
-    @abstractmethod
-    def __init__(self):
-        self.type = None
-        self.date = None
-        self.compounds = None
-        pass
-
-    def blank_subtract(self, compounds_to_subtract=None, *, blank=object(), hours_to_match=6):
-        """
-        TODO
-        :param compounds_to_subtract:
-        :param blank: Provide None to pass values
-        :return:
-        :raises TypeError: if blank is not of type GcRun or NoneType
-        """
-
-        engine, session = connect_to_db(DB_NAME, CORE_DIR)
-
-        blank_default = blank_subtract.__kwdefaults__['blank']  # get default object to use as a sentinel value
-
-        if blank is blank_default and self.type not in [0, 6]:
-            close_blanks = (session.query(GcRun)
-                            .filter(GcRun.type == 0)
-                            .filter(GcRun.date >= self.date - dt.timedelta(hours=hours_to_match),
-                                    GcRun.date < self.date + dt.timedelta(hours=hours_to_match))
-                            .all())
-
-            match, delta = find_closest_date(self.date, [r.date for r in close_blanks], how='abs')
-            self.blank = search_for_attr_value(close_blanks, 'date', match)  # will return None if not found
-
-        if type(self.blank) not in (GcRun, type(None)):
-            msg = 'Provided blank was not of type GcRun or NoneType'
-            raise TypeError(msg)
-
-        if self.blank or self.blank is None:
-            blank_peaks = self.blank.compounds
-
-            if blank_peaks:
-                for peak in self.compounds:
-                    if peak.name in compounds_to_subtract:  # only blank-subtract VOCs (or a given subset)
-                        matched_blank_peak = search_for_attr_value(blank_peaks, 'name', peak.name)
-
-                        if matched_blank_peak:
-                            if peak.pa is not None and matched_blank_peak.pa is not None:
-                                peak.corrected_pa = peak.pa - matched_blank_peak.pa  # subtract the blank area
-                                if peak.corrected_pa < 0:
-                                    peak.corrected_pa = 0  # catch negatives and set to 0
-                            elif peak.pa is None:
-                                peak.corrected_pa = None  # leave as None
-                            elif matched_blank_peak.pa is None:
-                                peak.corrected_pa = peak.pa  # subtract nothing
-                            else:
-                                peak.corrected_pa = peak.pa  # can we get here? Pass the value
-                        else:
-                            peak.corrected_pa = peak.pa
-                    else:
-                        peak.corrected_pa = peak.pa
-            else:
-                for peak in self.compounds:
-                    peak.corrected_pa = peak.pa
-        else:
-            for peak in self.compounds:
-                peak.corrected_pa = peak.pa
-
-        run = session.merge(run)
-
-        return run
 
 
 def match_integrations_to_logs(integrations, logs):
@@ -202,11 +128,3 @@ def get_mr_from_run(run, name):
     """
     comp = search_for_attr_value(run.compounds, 'name', name)
     return comp.mr if comp else None
-
-
-def test_blank_subtract_mixin():
-    pass
-
-
-if __name__ == '__main__':
-    test_blank_subtract_mixin()
