@@ -5,6 +5,7 @@ from sqlalchemy.orm import relationship
 
 from IO.db import Base
 from utils.core import search_for_attr_value
+from processing.utils import BlankSubtractedMixin
 
 __all__ = ['Compound', 'LogFile', 'DailyFile', 'Daily', 'Integration', 'GcRun', 'Datum', 'OldData']
 
@@ -413,7 +414,7 @@ class Integration(Base):
         self._path = str(val)
 
 
-class GcRun(Base):
+class GcRun(Base, BlankSubtractedMixin):
     """
     A complete, successful run on the GC. Contains a LogFile, Integration by relation.
 
