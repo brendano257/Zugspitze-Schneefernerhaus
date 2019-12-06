@@ -1,11 +1,17 @@
 from pathlib import Path
+from abc import ABC, abstractmethod
+from collections.abc import Sequence
+import datetime as dt
 
 from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey, DateTime, UniqueConstraint
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, Session
 
-from IO.db import Base
-from utils.core import search_for_attr_value
-from processing.utils import BlankSubtractedMixin
+from IO.db.core import Base, connect_to_db
+from IO.db.models.standards import Standard
+from utils.core import search_for_attr_value, find_closest_date
+
+from settings import CORE_DIR, DB_NAME
+
 
 __all__ = ['Compound', 'LogFile', 'DailyFile', 'Daily', 'Integration', 'GcRun', 'Datum', 'OldData']
 
@@ -414,7 +420,139 @@ class Integration(Base):
         self._path = str(val)
 
 
-class GcRun(Base, BlankSubtractedMixin):
+class BlankSubtractedMixin(ABC):
+
+    @abstractmethod
+    def __init__(self):
+        self.type = None
+        self.date = None
+        self.compounds = None
+        pass
+
+    @abstractmethod
+    def quantify(self):
+        pass
+
+    def _default_to_pass_values(self, session):
+        """
+        Pass the value for all peaks.
+
+        :param session: active sqlalchemy session
+        :return:
+        """
+        print('Defaulted and pass all values.')
+        for peak in self.compounds:
+            peak.corrected_pa = peak.pa
+        session.merge(self)
+
+    def _subtract_peak(self, peak, blank_peak):
+        """
+        Blank subtract a single peak with the provided blank peak.
+
+        :param Compound peak:
+        :param Compound blank_peak:
+        :return:
+        :raises TypeError: if peaks are not of type Compound
+        """
+
+        if not isinstance(peak, Compound) or not isinstance(blank_peak, Compound):
+            msg = 'provided peak and blank peak must be of type Compound'
+            raise TypeError(msg)
+
+        if peak.pa is not None and blank_peak.pa is not None:
+            peak.corrected_pa = peak.pa - blank_peak.pa  # subtract the blank area
+            print(f'{peak.name}: New PA: {peak.corrected_pa} = old PA: {peak.pa} -  blank PA: {blank_peak.pa}')
+            if peak.corrected_pa < 0:
+                print('Peak pa defaulted to 0 after negative found')
+                peak.corrected_pa = 0  # catch negatives and set to 0
+        elif peak.pa is None:
+            print('Peak.pa was None, peak.corrected_pa will be none')
+            peak.corrected_pa = None  # leave as None
+        elif blank_peak.pa is None:
+            print('Blank peak pa was None, peak.pa will be passed.')
+            peak.corrected_pa = peak.pa  # subtract nothing
+        else:
+            print('The seemingly impossible happened!')
+            peak.corrected_pa = peak.pa  # can we get here? Pass the value just in case
+
+    def blank_subtract(self, *, session=object(), compounds_to_subtract=object(), blank=object(), hours_to_match=6):
+        """
+        TODO
+        :param compounds_to_subtract:
+        :param blank: Provide None to pass values
+        :return:
+        :raises TypeError: if blank is not of type GcRun or NoneType
+        """
+
+        print(f'Blank subtracting GcRun for {self.date}')
+
+        blank_default = self.blank_subtract.__kwdefaults__['blank']  # get default object to use as a sentinel value
+        compounds_to_subtract_default = self.blank_subtract.__kwdefaults__['compounds_to_subtract']  # ''
+        session_default = self.blank_subtract.__kwdefaults__['session']  # ''
+
+        if session is session_default:
+            engine, session = connect_to_db(DB_NAME, CORE_DIR)
+        elif not isinstance(session, Session):
+            msg = 'Provided session must be a sqlalchemy Session object'
+            TypeError(msg)
+
+        if compounds_to_subtract is compounds_to_subtract_default:
+            print('Defaulted to subtracting vocs')
+            # default to getting vocs from database
+            vocs = session.query(Standard).filter(Standard.name == 'vocs').one()
+            compounds_to_subtract = [q.name for q in vocs.quantifications]
+
+        if not isinstance(compounds_to_subtract, Sequence):
+            msg = 'compounds_to_subtract must be of type Sequence'
+            raise TypeError(msg)
+
+        if blank is blank_default and self.type not in [0, 6]:
+            print('Looking for blank to subtract.')
+            # match blanks if not value was provided and this sample isn't a blank
+            close_blanks = (session.query(GcRun)
+                            .filter(GcRun.type == 0)
+                            .filter(GcRun.date >= self.date - dt.timedelta(hours=hours_to_match),
+                                    GcRun.date < self.date + dt.timedelta(hours=hours_to_match))
+                            .all())
+
+            match, delta = find_closest_date(self.date, [r.date for r in close_blanks], how='abs')
+            self.blank = search_for_attr_value(close_blanks, 'date', match)  # will return None if not found
+
+        if type(self.blank) not in (GcRun, type(None)):
+            msg = 'Provided blank was not of type GcRun or NoneType'
+            raise TypeError(msg)
+
+        if self.blank is None:
+            self._default_to_pass_values(session)
+            return
+
+        if self.blank:
+            blank_peaks = self.blank.compounds
+
+            if not blank_peaks:
+                self._default_to_pass_values(session)
+                return
+            else:
+                for peak in self.compounds:
+                    if peak.name in compounds_to_subtract:  # only blank-subtract VOCs (or a given subset)
+                        matched_blank_peak = search_for_attr_value(blank_peaks, 'name', peak.name)
+
+                        if matched_blank_peak:
+                            self._subtract_peak(peak, matched_blank_peak)
+                        else:
+                            peak.corrected_pa = peak.pa  # pass the value if no match
+                    else:
+                        peak.corrected_pa = peak.pa  # pass the value if it's not a subtracted peak
+
+        session.merge(self)
+        return
+
+
+class JoinedMeta(type(BlankSubtractedMixin), type(Base)):
+    pass
+
+
+class GcRun(Base, BlankSubtractedMixin, metaclass=JoinedMeta):
     """
     A complete, successful run on the GC. Contains a LogFile, Integration by relation.
 
