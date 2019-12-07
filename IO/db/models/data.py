@@ -454,10 +454,13 @@ class BlankSubtractedMixin(ABC):
         """
         Blank subtract a single peak with the provided blank peak.
 
-        :param Compound peak:
-        :param Compound blank_peak:
+        Convenience method to pull some of the logic out of blank_subtract() and simplify it.
+
+        :param Compound peak: peak to be subtracted
+        :param Compound blank_peak: peak to be used in subtraction, from a zero-air sample
         :return:
         :raises TypeError: if peaks are not of type Compound
+        :raises NotImplementedError: if I was wrong about logic...
         """
 
         if not isinstance(peak, Compound) or not isinstance(blank_peak, Compound):
@@ -466,21 +469,18 @@ class BlankSubtractedMixin(ABC):
 
         if peak.pa is not None and blank_peak.pa is not None:
             peak.corrected_pa = peak.pa - blank_peak.pa  # subtract the blank area
-            print(f'{peak.name}: New PA: {peak.corrected_pa} = old PA: {peak.pa} -  blank PA: {blank_peak.pa}')
             if peak.corrected_pa < 0:
-                print('Peak pa defaulted to 0 after negative found')
                 peak.corrected_pa = 0  # catch negatives and set to 0
         elif peak.pa is None:
-            print('Peak.pa was None, peak.corrected_pa will be none')
             peak.corrected_pa = None  # leave as None
         elif blank_peak.pa is None:
-            print('Blank peak pa was None, peak.pa will be passed.')
             peak.corrected_pa = peak.pa  # subtract nothing
         else:
-            print('The seemingly impossible happened!')
-            peak.corrected_pa = peak.pa  # can we get here? Pass the value just in case
+            raise NotImplementedError('This branch was suspected to be unreachable...')
+            # peak.corrected_pa = peak.pa  # can we get here? Pass the value just in case
 
-    def blank_subtract(self, *, session=object(), compounds_to_subtract=object(), blank=object(), hours_to_match=6):
+    def blank_subtract(self, *, session=object(), compounds_to_subtract=object(), blank=object(), hours_to_match=6,
+                       commit=True):
         """
         Blank subtract this sample by using a provided or searched-for blank run (of type 0, zero-air).
 
@@ -493,6 +493,10 @@ class BlankSubtractedMixin(ABC):
         produce the same output no matter how many times it's called -- assuming no changes to the original data are
         made in between subtractions, and the same blank or time period is passed in.
 
+        Performance: Performance can be expected to be significantly slower is compounds_to_subtract and a session are
+        not supplied. These will then be created/retrieved for each run. Allowing for their absence is a
+        use-at-your-own-risk convenience that may cause session conflicts as well as poor performance.
+
         :param Session session: active sqlalchemy Session
             **if not given, one will be created. However, this can result in session conflicts with passed in objects!
             Because of this. It's best to pass in the active session that was used to retrieve the provided blanks or
@@ -503,12 +507,10 @@ class BlankSubtractedMixin(ABC):
             for within +/- hours_to_match of the sample time
         :param int | float hours_to_match: +/- <n> hours to look for a blank within (if not given). Defaults to 6 hours,
             which is the normal period required for the daily runs
+        :param bool commit: Commit the session after blank subtracting?
         :return: None
         :raises TypeError: if given parameters are not of the correct type
         """
-
-        print(f'Blank subtracting GcRun for {self.date}')
-
         blank_default = self.blank_subtract.__kwdefaults__['blank']  # get default object to use as a sentinel value
         compounds_to_subtract_default = self.blank_subtract.__kwdefaults__['compounds_to_subtract']  # ''
         session_default = self.blank_subtract.__kwdefaults__['session']  # ''
@@ -520,7 +522,6 @@ class BlankSubtractedMixin(ABC):
             TypeError(msg)
 
         if compounds_to_subtract is compounds_to_subtract_default:
-            print('Defaulted to subtracting vocs')
             # default to getting vocs from database
             vocs = session.query(Standard).filter(Standard.name == 'vocs').one()
             compounds_to_subtract = [q.name for q in vocs.quantifications]
@@ -530,7 +531,6 @@ class BlankSubtractedMixin(ABC):
             raise TypeError(msg)
 
         if blank is blank_default and self.type not in [0, 6]:
-            print('Looking for blank to subtract.')
             # match blanks if not value was provided and this sample isn't a blank
             close_blanks = (session.query(GcRun)
                             .filter(GcRun.type == 0)
@@ -568,7 +568,11 @@ class BlankSubtractedMixin(ABC):
                         peak.corrected_pa = peak.pa  # pass the value if it's not a subtracted peak
 
         session.merge(self)
-        return
+
+        if commit:
+            session.commit()
+
+        return session
 
 
 class JoinedMeta(type(BlankSubtractedMixin), type(Base)):
