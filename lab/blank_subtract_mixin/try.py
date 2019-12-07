@@ -1,3 +1,6 @@
+"""
+A rough, semi-random test of the BlankSubtractedMixin after it was added to GcRuns.
+"""
 from settings import DB_NAME, CORE_DIR
 from IO.db import connect_to_db, GcRun
 
