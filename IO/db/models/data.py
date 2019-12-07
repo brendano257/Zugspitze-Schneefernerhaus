@@ -421,12 +421,16 @@ class Integration(Base):
 
 
 class BlankSubtractedMixin(ABC):
+    """
+    A mixin class that allows a sample to be blank subtracted.
+    """
 
     @abstractmethod
     def __init__(self):
         self.type = None
         self.date = None
         self.compounds = None
+        self.blank = None
         pass
 
     @abstractmethod
@@ -445,7 +449,8 @@ class BlankSubtractedMixin(ABC):
             peak.corrected_pa = peak.pa
         session.merge(self)
 
-    def _subtract_peak(self, peak, blank_peak):
+    @staticmethod
+    def _subtract_peak(peak, blank_peak):
         """
         Blank subtract a single peak with the provided blank peak.
 
@@ -477,11 +482,29 @@ class BlankSubtractedMixin(ABC):
 
     def blank_subtract(self, *, session=object(), compounds_to_subtract=object(), blank=object(), hours_to_match=6):
         """
-        TODO
-        :param compounds_to_subtract:
-        :param blank: Provide None to pass values
-        :return:
-        :raises TypeError: if blank is not of type GcRun or NoneType
+        Blank subtract this sample by using a provided or searched-for blank run (of type 0, zero-air).
+
+        If no blank is found, the uncorrected values are passed as corrected. By default, if a blank is not provided,
+        this will attempt to find one within the specified or defaulted time window. To prevent this and force the
+        values to be passed, provide None as a blank sample.
+
+        NOTE: This IS repeatable without consequence. Because the corrected values are calculated and stored
+        separately from the original values, repeated calls to this method will not have side affects and will
+        produce the same output no matter how many times it's called -- assuming no changes to the original data are
+        made in between subtractions, and the same blank or time period is passed in.
+
+        :param Session session: active sqlalchemy Session
+            **if not given, one will be created. However, this can result in session conflicts with passed in objects!
+            Because of this. It's best to pass in the active session that was used to retrieve the provided blanks or
+            the GcRun that is being subtracted.
+        :param Sequence[str] compounds_to_subtract: list of compounds names to blank subtract subtract; a list of all
+            the vocs will be queried from the database if not given
+        :param GcRun | None blank: the blank run to subtract; if None is not explicity provided, one will be searched
+            for within +/- hours_to_match of the sample time
+        :param int | float hours_to_match: +/- <n> hours to look for a blank within (if not given). Defaults to 6 hours,
+            which is the normal period required for the daily runs
+        :return: None
+        :raises TypeError: if given parameters are not of the correct type
         """
 
         print(f'Blank subtracting GcRun for {self.date}')
@@ -549,12 +572,13 @@ class BlankSubtractedMixin(ABC):
 
 
 class JoinedMeta(type(BlankSubtractedMixin), type(Base)):
+    """A mixed metaclass required to subclass two different meta-classed objects."""
     pass
 
 
 class GcRun(Base, BlankSubtractedMixin, metaclass=JoinedMeta):
     """
-    A complete, successful run on the GC. Contains a LogFile, Integration by relation.
+    A complete, successful run on the GC. Contains a LogFile and Integration by relation.
 
     GcRuns are the main workhorse of the Zugspitze data. When a LogFile from LabView, and an Integration result from
     Agilent's GC software are matched, a GcRun is created and the Integration, all it's compounds, and the LogFile are
@@ -596,6 +620,7 @@ class GcRun(Base, BlankSubtractedMixin, metaclass=JoinedMeta):
         :param LogFile log: LogFile with a date that matches (within tolerances) the Integration supplied
         :param Integration integration: Integration with a date that matches (within tolerances) the LogFile supplied
         """
+        super().__init__()  # does nothing
         self.log = log
         self.integration = integration
         self.date = log.date
@@ -626,6 +651,8 @@ class GcRun(Base, BlankSubtractedMixin, metaclass=JoinedMeta):
             print(f'No standard to quantify GcRun for date {self.date}.')
             return None
 
+        # PyCharm doesn't like the relationship to quantifications and expects Quantification, despite being one->many
+        # noinspection PyTypeChecker
         for quant in self.standard.quantifications:
             if quant.value is None:
                 continue
@@ -827,7 +854,7 @@ class SampleQuant:
             print(f'No standard to quantify Sample for date {self.sample.date}.')
             return None
 
-        # PyCharm's type inspector does not like sqlalchemy relationships
+        # PyCharm's type inspector does *not* like sqlalchemy relationships
         # noinspection PyTypeChecker
         for quant in self.standard.quantifications:
             if quant.value is None:
