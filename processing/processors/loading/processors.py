@@ -10,7 +10,7 @@ import numpy as np
 
 from settings import CORE_DIR, JSON_PRIVATE_DIR, DB_NAME, DAILY_DIR, LOG_DIR, GCMS_DIR, HISTORIC_DATA_SHEET
 from utils import search_for_attr_value
-from IO import Base, connect_to_db, get_all_data_files
+from IO import Base, connect_to_db, get_all_data_files, filter_for_new_entities
 from processing.file_io import read_daily_file, read_log_file, read_gcms_file
 from IO.db.models import Config, OldData, DailyFile, LogFile, Integration, Standard, Quantification
 
@@ -41,8 +41,8 @@ def load_all_dailies(logger):
 
     daily_files = [DailyFile(path) for path in sorted(get_all_data_files(DAILY_DIR, '.txt'))]
 
+    # can't use filter_for_new_entities here because it requires addtional checking of the size for updating
     new_files = []
-
     for file in daily_files:
         file_in_db = search_for_attr_value(daily_files_in_db, 'path', file.path)
 
@@ -94,16 +94,12 @@ def load_all_logs(logger):
     logs = []
     for file in logfiles:
         logs.append(LogFile(**read_log_file(file)))
-    # TODO: The below is a common pattern. Re-factor into a function that splits into sets etc and use elsewhere
-    log_dates = [log.date for log in logs]
-    logs_in_db = session.query(LogFile.date).filter(LogFile.date.in_(log_dates)).all()
-    logs_in_db[:] = [log.date for log in logs_in_db]
 
-    for log in logs:
-        if log.date not in logs_in_db:
-            logs_in_db.append(log.date)
-            session.add(log)
-            logger.info(f'Log for {log.date} added.')
+    new_logfiles = filter_for_new_entities(logs, LogFile, 'date', session)
+
+    for log in new_logfiles:
+        session.add(log)
+        logger.info(f'Log for {log.date} added.')
 
     session.commit()
     return True
@@ -135,15 +131,11 @@ def load_all_integrations(logger):
     for file in all_results:
         integrations.append(Integration(**read_gcms_file(file)))
 
-    integration_dates = [i.date for i in integrations]
-    integrations_in_db = session.query(Integration.date).filter(Integration.date.in_(integration_dates)).all()
-    integrations_in_db[:] = [i.date for i in integrations_in_db]
+    new_integrations = filter_for_new_entities(integrations, Integration, 'date', session)
 
-    for integration in integrations:
-        if integration.date not in integrations_in_db:
-            integrations_in_db.append(integration.date)
-            session.add(integration)
-            logger.info(f'Integration for {integration.date} added.')
+    for integration in new_integrations:
+        session.add(integration)
+        logger.info(f'Integration for {integration.date} added.')
 
     session.commit()
     return True

@@ -7,7 +7,7 @@ from datetime import datetime
 from settings import CORE_DIR, DB_NAME, FILTER_DIRS, JSON_PRIVATE_DIR
 from IO import Base, connect_to_db
 from IO.db.models import Config, Compound, LogFile, Integration, GcRun, Standard, Quantification
-from processing import match_integrations_to_logs, blank_subtract
+from processing import match_integrations_to_logs
 from utils import search_for_attr_value, find_closest_date
 
 __all__ = ['match_gcruns', 'quantify_runs', 'process_filters']
@@ -90,8 +90,10 @@ def quantify_runs(logger):
     std = None  # no standard found yet
 
     for run in runs:
-        blank_subtract(run, voc_list, session)
+        # call blank subtract with no provided blank (it will find one if possible), and don't commit changes
+        run.blank_subtract(session=session, compounds_to_subtract=voc_list, commit=False)
 
+    # commit once after all runs are done for performance
     session.commit()
 
     runs = session.query(GcRun).filter(GcRun.quantified == False).all()

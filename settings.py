@@ -4,12 +4,8 @@ Project-wide settings, currently limited to directories needed accross the proje
 TODO:
     # Notes about what general things should be done in the future
         .
-    xxxxxx 2) Address plotting code; roll into classes and subclasses
-    3) Address duplicate code snippets from db checking; can be factored out into 'check dates of type in sets of n'
-    6) Clean up blank_subtract and make it a method of GcRuns and SampleQuants
     7) Standardize .quantify() and make it a method shared by GcRuns and SampleQuants (it should call blank_subtract)
     9) Add checker for processor logs dir. Alert if over LOG_DIR_SIZE and allow for shrinking...
-    xxxxxx 10) Move scripts and analyses over
 
 """
 import json

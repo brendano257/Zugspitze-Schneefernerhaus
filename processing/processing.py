@@ -1,10 +1,7 @@
-import logging
 import datetime as dt
 
-from pathlib import Path
-
 from utils import search_for_attr_value, find_closest_date
-from IO.db.models import GcRun
+from IO.db import GcRun
 
 __all__ = ['match_integrations_to_logs', 'blank_subtract', 'get_mr_from_run']
 

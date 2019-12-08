@@ -1,12 +1,19 @@
 from pathlib import Path
+from abc import ABC, abstractmethod
+from collections.abc import Sequence
+import datetime as dt
 
 from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey, DateTime, UniqueConstraint
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, Session
 
-from IO.db import Base
-from utils.core import search_for_attr_value
+from IO.db.core import Base, connect_to_db
+from utils.core import search_for_attr_value, find_closest_date
 
-__all__ = ['Compound', 'LogFile', 'DailyFile', 'Daily', 'Integration', 'GcRun', 'Datum', 'OldData']
+from settings import CORE_DIR, DB_NAME
+
+
+__all__ = ['Compound', 'LogFile', 'DailyFile', 'Daily', 'Integration', 'GcRun', 'Datum', 'OldData', 'Quantification',
+           'Standard', 'SampleQuant']
 
 
 class Compound(Base):
@@ -413,9 +420,169 @@ class Integration(Base):
         self._path = str(val)
 
 
-class GcRun(Base):
+class BlankSubtractedMixin(ABC):
     """
-    A complete, successful run on the GC. Contains a LogFile, Integration by relation.
+    A mixin class that allows a sample to be blank subtracted.
+    """
+
+    @abstractmethod
+    def __init__(self):
+        self.type = None
+        self.date = None
+        self.compounds = None
+        self.blank = None
+        pass
+
+    @abstractmethod
+    def quantify(self):
+        pass
+
+    def _default_to_pass_values(self, session):
+        """
+        Pass the value for all peaks.
+
+        :param session: active sqlalchemy session
+        :return:
+        """
+        print('Defaulted and pass all values.')
+        for peak in self.compounds:
+            peak.corrected_pa = peak.pa
+        session.merge(self)
+
+    @staticmethod
+    def _subtract_peak(peak, blank_peak):
+        """
+        Blank subtract a single peak with the provided blank peak.
+
+        Convenience method to pull some of the logic out of blank_subtract() and simplify it.
+
+        :param Compound peak: peak to be subtracted
+        :param Compound blank_peak: peak to be used in subtraction, from a zero-air sample
+        :return:
+        :raises TypeError: if peaks are not of type Compound
+        :raises NotImplementedError: if I was wrong about logic...
+        """
+
+        if not isinstance(peak, Compound) or not isinstance(blank_peak, Compound):
+            msg = 'provided peak and blank peak must be of type Compound'
+            raise TypeError(msg)
+
+        if peak.pa is not None and blank_peak.pa is not None:
+            peak.corrected_pa = peak.pa - blank_peak.pa  # subtract the blank area
+            if peak.corrected_pa < 0:
+                peak.corrected_pa = 0  # catch negatives and set to 0
+        elif peak.pa is None:
+            peak.corrected_pa = None  # leave as None
+        elif blank_peak.pa is None:
+            peak.corrected_pa = peak.pa  # subtract nothing
+        else:
+            raise NotImplementedError('This branch was suspected to be unreachable...')
+            # peak.corrected_pa = peak.pa  # can we get here? Pass the value just in case
+
+    def blank_subtract(self, *, session=object(), compounds_to_subtract=object(), blank=object(), hours_to_match=6,
+                       commit=True):
+        """
+        Blank subtract this sample by using a provided or searched-for blank run (of type 0, zero-air).
+
+        If no blank is found, the uncorrected values are passed as corrected. By default, if a blank is not provided,
+        this will attempt to find one within the specified or defaulted time window. To prevent this and force the
+        values to be passed, provide None as a blank sample.
+
+        NOTE: This IS repeatable without consequence. Because the corrected values are calculated and stored
+        separately from the original values, repeated calls to this method will not have side affects and will
+        produce the same output no matter how many times it's called -- assuming no changes to the original data are
+        made in between subtractions, and the same blank or time period is passed in.
+
+        Performance: Performance can be expected to be significantly slower is compounds_to_subtract and a session are
+        not supplied. These will then be created/retrieved for each run. Allowing for their absence is a
+        use-at-your-own-risk convenience that may cause session conflicts as well as poor performance.
+
+        :param Session session: active sqlalchemy Session
+            **if not given, one will be created. However, this can result in session conflicts with passed in objects!
+            Because of this. It's best to pass in the active session that was used to retrieve the provided blanks or
+            the GcRun that is being subtracted.
+        :param Sequence[str] compounds_to_subtract: list of compounds names to blank subtract subtract; a list of all
+            the vocs will be queried from the database if not given
+        :param GcRun | None blank: the blank run to subtract; if None is not explicity provided, one will be searched
+            for within +/- hours_to_match of the sample time
+        :param int | float hours_to_match: +/- <n> hours to look for a blank within (if not given). Defaults to 6 hours,
+            which is the normal period required for the daily runs
+        :param bool commit: Commit the session after blank subtracting?
+        :return: None
+        :raises TypeError: if given parameters are not of the correct type
+        """
+        blank_default = self.blank_subtract.__kwdefaults__['blank']  # get default object to use as a sentinel value
+        compounds_to_subtract_default = self.blank_subtract.__kwdefaults__['compounds_to_subtract']  # ''
+        session_default = self.blank_subtract.__kwdefaults__['session']  # ''
+
+        if session is session_default:
+            engine, session = connect_to_db(DB_NAME, CORE_DIR)
+        elif not isinstance(session, Session):
+            msg = 'Provided session must be a sqlalchemy Session object'
+            TypeError(msg)
+
+        if compounds_to_subtract is compounds_to_subtract_default:
+            # default to getting vocs from database
+            vocs = session.query(Standard).filter(Standard.name == 'vocs').one()
+            compounds_to_subtract = [q.name for q in vocs.quantifications]
+
+        if not isinstance(compounds_to_subtract, Sequence):
+            msg = 'compounds_to_subtract must be of type Sequence'
+            raise TypeError(msg)
+
+        if blank is blank_default and self.type not in [0, 6]:
+            # match blanks if not value was provided and this sample isn't a blank
+            close_blanks = (session.query(GcRun)
+                            .filter(GcRun.type == 0)
+                            .filter(GcRun.date >= self.date - dt.timedelta(hours=hours_to_match),
+                                    GcRun.date < self.date + dt.timedelta(hours=hours_to_match))
+                            .all())
+
+            match, delta = find_closest_date(self.date, [r.date for r in close_blanks], how='abs')
+            self.blank = search_for_attr_value(close_blanks, 'date', match)  # will return None if not found
+
+        if type(self.blank) not in (GcRun, type(None)):
+            msg = 'Provided blank was not of type GcRun or NoneType'
+            raise TypeError(msg)
+
+        if self.blank is None:
+            self._default_to_pass_values(session)
+            return
+
+        if self.blank:
+            blank_peaks = self.blank.compounds
+
+            if not blank_peaks:
+                self._default_to_pass_values(session)
+                return
+            else:
+                for peak in self.compounds:
+                    if peak.name in compounds_to_subtract:  # only blank-subtract VOCs (or a given subset)
+                        matched_blank_peak = search_for_attr_value(blank_peaks, 'name', peak.name)
+
+                        if matched_blank_peak:
+                            self._subtract_peak(peak, matched_blank_peak)
+                        else:
+                            peak.corrected_pa = peak.pa  # pass the value if no match
+                    else:
+                        peak.corrected_pa = peak.pa  # pass the value if it's not a subtracted peak
+
+        session.merge(self)
+
+        if commit:
+            session.commit()
+
+        return session
+
+
+class JoinedMeta(type(BlankSubtractedMixin), type(Base)):
+    """A mixed metaclass required to subclass two different meta-classed objects."""
+    pass
+
+
+class GcRun(Base, BlankSubtractedMixin, metaclass=JoinedMeta):
+    """
+    A complete, successful run on the GC. Contains a LogFile and Integration by relation.
 
     GcRuns are the main workhorse of the Zugspitze data. When a LogFile from LabView, and an Integration result from
     Agilent's GC software are matched, a GcRun is created and the Integration, all it's compounds, and the LogFile are
@@ -457,6 +624,7 @@ class GcRun(Base):
         :param LogFile log: LogFile with a date that matches (within tolerances) the Integration supplied
         :param Integration integration: Integration with a date that matches (within tolerances) the LogFile supplied
         """
+        super().__init__()  # does nothing
         self.log = log
         self.integration = integration
         self.date = log.date
@@ -487,6 +655,8 @@ class GcRun(Base):
             print(f'No standard to quantify GcRun for date {self.date}.')
             return None
 
+        # PyCharm doesn't like the relationship to quantifications and expects Quantification, despite being one->many
+        # noinspection PyTypeChecker
         for quant in self.standard.quantifications:
             if quant.value is None:
                 continue
@@ -568,3 +738,157 @@ class OldData(Base):
         self.name = name
         self.date = date
         self.mr = mr
+
+
+class Quantification(Base):
+    """
+    A container for storing quantification information for a standard.
+
+    Quantifications are essentially Compounds that represent the provided values for a gas standard. They are related to
+    a Standard object (many --> one), such that a Standard contains one or more Quantifications. For instance, a
+    standard might have Quantifications of (name='ethane', value=1543.9), (name='propane', value=802) to indicate that
+    that Standard had quantified values of 1543.9ppt for ethane and 802ppt for propane.
+
+    Quantifications are referenced to determine the mixing ratio of a sample by comparing the measured sample response,
+    divided by it's corresponding, measured standard response, all multiplied by that standard's Quantification.value
+    for the name of that compound.
+    """
+    __tablename__ = 'quantifications'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+    value = Column(Float)
+
+    standard_id = Column(Integer, ForeignKey('standards.id'))
+    standard = relationship('Standard', back_populates='quantifications')
+
+    def __init__(self, name, value, standard):
+        """
+        Create a new Quantification and relate it to it's containing Standard object.
+
+        :param str name: Name of the compound this Quantification is for
+        :param float value: Provided or quantified value for the Standard
+        :param Standard standard: Standard this Quantification is related to.
+        """
+        self.name = name
+        self.value = value
+        self.standard = standard
+
+
+class Standard(Base):
+    """
+    A container for information about a gas reference standard.
+
+    Standards contain a given string name, and optional start/end dates for which they're used to quantify samples (None
+    is an acceptable required argument for start/end_date). Standards are related to one or more Quantifications that
+    represent the given values for that Standard. These are used for calculating mixing ratios of samples.
+    """
+    __tablename__ = 'standards'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String, unique=True)
+    start_date = Column(DateTime)
+    end_date = Column(DateTime)
+    quantifications = relationship('Quantification', back_populates='standard')
+
+    run = relationship('GcRun', back_populates='standard')
+
+    def __init__(self, name, start_date, end_date):
+        """
+        Create a Standard by name that applies to samples between the start and end dates.
+        (name='NameHere', start_date=None, end_date=None) is acceptable.
+
+        :param str name: Common name, usually a cylinder number.
+        :param datetime start_date: Date from which this is the active working standard for quantifying samples.
+            **Can be None if end_date is also None, meaning the Standard has provided values but hasn't yet been used
+                as a working standard
+        :param datetime end_date: Date up until which this is the active working standard for quantifying samples.
+            **Can be None if start_date is also None, meaning the Standard has provided values but hasn't yet been used
+                as a working standard
+        """
+        self.name = name
+        self.start_date = start_date
+        self.end_date = end_date
+
+
+class SampleQuant:
+    """
+    An ad-hoc type, similar to a GcRun used for quantifying special samples outside the normal workflow.
+
+    SampleQuants are used when the normal rules/functions for creating and quantifying a sample don't apply.
+    For instance, when quantifying a gas standard run against another gas standard, a GcRun is a poor fit to aggregate
+    the information and calculate values. Instead, a SampleQuant can be created and quantified in a more individually-
+    scripted manner. SampleQuants *can* be persisted, but are often made and reported in a spreadsheet in a
+    reproducible, but throw-away style.
+    """
+
+    def __init__(self, sample, quantifier, blank, standard, standard_blank=None):
+        """
+        Create a SampleQuant from GcRuns for the sample, quantifying run, corresponding blank run and Standard.
+
+        :param GcRun sample: the GcRun to be quantfied
+        :param GcRun quantifier: the GcRun to be used as the reference, must be of the type given by Standard
+        :param GcRun blank: a corresponding blank run that was subtracted from the sample
+        :param Standard standard: Standard object that represents the known values of the quantifier sample
+        :param GcRun standard_blank: optional GcRun of a blank to be used on only the standard.
+            defaults to the given blank if unprovided
+        """
+        self.sample = sample
+        self.quantifier = quantifier
+        self.blank = blank
+        self.standard = standard
+
+        if not standard_blank:
+            self.standard_blank = blank
+        else:
+            self.standard_blank = standard_blank
+
+    def quantify(self):
+        """
+        Quantify the sample after all inputs have been blank subtracted.
+
+        Similar to GcRun.quantify, this calculates mixing ratios for the compounds in self.sample, using the supplied
+        quantifying sample, blank, and Standard.
+
+        TODO: Does not report the sample as quantified=1 after the fact.
+            Originally this was written to be a non-persistant quantification...but it could be changed now.
+        :return: None
+        """
+        if not self.standard:
+            print(f'No standard to quantify Sample for date {self.sample.date}.')
+            return None
+
+        # PyCharm's type inspector does *not* like sqlalchemy relationships
+        # noinspection PyTypeChecker
+        for quant in self.standard.quantifications:
+            if quant.value is None:
+                continue
+
+            cpd = search_for_attr_value(self.sample.compounds, 'name', quant.name)
+
+            if self.quantifier is None:
+                print(f'No quantifier provided for Sample {self.sample.date}')
+                return None
+            else:
+                if not cpd or cpd.corrected_pa is None:
+                    # print(f'No {quant.name} found in compounds for GcRun {self.date}.')
+                    continue
+                else:
+                    q_compound = search_for_attr_value(self.quantifier.compounds, 'name', quant.name)
+
+                    if not q_compound:
+                        print(f'No working standard compound found for {quant.name} in GcRun {self.sample.date}')
+                        continue
+
+                    if q_compound.corrected_pa is not None and q_compound.corrected_pa is not 0:
+                        cpd.mr = (
+                                ((cpd.corrected_pa / q_compound.corrected_pa) * self.quantifier.log.sample_time
+                                 * self.quantifier.log.sample_flow * quant.value)
+                                / (self.sample.log.sample_time * self.sample.log.sample_flow)
+                        )
+                    # mixing ratio is the response ratio (sample / standard) mutliplied by the
+                    # certified value in that standard, normalized for a 2500s, 2.5V sample volume
+
+                    else:
+                        print(f'No working standard value found for compound {quant.name} in GcRun {self.sample.date}')
+                        continue
