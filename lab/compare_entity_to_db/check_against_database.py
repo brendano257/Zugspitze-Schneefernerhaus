@@ -9,14 +9,14 @@ from pathlib import Path
 
 from sqlalchemy.orm import Session
 
+from utils import split_into_sets_of_n
 from settings import DB_NAME, CORE_DIR, LOG_DIR, DAILY_DIR, GCMS_DIR
-from IO.db import connect_to_db, Base, LogFile, Integration, Daily
+from IO.db import connect_to_db, Base, LogFile, Integration, Daily, DailyFile
 
 
 def filter_for_new_entities(objs, orm_class, attr, session=None):
     """
     Filter a list of sqlalchemy class instances for only those that are unique along the provided attribute.
-    TODO: Should split into sets and process to avoid SQLite variable limits
 
     :param objs:
     :param orm_class:
@@ -37,7 +37,13 @@ def filter_for_new_entities(objs, orm_class, attr, session=None):
 
     obj_attrs = [getattr(o, attr) for o in objs]
 
-    objs_in_db = session.query(orm_class).filter(getattr(orm_class, attr).in_(obj_attrs)).all()
+    obj_attr_sets = split_into_sets_of_n(obj_attrs, 750)  # avoid SQLite var limit of 1000
+
+    objs_in_db = []
+    for set_ in obj_attr_sets:
+        db_attrs_from_set = session.query(orm_class).filter(getattr(orm_class, attr).in_(set_)).all()
+        for item in db_attrs_from_set:
+            objs_in_db.append(item)
 
     attrs_in_db = [getattr(e, attr) for e in objs_in_db]
 
@@ -71,10 +77,22 @@ def test_on_log_files():
 
 
 def test_on_dailies():
-    pass
+    from IO import get_all_data_files
+
+    daily_files = [DailyFile(path) for path in sorted(get_all_data_files(DAILY_DIR, '.txt'))]
+
+    print(f'DailyFiles read: {len(daily_files)}')
+
+    new_only = filter_for_new_entities(daily_files, DailyFile, '_path')
+
+    print(f'DailyFiles returned: {len(new_only)}')
+
+    for file in new_only:
+        print(file.path)
 
 
 if __name__ == '__main__':
     # test_on_log_files()  # returns only log dates not already in the database
+    # test_on_dailies()
 
     pass
