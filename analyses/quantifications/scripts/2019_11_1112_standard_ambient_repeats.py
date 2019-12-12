@@ -46,12 +46,21 @@ assert len(standard_runs) == len(ambient_runs), "Unequal number of standard and 
 
 ambients = []
 standards = []
+# last_standard = None
+
 for ambient_run, standard_run in zip(ambient_runs, standard_runs):
     blank_subtract(ambient_run, vocs, session, blank=blank_run)
     blank_subtract(standard_run, vocs, session, blank=blank_run)
 
     quant = SampleQuant(ambient_run, standard_run, blank_run, standard_to_quantify_with)
     quant.quantify()
+
+    #
+    # if last_standard:
+    #     alt_quant = SampleQuant(ambient_run, last_standard, blank_run, standard_to_quantify_with)
+    #     alt_quant.quantify()
+    #
+    # last_standard = standard_run
 
     ambient_run = session.merge(ambient_run)  # merge the quantified run, then add to list
     standard_run = session.merge(standard_run)
