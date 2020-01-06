@@ -3,9 +3,23 @@ Project-wide settings, currently limited to directories needed accross the proje
 
 TODO:
     # Notes about what general things should be done in the future
-        .
-    7) Standardize .quantify() and make it a method shared by GcRuns and SampleQuants (it should call blank_subtract)
-    9) Add checker for processor logs dir. Alert if over LOG_DIR_SIZE and allow for shrinking...
+    .
+    .
+    1) Standardize .quantify() and make it a method shared by GcRuns and SampleQuants (it should call blank_subtract)
+    1.1) Make a re-quantify method that takes dates to match between, etc. Use in processor to avoid pointless checking
+        of old, unmatched data. (use a config last_data_date, but always check 2-weeks back.
+    2) Make Integrations, GcRuns, and Standards iterables to access compounds/quantifications
+        Use a @make_iterable decorator on the class that's callable and returns the decorator, adding iteration
+            Should be @make_iterable(attr_to_iter)
+    3) Make __repr__ for all classes
+        3.1) TEST ALL REPRs
+    4) Make __str__ for all classes
+    5) Make all classes hashable by their SQLite ID and uniquely dimensioned data
+    6) Use sets wherever possible
+    7) Switch to generators wherever possible
+    8) Create EBAS data module -- generator based
+    9) Database connection --> context manager
+
 
 """
 import json
