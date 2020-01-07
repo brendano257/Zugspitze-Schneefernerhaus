@@ -519,7 +519,7 @@ class BlankSubtractedMixin(ABC):
             the GcRun that is being subtracted.
         :param Sequence[str] compounds_to_subtract: list of compounds names to blank subtract subtract; a list of all
             the vocs will be queried from the database if not given
-        :param GcRun | None blank: the blank run to subtract; if None is not explicity provided, one will be searched
+        :param GcRun | None blank: the blank run to subtract; if None is NOT explicity provided, one will be searched
             for within +/- hours_to_match of the sample time
         :param int | float hours_to_match: +/- <n> hours to look for a blank within (if not given). Defaults to 6 hours,
             which is the normal period required for the daily runs
