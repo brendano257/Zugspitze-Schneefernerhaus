@@ -6,6 +6,7 @@ import xlsxwriter
 import pandas as pd
 
 from xlsxwriter.utility import xl_rowcol_to_cell, xl_range
+from sqlalchemy.ext.declarative import DeclarativeMeta
 from sqlalchemy.orm.attributes import InstrumentedAttribute
 from sqlalchemy.sql.elements import BinaryExpression
 
@@ -31,8 +32,8 @@ def abstract_query(params, filters, order=None):
     .join(LogFile, LogFile.integration_id == LogFile.id), but easy_query handles this internally by referencing metadata
     that's created after the models are defined, thus it will handle changes in the schema as well.
 
-    :param Sequence[InstrumentedAttribute] params: one or many parameters to be queried, params will be output in their
-        requested order
+    :param Sequence[InstrumentedAttribute | DeclarativeMeta] params: one or many parameters to be queried,
+        params will be output in their requested order
     :param Sequence[BinaryExpression] filters: one or many filter expressions to apply,
         eg [Integration.id != 1, Integration.filename.like('2019_%'), LogFile.date >= datetime(2019, 1, 1)];
         filters *must* be given in their intended order of application
@@ -47,7 +48,11 @@ def abstract_query(params, filters, order=None):
 
     classes = []
     for p in params:
-        parent_class = p.parent.class_
+        if isinstance(p, DeclarativeMeta):
+            parent_class = p  # is a class; just add it
+        else:
+            parent_class = p.parent.class_  # is an attribute; need to add it's parent class
+
         classes.append(parent_class) if parent_class not in classes else None  # need order, so hack around a set...
 
     base = classes.pop(0)  # grab first class from list
@@ -72,7 +77,7 @@ def abstract_query(params, filters, order=None):
         q = q.filter(f)
 
     if order:
-        if not order in params:
+        if order.parent.class_ not in (base, *classes):
             msg = 'Order must be an InstrumentedAttribute and must also be in the queried parameters'
             raise ValueError(msg)
 
@@ -99,9 +104,9 @@ def get_df_with_filters(use_mrs, filters=None, compounds=None):
     Returned DataFrame has a datetimeindex of GcRun dates, and a column per compound.
 
     :param bool use_mrs: Boolean specifying if mixing ratios should be returned. False will return peak areas instead
-    :param list filters: List containing Sqlalchemy filter expressions, eg [GcRun.type == 1, GcRun.quantified == 1]
+    :param Iterable filters: List containing Sqlalchemy filter expressions, eg [GcRun.type == 1, GcRun.quantified == 1]
         **Filters are added sequentially and should be given in their intended order
-    :param list compounds: list of compounds to query for, defaults to all quantified compounds if not given
+    :param Iterable compounds: list of compounds to query for, defaults to all quantified compounds if not given
     :return pd.DataFrame:
     """
     engine, session = connect_to_db(DB_NAME, CORE_DIR)
