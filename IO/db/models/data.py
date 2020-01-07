@@ -546,7 +546,7 @@ class BlankSubtractedMixin(ABC):
             msg = 'compounds_to_subtract must be of type Sequence'
             raise TypeError(msg)
 
-        if blank is blank_default and self.type not in [0, 6]:
+        if blank is blank_default and self.type not in {0, 6}:
             # match blanks if not value was provided and this sample isn't a blank
             close_blanks = (session.query(GcRun)
                             .filter(GcRun.type == 0)

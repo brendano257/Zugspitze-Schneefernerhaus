@@ -56,6 +56,8 @@ def load_all_dailies(logger):
 
     if new_files:
         for file in new_files:
+
+            # TODO: Dailies need to check by date as well; roll into updates w/ set logic
             dailies = read_daily_file(file.path)
             file_daily_dates = [d.date for d in file.entries]
             file.entries.extend([d for d in dailies if d.date not in file_daily_dates])
@@ -182,7 +184,7 @@ def load_standards(logger):
         standard = Standard(name, start_date, end_date)
         quantifications = []
         for compound, cert_value in vals.items():
-            if compound not in ['start_date', 'end_date']:
+            if compound not in {'start_date', 'end_date'}:
                 quantifications.append(Quantification(compound, cert_value, standard))
 
         if standard.name not in standards_in_db:

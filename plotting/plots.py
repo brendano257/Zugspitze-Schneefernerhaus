@@ -95,8 +95,8 @@ class Plot2D(ABC):
         limits = getattr(self, limits_attr)
 
         if self.limits:
-            axis.set_xlim(**{k: v for k, v in limits.items() if k in ('right', 'left')})
-            axis.set_ylim(**{k: v for k, v in limits.items() if k in ('top', 'bottom')})
+            axis.set_xlim(**{k: v for k, v in limits.items() if k in {'right', 'left'}})
+            axis.set_ylim(**{k: v for k, v in limits.items() if k in {'top', 'bottom'}})
 
     def _label_axes(self):
         """Set the axes labels on the primary axis."""

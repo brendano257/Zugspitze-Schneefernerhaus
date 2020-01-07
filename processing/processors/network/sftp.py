@@ -18,10 +18,6 @@ def retrieve_new_files(logger):
     Uses a local SQLite database as part of the project to track remote and local files, pulling only those with changed
     file sizes. Only gets GCMS data for this month and the month it was 7 days ago (if different) as an optimization.
 
-    TODO: Need a better way of comparing local/remote paths; probably just a lookup or differencer? Local will
-        always be prefixed with /data now...
-        FOUND IT: relpath should be stripped properly in LocalFile...it currently is not.
-
     :param logger: Active logger that function should log to
     :return bool: True if it exits without issue/concern
     """

@@ -22,7 +22,7 @@ def match_integrations_to_logs(integrations, logs):
     integration_dates = [i.date for i in integrations]
 
     for log in logs:
-        if log.sample_type in [5, 4, 3, 2, 1, 0]:
+        if log.sample_type in {5, 4, 3, 2, 1, 0}:
             # samples (5), standards (3, 2, 1), and zero air (0) logs
             # should be 30-40 minutes before the Agilent acq. log date
             date, difference = find_closest_date(log.date, integration_dates, how='pos')
@@ -73,7 +73,7 @@ def blank_subtract(run, compounds_to_subtract, session, blank=None, force_no_bla
 
     run.blank = blank  # assign, even if None
 
-    if not blank and run.type not in [0, 6] and not force_no_blank:
+    if not blank and run.type not in {0, 6} and not force_no_blank:
         close_blanks = (session.query(GcRun)
                         .filter(GcRun.type == 0)
                         .filter(GcRun.date >= run.date - dt.timedelta(hours=6),

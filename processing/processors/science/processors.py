@@ -110,9 +110,9 @@ def quantify_runs(logger):
             run.standard = std
 
         # find the working standard if this run wasn't one
-        if run.type not in [1, 2, 3]:
+        if run.type not in {1, 2, 3}:
             close_standards = (session.query(GcRun)
-                               .filter(GcRun.type.in_([1, 2, 3]))
+                               .filter(GcRun.type.in_({1, 2, 3}))
                                .filter(GcRun.date >= run.date - dt.timedelta(hours=6),
                                        GcRun.date < run.date + dt.timedelta(hours=6))
                                .all())
