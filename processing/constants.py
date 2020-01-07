@@ -1,7 +1,7 @@
 __all__ = ['ALL_COMPOUNDS', 'LOG_ATTRS', 'DAILY_ATTRS']
 
 # list of all compounds processed by system; used frequently throughout for plotting etc
-ALL_COMPOUNDS = {'PFC-116', 'ethene', 'SF6', 'CFC-13', 'ethane', 'SO2F2', 'HFC-143a', 'PFC-218', 'HFC-125', 'OCS',
+ALL_COMPOUNDS = ('PFC-116', 'ethene', 'SF6', 'CFC-13', 'ethane', 'SO2F2', 'HFC-143a', 'PFC-218', 'HFC-125', 'OCS',
                  'H-1301', 'HFC-134a', 'HFC-152a', 'HCFC-22', 'CFC-115', 'propene', 'methyl_chloride', 'propane',
                  'propyne*', 'methanol', 'PFC-318', 'CFC-12', 'acetaldehyde', 'HCFC-142b', 'methyl_bromide', 'HCFC-124',
                  'HFC-245fa', 'methyl_formate', 'i-butane', 'iso-butene', '1,3-butadiene', '1-butene', 'H-1211',
@@ -10,7 +10,7 @@ ALL_COMPOUNDS = {'PFC-116', 'ethene', 'SF6', 'CFC-13', 'ethane', 'SO2F2', 'HFC-1
                  'trans-2-pentene', 'cis-2-pentene', 'n-pentane', 'CFC-113', 'H-2402', 'chloroform', '2-methylpentane',
                  '3-methylpentane', 'CH2Br2', 'hexane', 'benzene', 'methyl_chloroform', 'CCl4', 'cyclohexane',
                  'n-heptane', 'toluene', 'perchloroethylene', 'iso-octane', 'CHBr3', 'octane', 'ethylbenzene',
-                 'm-xylene', 'o-xylene', '1,2,4-trimethylbenzene', '1,3,5-trimethylbenzene'}
+                 'm-xylene', 'o-xylene', '1,2,4-trimethylbenzene', '1,3,5-trimethylbenzene')
 
 # list of all attributes to a LogFile object, sans date; used to simplify LogFile init and other bulk operations
 LOG_ATTRS = ('sample_time', 'sample_flow', 'sample_type', 'backflush_time', 'desorb_temp', 'flashheat_time',
