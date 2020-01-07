@@ -7,7 +7,7 @@ from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey, Date
 from sqlalchemy.orm import relationship, Session
 
 from IO.db.core import Base, connect_to_db
-from utils.core import search_for_attr_value, find_closest_date
+from utils.core import search_for_attr_value, find_closest_date, make_class_iterable_on_attr
 
 from settings import CORE_DIR, DB_NAME
 
@@ -372,6 +372,7 @@ class Daily(Base):
         return f'{self.__class__.__name__}(date={repr(self.date)})'
 
 
+@make_class_iterable_on_attr('compounds')
 class Integration(Base):
     """
     A container for the results of integrating a run on the GCMS.
@@ -595,6 +596,7 @@ class JoinedMeta(type(BlankSubtractedMixin), type(Base)):
     pass
 
 
+@make_class_iterable_on_attr('compounds')
 class GcRun(Base, BlankSubtractedMixin, metaclass=JoinedMeta):
     """
     A complete, successful run on the GC. Contains a LogFile and Integration by relation.
@@ -799,6 +801,7 @@ class Quantification(Base):
         return f'{self.__class__.__name__}(name={repr(self.name)}, value={self.value}, standard={repr(self.standard)})'
 
 
+@make_class_iterable_on_attr('quantifications')
 class Standard(Base):
     """
     A container for information about a gas reference standard.

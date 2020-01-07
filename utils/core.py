@@ -2,7 +2,8 @@ import logging
 
 from pathlib import Path
 
-__all__ = ['configure_logger', 'split_into_sets_of_n', 'gen_isempty', 'search_for_attr_value', 'find_closest_date']
+__all__ = ['configure_logger', 'split_into_sets_of_n', 'gen_isempty', 'search_for_attr_value', 'find_closest_date',
+           'make_class_iterable_on_attr']
 
 
 def configure_logger(rundir, name):
@@ -121,3 +122,20 @@ def find_closest_date(date, list_of_dates, how='abs'):
     delta = match - date
 
     return match, delta
+
+
+def make_class_iterable_on_attr(attr):
+    """
+    Class decorator for making a class iterable by deligating iteration to it's attribute 'attr'.
+
+    :param str attr: attribute to deligate iteration of the class to
+    :return: the wrapped class, with added __iter__ method
+    """
+    def class_wrap(cls):
+        def deligated_iter(self):
+            return iter(getattr(self, attr))
+
+        cls.__iter__ = deligated_iter
+        return cls
+
+    return class_wrap
