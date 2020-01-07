@@ -3,8 +3,6 @@ from settings import DB_NAME, CORE_DIR
 
 _, session = connect_to_db(DB_NAME, CORE_DIR)
 
-
-
 for typ in (Integration, GcRun, Standard):
     print(f'\n\n{typ.__name__}s')
     instances = session.query(typ).limit(3).all()  # get a couple test types
