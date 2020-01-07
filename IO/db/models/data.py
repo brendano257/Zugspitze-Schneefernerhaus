@@ -71,6 +71,10 @@ class Compound(Base):
         self.corrected_pa = None
         self.filtered = False
 
+    def __repr__(self):
+        return (f'{self.__class__.__name__}(name={repr(self.name)}, rt={self.rt}, ion={self.ion}, pa={self.pa},'
+                + f'corrected_pa={self.corrected_pa}, filtered={self.filtered})')
+
 
 class LogFile(Base):
     """
@@ -240,6 +244,9 @@ class LogFile(Base):
         self.trapheatout_bakeout = trapheatout_bakeout
         self.status = 'single'
 
+    def __repr__(self):
+        return f'{self.__class__.__name__}(date={repr(self.date)}, sample_type={self.sample_type})'
+
 
 class DailyFile(Base):
     """
@@ -283,6 +290,9 @@ class DailyFile(Base):
     def name(self):
         """Getter that returns the filename of the stored path"""
         return self._name
+
+    def __repr__(self):
+        return f'{self.__class__.__name__}(path="{self._path}")'
 
 
 class Daily(Base):
@@ -358,6 +368,9 @@ class Daily(Base):
         self.linep = linep
         self.zerop = zerop
 
+    def __repr__(self):
+        return f'{self.__class__.__name__}(date={repr(self.date)})'
+
 
 class Integration(Base):
     """
@@ -419,6 +432,9 @@ class Integration(Base):
     def path(self, val):
         self._path = str(val)
 
+    def __repr__(self):
+        return f'{self.__class__.__name__}(date={repr(self.date)})'
+
 
 class BlankSubtractedMixin(ABC):
     """
@@ -444,7 +460,6 @@ class BlankSubtractedMixin(ABC):
         :param session: active sqlalchemy session
         :return:
         """
-        print('Defaulted and pass all values.')
         for peak in self.compounds:
             peak.corrected_pa = peak.pa
         session.merge(self)
@@ -692,6 +707,9 @@ class GcRun(Base, BlankSubtractedMixin, metaclass=JoinedMeta):
 
         self.quantified = 1
 
+    def __repr__(self):
+        return f'{self.__class__.__name__}(date={repr(self.date)}, type={self.type})'
+
 
 class Datum(Base):
     """
@@ -739,6 +757,9 @@ class OldData(Base):
         self.date = date
         self.mr = mr
 
+    def __repr__(self):
+        return f'{self.__class__.__name__}(date={repr(self.date)}, name={repr(self.name)}, mr={self.mr})'
+
 
 class Quantification(Base):
     """
@@ -773,6 +794,9 @@ class Quantification(Base):
         self.name = name
         self.value = value
         self.standard = standard
+
+    def __repr__(self):
+        return f'{self.__class__.__name__}(name={repr(self.name)}, value={self.value}, standard={repr(self.standard)})'
 
 
 class Standard(Base):
@@ -809,6 +833,10 @@ class Standard(Base):
         self.name = name
         self.start_date = start_date
         self.end_date = end_date
+
+    def __repr__(self):
+        return (f'{self.__class__.__name__}(name={repr(self.name)}, start_date={repr(self.start_date)},'
+                + f'end_date={repr(self.end_date)})')
 
 
 class SampleQuant:
@@ -892,3 +920,6 @@ class SampleQuant:
                     else:
                         print(f'No working standard value found for compound {quant.name} in GcRun {self.sample.date}')
                         continue
+
+    def __repr__(self):
+        return f'{self.__class__.__name__}(sample={repr(self.sample)}, standard={repr(self.standard)})'

@@ -49,6 +49,11 @@ class Config(Base):
         self.last_data_date = last_data_date
         self.days_to_plot = days_to_plot
 
+    def __repr__(self):
+        return (f'{self.__class__.__name__}(processor={repr(self.processor)}, filesize={self.filesize}, '
+                + f'startline={self.startline}, last_data_date={repr(self.last_data_date)}, '
+                + f'days_to_plot={self.days_to_plot})')
+
 
 class FileToUpload(Base):
     """
@@ -95,3 +100,6 @@ class FileToUpload(Base):
     def name(self):
         """Get the name of the Path, e.g. file.txt"""
         return self._name
+
+    def __repr__(self):
+        return f'{self.__class__.__name__}(path="{self.path}", remote_path="{self.remote_path}", staged={self.staged})'

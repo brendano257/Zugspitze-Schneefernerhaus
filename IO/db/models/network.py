@@ -7,7 +7,6 @@ from settings import REMOTE_BASE_PATH, LOCAL_BASE_PATH
 __all__ = ['LocalFile', 'RemoteFile']
 
 
-
 class LocalFile(Base):
     """
     A database-persisted file representation used for comparing local and remote files.
@@ -39,6 +38,9 @@ class LocalFile(Base):
         self.path = path
         self.relpath = path.replace(str(LOCAL_BASE_PATH), '')
 
+    def __repr__(self):
+        return f'{self.__class__.__name__}(st_mtime={self.st_mtime}, path="{self.path}")'
+
 
 class RemoteFile(Base):
     """
@@ -69,3 +71,6 @@ class RemoteFile(Base):
         self.st_mtime = st_mtime
         self.path = path
         self.relpath = path.replace(REMOTE_BASE_PATH, '')
+
+    def __repr__(self):
+        return f'{self.__class__.__name__}(st_mtime={self.st_mtime}, path="{self.path}")'

@@ -15,7 +15,7 @@ TODO:
         3.1) TEST ALL REPRs
     4) Make __str__ for all classes
     5) Make all classes hashable by their SQLite ID and uniquely dimensioned data
-    6) Use sets wherever possible
+    6) Use sets wherever possible (updated daily date checking at same time)
     7) Switch to generators wherever possible
     8) Create EBAS data module -- generator based
     9) Database connection --> context manager
