@@ -63,14 +63,14 @@ def filter_for_new_entities(objs, orm_class, attr, session=None):
         for item in db_objs_from_set:
             objs_in_db.append(item)
 
-    attrs_in_db = [getattr(e, attr) for e in objs_in_db]
+    attrs_in_db = {getattr(e, attr) for e in objs_in_db}
 
     new_objs = []
     for obj in objs:
         if getattr(obj, attr) not in attrs_in_db:
             new_objs.append(obj)  # add new object to return list
             # adding the new obj attr to the check-against list is required to prevent duplicates in one batch
-            attrs_in_db.append(getattr(obj, attr))
+            attrs_in_db.add(getattr(obj, attr))
 
     if close_on_exit:
         session.close()
