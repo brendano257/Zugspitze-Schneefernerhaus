@@ -2,10 +2,6 @@
 A sequence of Zero-Air, NIST VOC Standard, TrapBlank, NIST VOC Standard, Zero-Air were run to test the residuals left on
 the trap. The first Zero-air is technically a part of the night runs, but is included anyway.
 """
-from datetime import datetime
-
-import pandas as pd
-
 from settings import CORE_DIR, DB_NAME
 from IO.db import connect_to_db, GcRun, Standard, Integration
 from reporting import get_df_with_filters, write_df_to_excel, abstract_query
@@ -25,8 +21,8 @@ filters = (GcRun.integration.has(Integration.filename.in_(samples)),)
 runs = abstract_query((GcRun,), filters, GcRun.date)
 
 for run in runs:
-    run.blank_subtract(session=session, blank=None, compounds_to_subtract=ALL_COMPOUNDS)  # force "blank subtraction" with no values
-    # this means all samples are now "as is" when they were integrated
+    run.blank_subtract(session=session, blank=None, compounds_to_subtract=ALL_COMPOUNDS)
+    # force "blank subtraction" with no values; this means all samples are now "as is" when they were integrated
 
 session.commit()
 
