@@ -1,6 +1,7 @@
 import statistics as s
 from datetime import datetime
-from collections import OrderedDict, Sequence
+from collections import OrderedDict
+from collections.abc import Sequence
 
 import xlsxwriter
 import pandas as pd
@@ -144,7 +145,7 @@ def get_df_with_filters(use_mrs, filters=None, compounds=None):
                 dates[r.date] = OrderedDict([(compound, r[0])])  # if date doesn't exist yet, create it's ODict
 
     # re-sort based on date, for safety
-    dates = OrderedDict(sorted(dates.items()))
+    dates = OrderedDict(sorted(dates.items(), key=lambda kv_pair: kv_pair[0]))
 
     for date, results in dates.items():
         dates[date] = OrderedDict(
