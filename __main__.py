@@ -2,6 +2,7 @@
 Run any portion of the processing or all of it at once from the command line.
 """
 import argparse
+from time import sleep
 from datetime import datetime
 
 from settings import PROCESSOR_LOGS_DIR
@@ -49,6 +50,10 @@ def run(ergs):
 
     if ergs.no_upload:
         sequence.pop(-1)  # remove the last element (always the upload function, check_send_files)
+
+    if ergs.wait:
+        print(f'Waiting for {ergs.wait} minutes before running.')
+        sleep(60 * ergs.wait)
 
     # Run the entire process from start to end
     for proc in sequence:
@@ -130,12 +135,15 @@ subparsers = parser.add_subparsers(required=True,
 
 # ----------------- Parser for running everything, optionally not downloading or uploading ----------------- #
 parser_run = subparsers.add_parser('run',
-                                   description='Run the entire sequence, with the ability to opt-out of uploading.')
+                                   description='Run the entire sequence, with the ability to opt-out of uploading '
+                                   + 'downloading, or optionally waiting X minutes before running.')
 
 parser_run.add_argument('-D', '--no-download', action='store_true', dest='no_download',
                         help='Do not download new files when running all.')
 parser_run.add_argument('-U', '--no-upload', action='store_true', dest='no_upload',
                         help='Do not upload any staged files when running all.')
+parser_run.add_argument('-W', '--wait', type=int, dest='wait',
+                        help='Wait for the provided number of minutes before running.')
 
 # if parser_run is used, run is set as it's func, such that args.func(args) can be called
 parser_run.set_defaults(func=run)
