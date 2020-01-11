@@ -37,7 +37,7 @@ def match_gcruns(logger):
     runs = match_integrations_to_logs(integrations, logfiles)
 
     if runs:
-        run_dates = [r.date for r in runs]
+        run_dates = {r.date for r in runs}
         run_dates_in_db = session.query(GcRun).filter(GcRun.date.in_(run_dates)).all()
         run_dates_in_db = {r.date for r in run_dates_in_db}
 
