@@ -66,6 +66,7 @@ def retrieve_new_files(logger):
                                                  [new_remote_files, new_local_files]):
             paths_in_db = []
             for set_ in filesets:
+                set_ = frozenset(set_)
                 # noinspection PyUnresolvedReferences
                 in_db = session.query(Filetype.path).filter(Filetype.path.in_(set_)).all()
                 if in_db:
