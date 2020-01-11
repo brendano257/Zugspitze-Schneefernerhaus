@@ -89,6 +89,7 @@ def filter_for_new_entities(objs, orm_class, attr, session=None):
 
     objs_in_db = []
     for set_ in obj_attr_sets:
+        set_ = frozenset(set_)  # convert to frozenset for better query/comparison perf
         db_objs_from_set = session.query(orm_class).filter(getattr(orm_class, attr).in_(set_)).all()
         for item in db_objs_from_set:
             objs_in_db.append(item)
