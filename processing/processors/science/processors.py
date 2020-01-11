@@ -39,12 +39,12 @@ def match_gcruns(logger):
     if runs:
         run_dates = [r.date for r in runs]
         run_dates_in_db = session.query(GcRun).filter(GcRun.date.in_(run_dates)).all()
-        run_dates_in_db[:] = [r.date for r in run_dates_in_db]
+        run_dates_in_db = {r.date for r in run_dates_in_db}
 
         for r in runs:
             if r.date not in run_dates_in_db:
                 session.merge(r)
-                run_dates_in_db.append(r.date)
+                run_dates_in_db.add(r.date)
                 logger.info(f'GcRun for {runs.date} added.')
 
         session.commit()
