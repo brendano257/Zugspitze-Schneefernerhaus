@@ -15,6 +15,7 @@ TODO:
         xxxxxx 3.1) TEST ALL REPRs
     4) Make __str__ for all classes
     5) Make all classes hashable by their SQLite ID and uniquely dimensioned data
+        would allow more abstraction in database query/update/checking on different data types
     6) Use sets wherever possible (updated daily date checking at same time)
     7) Switch to generators wherever possible
     8) Create EBAS data module -- generator based
@@ -26,13 +27,15 @@ import json
 from pathlib import Path
 
 __all__ = ['CORE_DIR', 'REMOTE_BASE_PATH', 'BOULDAIR_BASE_PATH', 'PROCESSOR_LOGS_DIR',
-           'LOG_DIR', 'GCMS_DIR', 'DAILY_DIR', 'LOCAL_BASE_PATH', 'DB_NAME', 'MR_PLOT_DIR', 'FULL_PLOT_DIR',
-           'LOG_PLOT_DIR', 'DAILY_PLOT_DIR', 'PA_PLOT_DIR', 'STD_PA_PLOT_DIR', 'FILTER_DIRS', 'HISTORIC_DATA_SHEET',
-           'JSON_FILES', 'JSON_PRIVATE_DIR', 'JSON_PUBLIC_DIR']
+           'LOG_DIR', 'GCMS_DIR', 'DAILY_DIR', 'LOCAL_BASE_PATH', 'DB_NAME', 'DB_PROTO', 'DB_FILE', 'MR_PLOT_DIR',
+           'FULL_PLOT_DIR', 'LOG_PLOT_DIR', 'DAILY_PLOT_DIR', 'PA_PLOT_DIR', 'STD_PA_PLOT_DIR', 'FILTER_DIRS',
+           'HISTORIC_DATA_SHEET', 'JSON_FILES', 'JSON_PRIVATE_DIR', 'JSON_PUBLIC_DIR']
 
 CORE_DIR = Path('/home/brendan/PycharmProjects/Z')  # assign static project directory
 
-DB_NAME = 'sqlite:///zugspitze.sqlite'
+DB_FILE = 'zugspitze.sqlite'
+DB_PROTO = 'sqlite:///{}'
+DB_NAME = DB_PROTO.format(DB_FILE)
 
 # data directories for LabView logs, GCMS output files, and daily files
 LOG_DIR = CORE_DIR / 'data/log/'
