@@ -168,7 +168,7 @@ def load_standards(logger):
     logger.info('Running load_standards()')
 
     standards_in_db = session.query(Standard.name).all()
-    standards_in_db[:] = [s.name for s in standards_in_db]
+    standards_in_db = {s.name for s in standards_in_db}
 
     standards = json.loads(standards_filepath.read_text())
 
@@ -251,7 +251,7 @@ def load_historic_data(logger):
                 data.append(OldData(cpd, date, val))
 
         if data:
-            data_dates = [d.date for d in data]
+            data_dates = {d.date for d in data}
             data_in_db = session.query(OldData.date).filter(OldData.date.in_(data_dates)).all()
             data_in_db[:] = [d.date for d in data_in_db]
             for datum in data:
