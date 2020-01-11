@@ -2,10 +2,10 @@ from sqlalchemy.orm import Session
 
 from utils import split_into_sets_of_n
 from settings import DB_NAME, CORE_DIR
-from IO.db.models import FileToUpload
+from IO.db.models import FileToUpload, Standard
 from IO.db import connect_to_db, Base
 
-__all__ = ['add_or_ignore_plot', 'filter_for_new_entities']
+__all__ = ['add_or_ignore_plot', 'filter_for_new_entities', 'get_standard_quants']
 
 
 def add_or_ignore_plot(file, core_session):
@@ -23,6 +23,36 @@ def add_or_ignore_plot(file, core_session):
     if str(file.path.resolve()) not in files_in_db:
         core_session.add(file)
     return
+
+
+def get_standard_quants(name, string=False, set_=True, session=None):
+    """
+    Get the quantification objects or string names of the compounds for a given standard.
+
+    By default, returns a frozen set for performance. In general, this query is used to check string membership, making
+    an immutable set highly desirable.
+
+    :param str name: name of the standard to search for
+    :param bool string: if True, return string names of each quantification instead of object, else return Quant objects
+    :param bool set_: if True, return the result as a frozenset, otherwise returns tuple
+    :param Session session: an active Sqlalchemy session
+    :return tuple | frozenset: resulting objects or string names
+    """
+
+    if not session:
+        _, session = connect_to_db(DB_NAME, CORE_DIR)
+
+    std = session.query(Standard).filter(Standard.name == name).one()
+
+    if string:
+        quants = [q.name for q in std.quantifications]
+    else:
+        quants = [q for q in std.quantifications]
+
+    if set_:
+        return frozenset(quants)
+    else:
+        return tuple(set)
 
 
 def filter_for_new_entities(objs, orm_class, attr, session=None):
