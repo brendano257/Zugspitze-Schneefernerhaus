@@ -509,9 +509,9 @@ class BlankSubtractedMixin(ABC):
         produce the same output no matter how many times it's called -- assuming no changes to the original data are
         made in between subtractions, and the same blank or time period is passed in.
 
-        Performance: Performance can be expected to be significantly slower is compounds_to_subtract and a session are
+        Performance: Performance can be expected to be significantly slower if compounds_to_subtract and a session are
         not supplied. These will then be created/retrieved for each run. Allowing for their absence is a
-        use-at-your-own-risk convenience that may cause session conflicts as well as poor performance.
+        use-at-your-own-risk convenience that may cause poor performance at best and session conflicts at worst.
 
         :param Session session: active sqlalchemy Session
             **if not given, one will be created. However, this can result in session conflicts with passed in objects!
@@ -539,11 +539,13 @@ class BlankSubtractedMixin(ABC):
 
         if compounds_to_subtract is compounds_to_subtract_default:
             # default to getting vocs from database
-            vocs = session.query(Standard).filter(Standard.name == 'vocs').one()
-            compounds_to_subtract = [q.name for q in vocs.quantifications]
+            vocs = session.query(Standard).filter(Standard.name == 'vocs').one_or_none()
+            compounds_to_subtract = frozenset([q.name for q in vocs.quantifications])
 
-        if not isinstance(compounds_to_subtract, Sequence):
-            msg = 'compounds_to_subtract must be of type Sequence'
+        if (not isinstance(compounds_to_subtract, Sequence)
+            or not isinstance(compounds_to_subtract, set)
+            or not isinstance(compounds_to_subtract, frozenset)):
+            msg = 'compounds_to_subtract must be of type Sequence, set, or frozenset'
             raise TypeError(msg)
 
         if blank is blank_default and self.type not in {0, 6}:
