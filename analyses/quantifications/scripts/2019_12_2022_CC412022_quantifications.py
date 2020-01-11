@@ -8,7 +8,7 @@ import datetime as dt
 from datetime import datetime
 
 from settings import CORE_DIR, DB_NAME
-from IO.db import connect_to_db, GcRun, Integration, Standard, SampleQuant
+from IO.db import connect_to_db, GcRun, Integration, Standard, SampleQuant, get_standard_quants
 from processing import blank_subtract
 from reporting import compile_quant_report
 
@@ -21,8 +21,7 @@ certified_values_of_sample = (session.query(Standard)
                               .one().quantifications)
 # get standard cert values for the sample being quantified
 
-voc_standard_list = session.query(Standard).filter(Standard.name == 'vocs').one()
-vocs = [q.name for q in voc_standard_list.quantifications]
+vocs = get_standard_quants('vocs', string=True, session=session)
 
 days_with_standards = [datetime(2019, 12, x) for x in (20, 21, 22)]
 
