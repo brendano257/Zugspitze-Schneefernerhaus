@@ -543,8 +543,8 @@ class BlankSubtractedMixin(ABC):
             compounds_to_subtract = frozenset([q.name for q in vocs.quantifications])
 
         if (not isinstance(compounds_to_subtract, Sequence)
-            or not isinstance(compounds_to_subtract, set)
-            or not isinstance(compounds_to_subtract, frozenset)):
+            and not isinstance(compounds_to_subtract, set)
+            and not isinstance(compounds_to_subtract, frozenset)):
             msg = 'compounds_to_subtract must be of type Sequence, set, or frozenset'
             raise TypeError(msg)
 
