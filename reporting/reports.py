@@ -1,7 +1,7 @@
 import statistics as s
-from datetime import datetime
+from datetime import datetime, timedelta
 from collections import OrderedDict
-from collections.abc import Sequence
+from collections.abc import Sequence, Iterable
 
 import xlsxwriter
 import pandas as pd
@@ -11,8 +11,8 @@ from sqlalchemy.ext.declarative import DeclarativeMeta
 from sqlalchemy.orm.attributes import InstrumentedAttribute
 from sqlalchemy.sql.elements import BinaryExpression
 
-from IO.db.models import Compound, GcRun, Standard
-from IO.db import connect_to_db
+from IO.db.models import Compound, GcRun, Standard, SampleQuant, Integration
+from IO.db import connect_to_db, DBConnection, get_standard_quants
 from settings import CORE_DIR, DB_NAME
 from utils.core import search_for_attr_value
 from processing import get_mr_from_run, ALL_COMPOUNDS
@@ -20,7 +20,7 @@ from processing import get_mr_from_run, ALL_COMPOUNDS
 from IO.db.meta import relations
 
 __all__ = ['get_df_with_filters', 'write_df_to_excel', 'compile_quant_report', 'compile_enhancement_comparison',
-           'abstract_query']
+           'abstract_query', 'create_multiday_quant_report']
 
 
 def abstract_query(params, filters, order=None):
@@ -93,6 +93,7 @@ def get_df_from_results(results):
     :param results:
     :return:
     """
+    print(results)
     pass
 
 
@@ -277,7 +278,7 @@ def compile_quant_report(quantifications, sample_name, standard_name, sample_cer
         run_row += 1
 
     summary_header = [f'Compounds in {sample_name}',
-                      f'{sample_name} Certified Value',
+                      f'{sample_name} Provided Value',
                       f'Quantified Value (Mean: {len(quantifications)} Runs)',
                       '', 'Relative Difference']
 
@@ -385,3 +386,86 @@ def compile_enhancement_comparison(low, high, compounds=None, names=('Ridgeline'
             sheet.write(row, enhance_col, f'=({high_cell}-{low_cell})/{low_cell}', bold_percent_fmt)
 
     book.close()
+
+
+def create_multiday_quant_report(sample_name, standard_name, period_start_dates, period_length=timedelta(hours=24),
+                                 file_date=None, alt_standard_name=None, alt_sample_name=None):
+    """
+    Creates a quantification report for a set of runs conducted over mutliple days.
+
+    Currently, the SOP for quantifications is to run (SAMPLE, STANDARD, ZERO_BLANK) after the normal day runs for 3 days
+    in a row. Each set is considered one quantification, and the mean of all three is used. This handles that case with
+    only the standard and sample names being provided, along with the dates the sample sets occurred on.
+
+    TODO: Add more behavior for standards having different blanks, etc.
+
+    :param str sample_name: name of the sample to be found in filenames: filename.ilike(f'%{sample_name}.D');
+        also used for finding the standard in the database if an alternative is not provided:
+            Standard.name == sample_name
+    :param str standard_name: name of the standard to be found in filenames: filename.ilike(f'%{standard_name}.D');
+        also used for finding the standard in the database if an alternative is not provided:
+            Standard.name == standard_name
+    :param Sequence[datetime] | Iterable[datetime] period_start_dates: a sequence of datetimes, representing the start
+        of each period where a set of (sample, standard, zero_air) can be found
+    :param timedelta period_length: length of the period that a set of (sample, standard, zero_air) should be
+        found in; where (GcRun.date > period_start_date, GcRun.date < period_start_date + period_length). Defaults to
+        a single day (24h).
+    :param datetime file_date: date to prepend to the output filename, like [YYYY_MM_DD]_SAMPLE_qx_STANDARD.xlsx
+    :param str alt_standard_name: an alternative name to use when retrieving the Standard quantifications from the
+        database. For instance, the standard 'CC412022' has it's quantified values stored as 'cc412022_noaa_provided'
+    :param str alt_sample_name: an alternative name to use when retrieving the sample quantifications from the
+        database. For instance, the standard 'CC412022' has it's quantified values stored as 'cc412022_noaa_provided'
+    :return: None
+    """
+
+    # use lowercase of the provided names to query database if an alternative is not provided
+    alt_sample_name = sample_name.lower() if not alt_sample_name else alt_sample_name
+    alt_standard_name = standard_name.lower() if not alt_standard_name else alt_standard_name
+
+    # use the first period_start_date if a file_date wasn't given
+    file_date = period_start_dates[0] if not file_date else file_date
+
+    with DBConnection() as session:
+        standard_to_quantify_with = session.query(Standard).filter(Standard.name == alt_standard_name).one_or_none()
+        # get standard cert values for the quantifier
+        certified_values_of_sample = (session.query(Standard)
+                                      .filter(Standard.name == alt_sample_name)
+                                      .one().quantifications)
+        # get standard cert values for the sample being quantified
+
+        vocs = get_standard_quants('vocs', string=True, session=session)
+        quant_runs = []
+        for period in period_start_dates:
+            period_end = period + period_length
+
+            sample = (session.query(GcRun).join(Integration, Integration.run_id == GcRun.id)
+                      .filter(GcRun.date > period, GcRun.date < period_end)
+                      .filter(Integration.filename.ilike(f'%{sample_name}.D'))
+                      .order_by(GcRun.date)
+                      .one_or_none())
+
+            quantifier = (session.query(GcRun).join(Integration, Integration.run_id == GcRun.id)
+                          .filter(GcRun.date > period, GcRun.date < period_end)
+                          .filter(Integration.filename.ilike(f'%{standard_name}.D'))
+                          .order_by(GcRun.date)
+                          .one_or_none())
+
+            blank = (session.query(GcRun).join(Integration, Integration.run_id == GcRun.id)
+                     .filter(GcRun.date > period, GcRun.date < period_end)
+                     .filter(Integration.filename.ilike('%Blank2500.D'))
+                     .order_by(GcRun.date)
+                     .one_or_none())
+
+            if not sample or not quantifier or not blank:
+                print(f'Sample, standard or blank not found for {period}.')
+                continue
+
+            sample.blank_subtract(session=session, compounds_to_subtract=vocs, blank=blank)
+            quantifier.blank_subtract(session=session, compounds_to_subtract=vocs, blank=blank)
+
+            quant = SampleQuant(sample, quantifier, blank, standard_to_quantify_with)
+            quant.quantify()
+
+            quant_runs.append(quant)
+
+            compile_quant_report(quant_runs, sample_name, standard_name, certified_values_of_sample, date=file_date)
