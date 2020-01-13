@@ -51,13 +51,15 @@ class DBConnection:
 
     Care should be taken that lazy queries are not made inside the context and then retrieved outside of the context.
     """
-    def __init__(self, db_file=DB_FILE, directory=CORE_DIR):
+    def __init__(self, *, db_file=DB_FILE, directory=CORE_DIR, **kwargs):
         """
         :param str db_file: the filename of the database to be concatenated with it's directory
         :param Path directory: the Path to the database, excepting it's filename
+        :param dict kwargs: collect any keyword arguments to pass to sqlalchemy's sessionmaker in __enter__
         """
         self._db = db_file
         self._dir = directory
+        self.kwargs = kwargs
 
     @property
     def db_file(self):
@@ -69,7 +71,7 @@ class DBConnection:
 
     def __enter__(self):
         self._engine = create_engine(DB_PROTO.format(self._dir / DB_FILE))
-        self._session = sessionmaker(bind=self._engine)()
+        self._session = sessionmaker(bind=self._engine, **self.kwargs)()
         return self._session
 
     def __exit__(self, exc_type, exc_val, exc_tb):
