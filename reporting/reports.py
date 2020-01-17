@@ -23,7 +23,7 @@ __all__ = ['get_df_with_filters', 'write_df_to_excel', 'compile_quant_report', '
            'abstract_query', 'create_multiday_quant_report']
 
 
-def abstract_query(params, filters, order=None):
+def abstract_query(params, filters, order=None, session=None):
     """
     Make a query for one or many parameters with no knowledge of the project structure needed.
 
@@ -35,7 +35,7 @@ def abstract_query(params, filters, order=None):
 
     :param Sequence[InstrumentedAttribute | DeclarativeMeta] params: one or many parameters to be queried,
         params will be output in their requested order
-    :param Sequence[BinaryExpression] filters: one or many filter expressions to apply,
+    :param Sequence filters: one or many filter expressions to apply,
         eg [Integration.id != 1, Integration.filename.like('2019_%'), LogFile.date >= datetime(2019, 1, 1)];
         filters *must* be given in their intended order of application
     :param InstrumentedAttribute order: parameter to order results by
@@ -43,7 +43,12 @@ def abstract_query(params, filters, order=None):
     :raises NotImplementedError: if any class in params cannot be joined appropriately
     :raises ValueError: if order is not also in params
     """
-    engine, session = connect_to_db(DB_NAME, CORE_DIR)
+
+    if not session:
+        engine, session = connect_to_db(DB_NAME, CORE_DIR)
+        close_on_exit = True
+    else:
+        close_on_exit = False
 
     q = session.query(*params)  # kick off the query
 
@@ -83,6 +88,9 @@ def abstract_query(params, filters, order=None):
             raise ValueError(msg)
 
         q = q.order_by(order)
+
+    if close_on_exit:
+        session.close()
 
     return q.all()
 
