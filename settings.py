@@ -8,19 +8,11 @@ TODO:
     1) Standardize .quantify() and make it a method shared by GcRuns and SampleQuants (it should call blank_subtract)
     1.1) Make a re-quantify method that takes dates to match between, etc. Use in processor to avoid pointless checking
         of old, unmatched data. (use a config last_data_date, but always check 2-weeks back.
-    xxxxxx 2) Make Integrations, GcRuns, and Standards iterables to access compounds/quantifications
-        Use a @make_iterable decorator on the class that's callable and returns the decorator, adding iteration
-            Should be @make_iterable(attr_to_iter)
-    xxxxxx 3) Make __repr__ for all classes
-        xxxxxx 3.1) TEST ALL REPRs
-    4) Make __str__ for all classes
     5) Make all classes hashable by their SQLite ID and uniquely dimensioned data
         would allow more abstraction in database query/update/checking on different data types
     6) Use sets wherever possible (updated daily date checking at same time)
     7) Switch to generators wherever possible
     8) Create EBAS data module -- generator based
-    9) Database connection --> context manager
-
 
 """
 import json
