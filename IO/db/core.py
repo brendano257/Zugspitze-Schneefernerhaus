@@ -55,7 +55,7 @@ class DBConnection:
         """
         :param str db_file: the filename of the database to be concatenated with it's directory
         :param Path directory: the Path to the database, excepting it's filename
-        :param dict kwargs: collect any keyword arguments to pass to sqlalchemy's sessionmaker in __enter__
+        :param kwargs: collect any keyword arguments to pass to sqlalchemy's sessionmaker in __enter__
         """
         self._db = db_file
         self._dir = directory
