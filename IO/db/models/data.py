@@ -4,10 +4,10 @@ from collections.abc import Sequence
 import datetime as dt
 
 from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey, DateTime, UniqueConstraint
-from sqlalchemy.orm import relationship, Session
+from sqlalchemy.orm import relationship, Session, reconstructor, class_mapper, configure_mappers
 
 from IO.db.core import Base, connect_to_db
-from utils.core import search_for_attr_value, find_closest_date, make_class_iterable_on_attr
+from utils.core import search_for_attr_value, find_closest_date, make_class_iterable_on_attr, give_class_lookup_on_attr
 
 from settings import CORE_DIR, DB_NAME
 
@@ -72,7 +72,7 @@ class Compound(Base):
         self.filtered = False
 
     def __repr__(self):
-        return (f'{self.__class__.__name__}(name={repr(self.name)}, rt={self.rt}, ion={self.ion}, pa={self.pa},'
+        return (f'{self.__class__.__name__}(name={repr(self.name)}, rt={self.rt}, ion={self.ion}, pa={self.pa}, '
                 + f'corrected_pa={self.corrected_pa}, filtered={self.filtered})')
 
 
@@ -598,6 +598,7 @@ class JoinedMeta(type(BlankSubtractedMixin), type(Base)):
     pass
 
 
+@give_class_lookup_on_attr('compounds', 'name', None, 'compound')
 @make_class_iterable_on_attr('compounds')
 class GcRun(Base, BlankSubtractedMixin, metaclass=JoinedMeta):
     """

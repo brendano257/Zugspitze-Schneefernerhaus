@@ -1,6 +1,7 @@
 import logging
-
 from pathlib import Path
+
+from sqlalchemy import event
 
 __all__ = ['configure_logger', 'split_into_sets_of_n', 'gen_isempty', 'search_for_attr_value', 'find_closest_date',
            'make_class_iterable_on_attr']
@@ -136,6 +137,64 @@ def make_class_iterable_on_attr(attr):
             return iter(getattr(self, attr))
 
         cls.__iter__ = deligated_iter
+        return cls
+
+    return class_wrap
+
+
+def give_class_lookup_on_attr(attr_to_lookup, lookup_key_attr, lookup_value_attr, lookup_name):
+    """
+    Decorate a class with dictionary lookup on some sequential attribute of the class; often a relationship.
+
+    For a class, MappedClass, create a lookup table of attr_to_lookup, such that it's:
+        MappedClass.lookup_name = {obj.lookup_key_attr: getattr(obj, lookup_value_attr, obj) for obj in attr_to_lookup}
+
+    Uses sqlalchemy 'load' event to automatically create lookup whenever re-instantiated from the database; otherwise
+    the lookup is only created if the property (self.lookup_name['thing']) is called and would return a falsy value.
+
+    :param str attr_to_lookup: attribute on the class to create a lookup table of
+    :param str lookup_key_attr: attribute of attr_to_lookup instances to use as the key
+    :param str | None lookup_value_attr: attribute of attr_to_lookup instances to use at the value.
+        ** Passing None as the lookup_value_attr will make the value the object itself
+    :param str lookup_name: name of the class property to access the lookup table by
+    :return:
+    """
+    # None is a key for the lookup_value_attr to return the object itself (set in the default)
+    if lookup_value_attr is None:
+        lookup_value_attr = ''
+        # passing an empty string will never find an attribute, which makes it the key for returning the default
+
+    def class_wrap(cls):
+
+        def func(self):
+            attr = getattr(self, attr_to_lookup)
+
+            lookup = dict(zip(
+                [getattr(c, lookup_key_attr) for c in attr],
+                [getattr(c, lookup_value_attr, c) for c in attr]
+            ))
+
+            # set a private attr as "self._<lookup_name>"
+            setattr(self, '_' + lookup_name, lookup)
+
+        cls._create_lookup = func
+
+        def prop_getter(self, name=lookup_name):
+            attr = getattr(self, '_' + name, None)
+
+            if not attr:
+                print('Lookup was not found. Created and returned.')
+                self._create_lookup()
+                attr = getattr(self, '_' + name)
+
+            return attr
+
+        setattr(cls, lookup_name, property(prop_getter))
+
+        @event.listens_for(cls, 'load')
+        def recieve_load(target, context):
+            target._create_lookup()
+
         return cls
 
     return class_wrap
