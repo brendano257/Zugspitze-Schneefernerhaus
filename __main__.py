@@ -8,7 +8,7 @@ from datetime import datetime
 from settings import PROCESSOR_LOGS_DIR
 from utils import configure_logger
 from processing.processors import *
-
+from reporting.json import create_current_json
 
 # get a logger and log to a file with the current datetime of the run start
 logger = configure_logger(PROCESSOR_LOGS_DIR, datetime.now().strftime('%Y_%m_%d_%H%M_run'))
@@ -31,6 +31,7 @@ sequence = [
     check_send_files
 ]
 
+# create the description for run_one at runtime using a comprehension to list out and number the sequence in the docs
 run_one_desc = (
     'Run one or more specific functions from the Zugspitze runtime.\n'
     + "Use run-proc unless you know exactly what you're trying to accomplish.\n"
@@ -123,6 +124,16 @@ def run_one(ergs):
         proc(logger)
 
 
+def json(ergs):
+    """
+    Run a JSON creator, either creating filtered data or not.
+
+    :param ergs: Args from parser.parse_args(), should include args.filtered = True || False
+    :return:
+    """
+    create_current_json(filtered=ergs.filtered)
+
+
 parser = argparse.ArgumentParser(
     prog='zugspitze',
     description='Run part of or all of the Zugpsitze runtime in sequence.'
@@ -131,7 +142,7 @@ parser = argparse.ArgumentParser(
 subparsers = parser.add_subparsers(required=True,
                                    title='Mandatory Subcommands',
                                    help='Run the entire sequence (run), a set of processes (run-proc), '
-                                        + 'or one to many of the individual functions (one).')
+                                        + 'or one to many of the individual functions (run-one).')
 
 # ----------------- Parser for running everything, optionally not downloading or uploading ----------------- #
 parser_run = subparsers.add_parser('run',
@@ -147,6 +158,15 @@ parser_run.add_argument('-W', '--wait', type=int, dest='wait',
 
 # if parser_run is used, run is set as it's func, such that args.func(args) can be called
 parser_run.set_defaults(func=run)
+
+# ----------------- Parser for running JSON operations ----------------- #
+parser_json = subparsers.add_parser('json',
+                                    description='Run the JSON generation to create new filtered JSON files.')
+
+parser_json.add_argument('-F', '--filtered', action='store_true', dest='filtered',
+                         help='Create filtered json files.')
+
+parser_json.set_defaults(func=json)
 
 # ----------------- Parser for running logical groups of functions ----------------- #
 parser_run_proc = subparsers.add_parser('run-proc',

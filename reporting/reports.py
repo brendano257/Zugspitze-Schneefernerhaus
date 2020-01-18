@@ -9,7 +9,6 @@ import pandas as pd
 from xlsxwriter.utility import xl_rowcol_to_cell, xl_range
 from sqlalchemy.ext.declarative import DeclarativeMeta
 from sqlalchemy.orm.attributes import InstrumentedAttribute
-from sqlalchemy.sql.elements import BinaryExpression
 
 from IO.db.models import Compound, GcRun, Standard, SampleQuant, Integration
 from IO.db import connect_to_db, DBConnection, get_standard_quants
