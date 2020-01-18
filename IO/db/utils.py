@@ -52,7 +52,7 @@ def get_standard_quants(name, string=False, set_=True, session=None):
     if set_:
         return frozenset(quants)
     else:
-        return tuple(set)
+        return tuple(quants)
 
 
 def filter_for_new_entities(objs, orm_class, attr, session=None):
