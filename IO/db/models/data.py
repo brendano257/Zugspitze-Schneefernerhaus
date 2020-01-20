@@ -4,13 +4,12 @@ from collections.abc import Sequence
 import datetime as dt
 
 from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey, DateTime, UniqueConstraint
-from sqlalchemy.orm import relationship, Session, reconstructor, class_mapper, configure_mappers
+from sqlalchemy.orm import relationship, Session
 
 from IO.db.core import Base, connect_to_db
 from utils.core import search_for_attr_value, find_closest_date, make_class_iterable_on_attr, give_class_lookup_on_attr
 
 from settings import CORE_DIR, DB_NAME
-
 
 __all__ = ['Compound', 'LogFile', 'DailyFile', 'Daily', 'Integration', 'GcRun', 'Datum', 'OldData', 'Quantification',
            'Standard', 'SampleQuant']
@@ -543,8 +542,8 @@ class BlankSubtractedMixin(ABC):
             compounds_to_subtract = frozenset([q.name for q in vocs.quantifications])
 
         if (not isinstance(compounds_to_subtract, Sequence)
-            and not isinstance(compounds_to_subtract, set)
-            and not isinstance(compounds_to_subtract, frozenset)):
+                and not isinstance(compounds_to_subtract, set)
+                and not isinstance(compounds_to_subtract, frozenset)):
             msg = 'compounds_to_subtract must be of type Sequence, set, or frozenset'
             raise TypeError(msg)
 
