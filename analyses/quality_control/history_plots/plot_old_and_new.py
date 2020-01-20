@@ -4,16 +4,20 @@ A script for plotting all data from 2013 onward for consistency checks.
 This attempts to filter for only the first sample of every day by not taking samples past 5AM, and not taking any
 samples that have an 'a' in their integration filename, eg 2019_03_19a_02.D, which is the standard notation for the
 second ambient run of the day.
+
+TO COMBINE ALL PLOTS INTO ONE PDF:
+    On Linux w/ ImageMagick installed, in the directory of all the plots:
+    >cd /home/brendan/PycharmProjects/Z/analyses/quality_control/history_plots/plots
+    >convert *.png "../all_history_plots_end_of_2019.pdf"
 """
 __package__ = 'Z'
 
 import json
 from datetime import datetime
 
-from sqlalchemy.sql.expression import extract, not_
-
 from settings import CORE_DIR, DB_NAME, JSON_PUBLIC_DIR
 from IO.db import GcRun, Standard, Quantification, Compound, OldData, Integration, connect_to_db
+from IO.db.filters import final_data_first_sample_only_filter
 from plotting import create_monthly_ticks, MixingRatioPlot
 
 PLOTDIR = CORE_DIR / 'analyses/quality_control/history_plots/plots'
@@ -32,7 +36,7 @@ def plot_history():
 
     compounds_to_plot[:] = [q.name for q in compounds_to_plot]
 
-    date_limits, major_ticks, minor_ticks = create_monthly_ticks(72, days_per_minor=0, start=datetime(2013, 1, 1))
+    date_limits, major_ticks, minor_ticks = create_monthly_ticks(84, days_per_minor=0, start=datetime(2013, 1, 1))
 
     major_ticks = major_ticks[::4]
 
@@ -48,17 +52,19 @@ def plot_history():
 
         # extract and filter by 4AM or earlier to only get first measurement on normal days
         # also filter by 'a' not in the filename to avoid "2018_10a_02.D" ie second ambient samples
-        new_results = (session.query(Compound.mr, Integration.date)
+
+        new_results = (session.query(Compound.mr, GcRun.date, Integration.filename)
                        .join(Integration, Integration.id == Compound.integration_id)
                        .join(GcRun, GcRun.id == Integration.run_id)
-                       .filter(Integration.date >= date_limits['left'])
-                       .filter(extract('hour', Integration.date) < 5)
-                       .filter(not_(Integration.filename.in_('a')))
+                       .filter(GcRun.date >= date_limits['left'])
                        .filter(GcRun.type == 5)
                        .filter(Compound.name == name)
-                       .filter(Compound.filtered == False)
-                       .order_by(Integration.date)
-                       .all())
+                       .filter(Compound.filtered == False))
+
+        for f in final_data_first_sample_only_filter:
+            new_results = new_results.filter(f)
+
+        new_results = new_results.order_by(GcRun.date).all()
 
         dates = [o.date for o in old_results]
         mrs = [o.mr for o in old_results]
