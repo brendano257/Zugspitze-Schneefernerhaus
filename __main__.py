@@ -8,7 +8,7 @@ from datetime import datetime
 from settings import PROCESSOR_LOGS_DIR
 from utils import configure_logger
 from processing.processors import *
-from reporting.json import create_current_json
+from reporting.json import create_current_json, create_current_semifinal_json
 
 # get a logger and log to a file with the current datetime of the run start
 logger = configure_logger(PROCESSOR_LOGS_DIR, datetime.now().strftime('%Y_%m_%d_%H%M_run'))
@@ -131,7 +131,11 @@ def json(ergs):
     :param ergs: Args from parser.parse_args(), should include args.filtered = True || False
     :return:
     """
-    create_current_json(filtered=ergs.filtered)
+    if ergs.final:
+        create_current_semifinal_json(filtered=ergs.filtered)
+    else:
+        create_current_json(filtered=ergs.filtered)
+
 
 
 parser = argparse.ArgumentParser(
@@ -165,6 +169,9 @@ parser_json = subparsers.add_parser('json',
 
 parser_json.add_argument('-F', '--filtered', action='store_true', dest='filtered',
                          help='Create filtered json files.')
+
+parser_json.add_argument('--final', action='store_true', dest='final',
+                         help='Create final filtered json files; applies additional filters.')
 
 parser_json.set_defaults(func=json)
 
