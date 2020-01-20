@@ -12,5 +12,6 @@ ambient_filters = [
 final_data_first_sample_only_filter = [
     extract('hour', Integration.date) < 5,
     not_(Integration.filename.ilike('%/___a/_02.D', escape='/')),
+    # match anything that isn't _[][]a_02.D
     GcRun.type == 5
 ]
