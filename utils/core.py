@@ -182,8 +182,7 @@ def give_class_lookup_on_attr(attr_to_lookup, lookup_key_attr, lookup_value_attr
         def prop_getter(self, name=lookup_name):
             attr = getattr(self, '_' + name, None)
 
-            if not attr:
-                print('Lookup was not found. Created and returned.')
+            if attr is not None:
                 self._create_lookup()
                 attr = getattr(self, '_' + name)
 
