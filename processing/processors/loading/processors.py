@@ -12,7 +12,7 @@ from settings import CORE_DIR, JSON_PRIVATE_DIR, DB_NAME, DAILY_DIR, LOG_DIR, GC
 from utils import search_for_attr_value
 from IO import Base, connect_to_db, get_all_data_files, filter_for_new_entities
 from processing.file_io import read_daily_file, read_log_file, read_gcms_file
-from IO.db.models import Config, OldData, DailyFile, LogFile, Integration, Standard, Quantification
+from IO.db.models import Config, OldData, Daily, DailyFile, LogFile, Integration, Standard, Quantification
 
 __all__ = ['load_all_dailies', 'load_all_logs', 'load_all_integrations', 'load_standards', 'load_historic_data']
 
@@ -56,9 +56,8 @@ def load_all_dailies(logger):
 
     if new_files:
         for file in new_files:
-
-            # TODO: Dailies need to check by date as well; roll into updates w/ set logic
             dailies = read_daily_file(file.path)
+            dailies = filter_for_new_entities(dailies, Daily, 'date', session)
             file_daily_dates = [d.date for d in file.entries]
             file.entries.extend([d for d in dailies if d.date not in file_daily_dates])
             file.size = file.path.stat().st_size
