@@ -304,7 +304,7 @@ class MixingRatioPlot(ResponsePlot):
 
 class PeakAreaPlot(ResponsePlot):
     """
-    MixingRatioPlots are the base for any plot of a compound's peak areas.
+    PeakAreaPlots are the base for any plot of a compound's peak areas.
     """
 
     def __init__(self, series, limits=None, major_ticks=None, minor_ticks=None, x_label_str=None,
