@@ -137,7 +137,6 @@ def json(ergs):
         create_current_json(filtered=ergs.filtered)
 
 
-
 parser = argparse.ArgumentParser(
     prog='zugspitze',
     description='Run part of or all of the Zugpsitze runtime in sequence.'

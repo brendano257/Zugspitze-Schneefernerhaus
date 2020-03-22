@@ -6,7 +6,7 @@ from settings import CORE_DIR
 from IO.db import DBConnection, Compound, Integration, GcRun
 from IO import scan_and_create_dir_tree, get_standard_quants, final_data_first_sample_only_filter
 
-__all__ = ['create_current_json']
+__all__ = ['create_current_json', 'create_current_semifinal_json']
 
 
 def create_current_semifinal_json(filtered=True, additional_filters=final_data_first_sample_only_filter):
