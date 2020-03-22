@@ -48,6 +48,9 @@ def create_current_json(filtered=True, additional_filters=None, type_=None):
 
             results = results.order_by(Integration.date).all()
 
+            for r in results:
+                print(r)
+
             data_for_json = []
 
             for r in results:
@@ -62,3 +65,12 @@ def create_current_json(filtered=True, additional_filters=None, type_=None):
 
             with file.open('w') as f:
                 f.write(json.dumps(data_for_json))
+
+
+if __name__ == '__main__':
+
+    def create_current_semifinal_json(filtered=True, additional_filters=final_data_first_sample_only_filter):
+        create_current_json(filtered=filtered, additional_filters=additional_filters, type_='final')
+
+
+    create_current_semifinal_json()
