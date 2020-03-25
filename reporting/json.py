@@ -10,7 +10,8 @@ __all__ = ['create_current_json', 'create_current_semifinal_json']
 
 
 def create_current_semifinal_json(filtered=True, additional_filters=final_data_first_sample_only_filter):
-    create_current_json(filtered=filtered, additional_filters=additional_filters, type_='final')
+    all_filters = additional_filters + [GcRun.date >= datetime(2018, 3, 1), GcRun.date < datetime(2020, 1, 1)]
+    create_current_json(filtered=filtered, additional_filters=all_filters, type_='final')
 
 
 def create_current_json(filtered=True, additional_filters=None, type_=None):
@@ -48,8 +49,8 @@ def create_current_json(filtered=True, additional_filters=None, type_=None):
 
             results = results.order_by(Integration.date).all()
 
-            for r in results:
-                print(r)
+            # for r in results:
+            #     print(r)
 
             data_for_json = []
 
