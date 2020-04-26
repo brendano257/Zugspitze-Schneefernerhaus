@@ -86,5 +86,3 @@ for cc416168, sx3556 in zip(cc416168_set, sx3556_set):
 
 compile_quant_report(all_in_sx3556, 'SX3556', 'CC416168', sx3556_certification.quantifications,
                      date=datetime(2018, 5, 16))
-
-
