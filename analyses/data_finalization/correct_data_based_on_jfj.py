@@ -82,11 +82,6 @@ def compare_single_samples():
     # get jfj data sorted by date so it can be binary-searched
     jfj_data = read_jfj_file('JFJ_CFC_Helmig.txt', sort=True)
 
-    # # filter for ambient data from start of data collection until switch to two samples a day
-    # filters = (*ambient_filters, GcRun.date >= datetime(2018, 3, 1), GcRun.date < datetime(2018, 12, 20))
-    #
-    # zug_single_sample_data = abstract_query((GcRun,), filters, order=GcRun.date)
-
     with DBConnection() as session:
         zug_single_sample_data = (session.query(GcRun)
                                          .filter(GcRun.type == 5)
