@@ -62,11 +62,12 @@ def get_average_two_sample_data(start_date, end_date, compounds_to_average):
     for _, sample_pair in sample_sets.items():
         # only proceed if there's two samples
         if len(sample_pair) == 2:
-            average_date = sample_pair[0].date + ((sample_pair[0].date - sample_pair[1].date) / 2)
+            average_date = (sample_pair[0].date + ((sample_pair[0].date - sample_pair[1].date) / 2))
             averaged_dates[average_date] = sample_pair
 
     compounds = {}
-    dates = [date for date in averaged_dates.keys()]
+    # 'round' down to 0 microseconds for ALL data
+    dates = [date.replace(second=0, microsecond=0) for date in averaged_dates.keys()]
     for compound in compounds_to_average:
         compound_mrs = []
         for sample_pair in averaged_dates.values():
