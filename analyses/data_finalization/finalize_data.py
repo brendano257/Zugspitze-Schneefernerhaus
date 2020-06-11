@@ -14,8 +14,10 @@ from pathlib import Path
 from datetime import datetime, timezone, timedelta
 from collections import defaultdict
 
+import pandas as pd
+
 from analyses.data_finalization.daily_averaging import get_average_two_sample_data
-from IO.db import DBConnection, GcRun, Compound
+from IO.db import GcRun, Compound
 from IO import get_standard_quants, ambient_filters
 from reporting import abstract_query
 
@@ -35,7 +37,7 @@ def get_final_single_sample_data(compounds):
 
         results = abstract_query(params, filters, GcRun.date)
 
-        final_single_sample_data[compound] = ([r.date for r in results], [r.mr for r in results])
+        final_single_sample_data[compound] = ([r.date.replace(second=0) for r in results], [r.mr for r in results])
 
     return final_single_sample_data
 
@@ -64,7 +66,7 @@ def jsonify_data(data, rel_dir):
             f.write(json.dumps(data_for_json))
 
 
-def main():
+def join_and_filter_data():
     compounds_to_output = get_standard_quants('quantlist', string=True, set_=False)
 
     single_sample_data = get_final_single_sample_data(compounds_to_output)
@@ -87,13 +89,44 @@ def main():
             for date, compounds in filters.items():
                 filter_data[datetime.strptime(date, '%Y-%m-%d %H:%M')].extend(compounds)
 
-    # TODO: finish applying filter data
-
-    print(filter_data)
+    for date, compounds in filter_data.items():
+        for compound in compounds:
+            print(final_data[compound][0])
+            final_data[compound][1][final_data[compound][0].index(date)] = None
 
     jsonify_data(final_data, 'semifinal_json')
 
+    return final_data
 
+
+def final_data_to_df(data):
+    """
+    Takes in data and returns a Pandas DataFrame.
+    :param dict data: comes in as 'compound_name': [dates, mrs] where dates and mrs are iterables of equal length
+    :return:
+    """
+    # create iterator to take first item, then continue with the remaining entries (will fail if there's only one item!)
+    data_iter = iter(data.items())
+
+
+    # create df from the first compound
+    compound, (dates, mrs) = next(data_iter)
+    base_df = pd.DataFrame({'date': dates, compound: mrs})
+
+    for compound, (dates, mrs) in data_iter:
+        sub_df = pd.DataFrame({'date': dates, compound: mrs})
+
+        base_df = base_df.merge(sub_df, how='outer', on='date')
+
+    base_df = base_df.set_index('date', drop=True).sort_index(ascending=True)
+
+    return base_df
+
+
+def main():
+    final_data = join_and_filter_data()
+    df = final_data_to_df(final_data)
+    df.to_csv(f'final_data_{datetime.now().strftime("%Y_%m_%d")}.csv', float_format='%.3f')
 
 
 if __name__ == '__main__':
