@@ -66,11 +66,25 @@ def jsonify_data(data, rel_dir):
             f.write(json.dumps(data_for_json))
 
 
+def print_stats_on_ratios_by_compound(ratios):
+    """
+    Print statistics on ratios between two-sample data so they can be used in reporting the data.
+    :param ratios:
+    :return:
+    """
+    for name, data in ratios.items():
+        print(f'{name}: {data}')
+
+
 def join_and_filter_data():
     compounds_to_output = get_standard_quants('quantlist', string=True, set_=False)
 
     single_sample_data = get_final_single_sample_data(compounds_to_output)
-    two_sample_data = get_average_two_sample_data(datetime(2018, 12, 20), datetime(2020, 1, 1), compounds_to_output)
+    two_sample_data, ratios = get_average_two_sample_data(datetime(2018, 12, 20),
+                                                          datetime(2020, 6, 1),
+                                                          compounds_to_output)
+
+    print_stats_on_ratios_by_compound(ratios)
 
     final_data = {}
 

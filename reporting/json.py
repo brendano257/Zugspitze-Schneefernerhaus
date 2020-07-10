@@ -27,7 +27,7 @@ def create_current_json(filtered=True, additional_filters=None, type_=None):
     file_suffix = filt_type if filt_type is not 'final' else 'filtered'
 
     with DBConnection() as session:
-        quantified_compounds = get_standard_quants('quantlist', string=True,session=session, set_=False)
+        quantified_compounds = get_standard_quants('quantlist', string=True, session=session, set_=False)
 
         save_dir = CORE_DIR / f'data/generation/json/auto_by_date/{filt_type}/{datetime.now().strftime("%Y_%m_%d")}'
         if not save_dir.exists():

@@ -12,7 +12,7 @@ from calendar import monthrange
 import pandas as pd
 
 from settings import CORE_DIR, JSON_PUBLIC_DIR, DB_NAME
-from IO.db import connect_to_db, GcRun, Compound, Standard
+from IO.db import connect_to_db, GcRun, Compound, Standard, final_data_first_sample_only_filter
 from plotting import create_daily_ticks, create_monthly_ticks, AnnotatedResponsePlot
 
 with open(JSON_PUBLIC_DIR / 'zug_plot_info.json', 'r') as file:
@@ -21,7 +21,7 @@ with open(JSON_PUBLIC_DIR / 'zug_plot_info.json', 'r') as file:
 engine, session = connect_to_db(DB_NAME, CORE_DIR)
 
 start_date = datetime(2018, 3, 1)
-end_date = datetime(2018, 12, 1)
+end_date = datetime(2018, 3, 1)
 
 date_ranges = pd.period_range(start_date, end_date, freq='1M')
 
@@ -92,7 +92,7 @@ if not full_plot_dir.exists():
 
 for compound in compounds:
 
-    date_limits, major_ticks, minor_ticks = create_monthly_ticks(10, start=start_date)
+    date_limits, major_ticks, minor_ticks = create_monthly_ticks(22, start=start_date)
 
     # filter for date and compound on query
     results = (session.query(Compound.mr, GcRun.date)
@@ -101,8 +101,13 @@ for compound in compounds:
                .filter(GcRun.date >= date_limits['left'], GcRun.date < date_limits['right'])
                .filter(GcRun.type == 5)
                .filter(Compound.filtered == False)
-               .order_by(GcRun.date)
-               .all())
+               .filter(*final_data_first_sample_only_filter)
+               .order_by(GcRun.date))
+
+    for f in final_data_first_sample_only_filter:
+        results = results.filter(f)
+
+    results = results.all()
 
     dates = [r.date for r in results]
     mrs = [r.mr for r in results]

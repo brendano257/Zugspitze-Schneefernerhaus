@@ -23,7 +23,7 @@ if quantified_compounds is None:
 
 quantified_compounds = [q.name for q in quantified_compounds]
 
-for type_ in ["filtered", "raw"]:
+for type_ in ("filtered", "raw"):
 
     save_dir = CORE_DIR / f'data/generation/json/{type_}'
     if not save_dir.exists():

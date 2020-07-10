@@ -18,7 +18,7 @@ from plotting import create_daily_ticks, AnnotatedResponsePlot
 
 engine, session = connect_to_db(DB_NAME, CORE_DIR)
 
-date_ranges = pd.period_range('2019-10-1', '2019-10-1', freq='1M')
+date_ranges = pd.period_range('2019-11-1', '2020-06-01', freq='1M')
 
 standard = (session.query(Standard)
             .filter(Standard.name == 'quantlist')

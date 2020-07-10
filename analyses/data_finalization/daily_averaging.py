@@ -66,36 +66,44 @@ def get_average_two_sample_data(start_date, end_date, compounds_to_average):
             averaged_dates[average_date] = sample_pair
 
     compounds = {}
-    # 'round' down to 0 microseconds for ALL data
+    ratios = {}
+    # 'round' down to 0 microseconds and seconds for ALL data
     dates = [date.replace(second=0, microsecond=0) for date in averaged_dates.keys()]
     for compound in compounds_to_average:
         compound_mrs = []
+        compound_ratios = []
         for sample_pair in averaged_dates.values():
             first_compound, second_compound = [s.compound.get(compound) for s in sample_pair]
 
             if first_compound is None or second_compound is None:
                 compound_mrs.append(None)
+                compound_ratios.append(None)
             else:
                 if first_compound.filtered or second_compound.filtered:
                     compound_mrs.append(None)
+                    compound_ratios.append(None)
                 else:
                     if first_compound.mr is None or second_compound.mr is None:
                         compound_mrs.append(None)
+                        compound_ratios.append(None)
                     else:
                         compound_mrs.append(first_compound.mr + ((first_compound.mr - second_compound.mr) / 2))
+                        compound_ratios.append(first_compound.mr / (first_compound.mr + ((first_compound.mr - second_compound.mr) / 2)))
 
         compounds[compound] = (dates, compound_mrs)
+        ratios[compound] = (dates, compound_ratios)
 
-    return compounds
+    return compounds, ratios
 
 
 def main():
-    averages = get_average_two_sample_data(datetime(2018, 12, 20), datetime(2020, 1, 1), ('CFC-11',))
-
-    for compound, (dates, mrs) in averages.items():
-        print(compound)
-        print(dates)
-        print(mrs)
+    pass
+    # averages = get_average_two_sample_data(datetime(2018, 12, 20), datetime(2020, 1, 1), ('CFC-11',))
+    #
+    # for compound, (dates, mrs) in averages.items():
+    #     print(compound)
+    #     print(dates)
+    #     print(mrs)
 
 
 if __name__ == '__main__':
