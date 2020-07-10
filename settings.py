@@ -23,7 +23,7 @@ __all__ = ['CORE_DIR', 'REMOTE_BASE_PATH', 'BOULDAIR_BASE_PATH', 'PROCESSOR_LOGS
            'FULL_PLOT_DIR', 'LOG_PLOT_DIR', 'DAILY_PLOT_DIR', 'PA_PLOT_DIR', 'STD_PA_PLOT_DIR', 'FILTER_DIRS',
            'HISTORIC_DATA_SHEET', 'JSON_FILES', 'JSON_PRIVATE_DIR', 'JSON_PUBLIC_DIR']
 
-CORE_DIR = Path('/home/brendan/PycharmProjects/Z')  # assign static project directory
+CORE_DIR = Path('/home/brendan/PycharmProjects/Zugspitze')  # assign static project directory
 
 DB_FILE = 'zugspitze.sqlite'
 DB_PROTO = 'sqlite:///{}'
