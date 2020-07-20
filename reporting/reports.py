@@ -37,7 +37,7 @@ def abstract_query(params, filters, order=None, session=None):
     :param Sequence filters: one or many filter expressions to apply,
         eg [Integration.id != 1, Integration.filename.like('2019_%'), LogFile.date >= datetime(2019, 1, 1)];
         filters *must* be given in their intended order of application
-    :param InstrumentedAttribute order: parameter to order results by
+    :param order: parameter to order results by
     :return list: returns list of named tuples results
     :raises NotImplementedError: if any class in params cannot be joined appropriately
     :raises ValueError: if order is not also in params
