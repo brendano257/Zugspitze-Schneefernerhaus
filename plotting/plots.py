@@ -509,7 +509,7 @@ class TwoAxisTimeSeries(TimeSeries):
         self.limits_y2 = limits_y2
 
         self.secondary_axis = None
-        self.safe_names2 = None
+        self.safe_names2 = []
 
     def _plot_all_series(self):
         """
