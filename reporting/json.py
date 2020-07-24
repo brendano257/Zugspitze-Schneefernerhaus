@@ -10,7 +10,7 @@ __all__ = ['create_current_json', 'create_current_semifinal_json']
 
 
 def create_current_all_data_selector_json(filtered=True, additional_filters=final_data_first_sample_only_filter,
-                                          directory=CORE_DIR / 'DataSelector/Zugspitze_basics/data'):
+                                          directory=CORE_DIR / 'ZugspitzeDataSelector/data'):
     all_filters = additional_filters + [GcRun.date >= datetime(2018, 3, 1)]
     create_current_json(filtered=filtered, additional_filters=all_filters, type_='final', directory=directory)
 
@@ -44,7 +44,8 @@ def create_current_json(filtered=True, additional_filters=None, type_=None, dire
             scan_and_create_dir_tree(save_dir, file=False)
 
         for compound in quantified_compounds:
-            results = (session.query(Compound.mr, Compound.pa, Compound.rt, Compound.corrected_pa, GcRun.date, Integration.filename)
+            results = (session.query(Compound.mr, Compound.pa, Compound.rt, Compound.corrected_pa, GcRun.date,
+                                     Integration.filename)
                        .join(Integration, Integration.id == Compound.integration_id)
                        .join(GcRun, GcRun.id == Integration.run_id)
                        .filter(GcRun.type == 5)
