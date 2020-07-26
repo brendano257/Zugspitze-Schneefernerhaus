@@ -16,11 +16,13 @@ from collections import defaultdict
 
 import pandas as pd
 
+from settings import JSON_PUBLIC_DIR
 from analyses.data_finalization.daily_averaging import get_average_two_sample_data
 from IO.db import GcRun, Compound
 from IO import get_standard_quants, ambient_filters
 from reporting import abstract_query
 from processing.constants import DETECTION_LIMITS
+from plotting import MixingRatioPlot
 
 
 def get_final_single_sample_data(compounds):
@@ -80,12 +82,15 @@ def print_stats_on_ratios_by_compound(ratios):
 def join_and_filter_data():
     compounds_to_output = get_standard_quants('quantlist', string=True, set_=False)
 
+    # with open(JSON_PUBLIC_DIR / 'zug_plot_info.json', 'r') as file:
+    #     compound_limits = json.loads(file.read())
+
     single_sample_data = get_final_single_sample_data(compounds_to_output)
     two_sample_data, ratios = get_average_two_sample_data(datetime(2018, 12, 20),
                                                           datetime(2020, 1, 1),
                                                           compounds_to_output)
 
-    print_stats_on_ratios_by_compound(ratios)
+    # print_stats_on_ratios_by_compound(ratios)
 
     final_data = {}
 
@@ -107,6 +112,12 @@ def join_and_filter_data():
                 if final_data[compound][1][index] == 0:
                     final_data[compound][1][index] = None
 
+        MixingRatioPlot(
+            {compound: final_data[compound]},
+            show=False,
+            save=True,
+            filepath=f'plots/{compound}_final.png'
+        ).plot()
 
 
     filter_data = defaultdict(list)
@@ -133,20 +144,8 @@ def final_data_to_df(data):
     :param dict data: comes in as 'compound_name': [dates, mrs] where dates and mrs are iterables of equal length
     :return:
     """
-    # create iterator to take first item, then continue with the remaining entries (will fail if there's only one item!)
-    data_iter = iter(data.items())
-
-    # create df from the first compound
-    compound, (dates, mrs) = next(data_iter)
-    base_df = pd.DataFrame({'date': dates, compound: mrs})
-
-    for compound, (dates, mrs) in data_iter:
-        sub_df = pd.DataFrame({'date': dates, compound: mrs})
-        base_df = base_df.merge(sub_df, how='outer', on='date')
-
-    base_df = base_df.set_index('date', drop=True).sort_index(ascending=True)
-
-    return base_df
+    return pd.DataFrame().join([pd.DataFrame({'date': dates, compound: mrs}).set_index('date', drop=True)
+                                for compound, (dates, mrs) in data.items()], how='outer')
 
 
 def main():
