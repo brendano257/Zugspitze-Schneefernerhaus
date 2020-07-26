@@ -79,6 +79,7 @@ def compare_single_samples():
 
     :return:
     """
+    print('Comparing Single Samples')
     # get jfj data sorted by date so it can be binary-searched
     jfj_data = read_jfj_file('JFJ_CFC_Helmig.txt', sort=True)
 
@@ -91,9 +92,9 @@ def compare_single_samples():
     ratios = []
     for compound in ['CFC-11', 'CFC-12', 'CFC-113']:
         for sample in zug_single_sample_data:
-            print(f'GcRun: {sample.date}')
-            print(f'Close samples are: {find_le(jfj_data["date"], sample.date)}'
-                  + f' and {find_gt(jfj_data["date"], sample.date)}')
+            # print(f'GcRun: {sample.date}')
+            # print(f'Close samples are: {find_le(jfj_data["date"], sample.date)}'
+            #       + f' and {find_gt(jfj_data["date"], sample.date)}')
 
             # get indexes for +/- 12h from this sample
             first_index = bisect_right(jfj_data['date'], sample.date - timedelta(hours=12))
@@ -116,8 +117,8 @@ def compare_single_samples():
 
             ratios.append(zug_compound / denom)
 
-        for sample, ratio in zip(zug_single_sample_data, ratios):
-            print(f'{sample.date}: {ratio}')
+        # for sample, ratio in zip(zug_single_sample_data, ratios):
+        #     print(f'{sample.date}: {ratio}')
 
         non_zero_ratios = [r for r in ratios if r != 0]
         all_average = stats.mean(non_zero_ratios)
@@ -126,6 +127,7 @@ def compare_single_samples():
         all_min = min(non_zero_ratios)
         all_max = max(non_zero_ratios)
 
+        print(compound)
         print(f'Min: {all_min}, Max: {all_max}, Mean: {all_average}, StDev: {all_stdev}')
         print(f"2-Sigma: {all_average - 2*all_stdev} : {all_average + 2*all_stdev}")
 
@@ -155,6 +157,7 @@ def compare_double_samples():
 
     :return:
     """
+    print('Comparing Double Samples')
     # get jfj data sorted by date so it can be binary-searched
     jfj_data = read_jfj_file('JFJ_CFC_Helmig.txt', sort=True)
 
@@ -242,6 +245,7 @@ def compare_double_samples():
         all_min = min(non_zero_ratios)
         all_max = max(non_zero_ratios)
 
+        print(compound)
         print(f'Min: {all_min}, Max: {all_max}, Mean: {all_average}, StDev: {all_stdev}, Median: {stats.median(non_zero_ratios)}')
         print(f"2-Sigma: {all_average - 2*all_stdev} : {all_average + 2*all_stdev}")
 
@@ -263,5 +267,6 @@ def compare_double_samples():
 
 
 if __name__ == '__main__':
-    # compare_single_samples()
+    compare_single_samples()
+    print()
     compare_double_samples()

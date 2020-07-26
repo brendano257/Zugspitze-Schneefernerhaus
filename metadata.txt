@@ -1,0 +1,28 @@
+
+Data up until 12/1/2018 are single samples collected at their given times. Data collected after 12/1/2019 are the mean of two samples collected several hours apart. The reported time is the average of the collection times.
+    Due to a daily change between the first and second samples in some chlorinated compounds (primarily CFC-11, -12, and -113) several comparisons were made to data at the nearby Jungfraujoch station in Switzerland (JFJ). 
+    These comparisons showed that for CFC-11, -12, and -113, the only single samples collected at Zugspitze were regularly slightly higher than the average of the JFJ samples from the surrouding 24 hours. When two samples 
+    were collected at Zugspitze, the second samples were consistently slightly lower than the average of the JFJ samples from the surrouding 24 hours, but the averages of the two samples from Zugspitze differed by no more 
+    than 1% from the surrounding 24-hour period of data from JFJ. 
+    
+    For this reason, data after 12/1/2018 are reported as the mean of the two samples collected.
+    
+    Based on analyses for CFC-11, -12, and -113, the suggested corrections for data prior to 12/1/2018 are as follows:
+        CFC-11: Zugspitze = Zugspitze / 1.016
+        CFC-12: Zugspitze = Zugspitze / 1.016
+        CFC-113: Zugspitze = Zugspitze / 1.023
+        
+        Compounds not compared with JFJ (data not available) that showed high/low behavior between the two runs can be expected to be 1-2% off for the single sample data.
+        
+
+Data for HCFC-141b and HCFC-142b for the period between 3/1/2018 and 10/15/2018 show contamination in the local air from the sampling stack being too close to the Zugspitze Mountain Station. 
+
+Data for HFC-152a prior to 8/15/2018 were removed due to contamination from gas diffusion through teflon ferrules in the instrument room.
+
+Data starting 11/13/2019 use the NOAA scale and thus have slightly different mixing ratios going forward. This reflects the real difference between the prior NOAA scale and the EMPA scale.
+    Compounds affected by this change are: HCFC-142b, H-1301, HFC-125, and HCFC-22
+    
+Detection Limits:
+    Compounds below their detection limits have those values set to half the detection limit. Detection limits were found necessary for only the following compounds:
+        Isoprene: 1 pptv
+        Hexane: .5 pptv
