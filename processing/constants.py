@@ -25,3 +25,9 @@ LOG_ATTRS = ('sample_time', 'sample_flow', 'sample_type', 'backflush_time', 'des
 DAILY_ATTRS = ('date', 'ads_xfer_temp', 'valves_temp', 'gc_xfer_temp', 'ebox_temp', 'catalyst_temp', 'molsieve_a_temp',
                'molsieve_b_temp', 'inlet_temp', 'room_temp', 'v5', 'mfc1', 'mfc2', 'mfc3', 'he_pressure', 'linep',
                'zerop')
+
+# detection limits for any compounds given (in pptv)
+DETECTION_LIMITS = {
+    'hexane': .5,
+    'isoprene': 1
+}
