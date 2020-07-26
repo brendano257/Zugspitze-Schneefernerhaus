@@ -20,6 +20,7 @@ from analyses.data_finalization.daily_averaging import get_average_two_sample_da
 from IO.db import GcRun, Compound
 from IO import get_standard_quants, ambient_filters
 from reporting import abstract_query
+from processing.constants import DETECTION_LIMITS
 
 
 def get_final_single_sample_data(compounds):
@@ -55,7 +56,7 @@ def jsonify_data(data, rel_dir):
         for date, mr in zip(*data[compound]):
             if mr is not None:
                 date = date.replace(tzinfo=timezone(timedelta(hours=1))).timestamp()
-                compound_obj = {'date': date, 'value': mr}  # report time as epoch UTC
+                compound_obj = {'date': date, 'mr': mr}  # report time as epoch UTC
                 data_for_json.append(compound_obj)
 
         # print(r.date, datetime.fromtimestamp(date, tz=timezone(timedelta(hours=1))))  # shows conversion works
@@ -81,7 +82,7 @@ def join_and_filter_data():
 
     single_sample_data = get_final_single_sample_data(compounds_to_output)
     two_sample_data, ratios = get_average_two_sample_data(datetime(2018, 12, 20),
-                                                          datetime(2020, 6, 1),
+                                                          datetime(2020, 1, 1),
                                                           compounds_to_output)
 
     print_stats_on_ratios_by_compound(ratios)
@@ -93,6 +94,20 @@ def join_and_filter_data():
         two_samples = two_sample_data.get(compound)
 
         final_data[compound] = (single_samples[0] + two_samples[0], single_samples[1] + two_samples[1])
+        # final data is now a dict of compound: (dates, mrs) for every compound
+
+        # iterate explicitly over indices instead of the list! Python Rule #1: Don't iterate over and modify
+        for index in range(len(final_data[compound][1])):
+            # if the mr is below the detection limit, set to half the limit
+            if (final_data[compound][1][index] is not None
+                    and final_data[compound][1][index] < DETECTION_LIMITS.get(compound, 0)):
+                final_data[compound][1][index] = DETECTION_LIMITS.get(compound, 0) / 2
+
+                # if something has no DL, but is set to 0, mark as None/Null
+                if final_data[compound][1][index] == 0:
+                    final_data[compound][1][index] = None
+
+
 
     filter_data = defaultdict(list)
 
@@ -105,10 +120,9 @@ def join_and_filter_data():
 
     for date, compounds in filter_data.items():
         for compound in compounds:
-            print(final_data[compound][0])
             final_data[compound][1][final_data[compound][0].index(date)] = None
 
-    jsonify_data(final_data, 'semifinal_json')
+    jsonify_data(final_data, '/home/brendan/PycharmProjects/Zugspitze/DataSelectors/FinalDataSelector/data')
 
     return final_data
 
@@ -122,14 +136,12 @@ def final_data_to_df(data):
     # create iterator to take first item, then continue with the remaining entries (will fail if there's only one item!)
     data_iter = iter(data.items())
 
-
     # create df from the first compound
     compound, (dates, mrs) = next(data_iter)
     base_df = pd.DataFrame({'date': dates, compound: mrs})
 
     for compound, (dates, mrs) in data_iter:
         sub_df = pd.DataFrame({'date': dates, compound: mrs})
-
         base_df = base_df.merge(sub_df, how='outer', on='date')
 
     base_df = base_df.set_index('date', drop=True).sort_index(ascending=True)
