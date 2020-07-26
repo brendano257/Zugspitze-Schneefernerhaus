@@ -10,7 +10,7 @@ __all__ = ['create_current_json', 'create_current_semifinal_json']
 
 
 def create_current_all_data_selector_json(filtered=True, additional_filters=final_data_first_sample_only_filter,
-                                          directory=CORE_DIR / 'ZugspitzeDataSelector/data'):
+                                          directory=CORE_DIR / 'DataSelectors/ZugspitzeDataSelector/data'):
     all_filters = additional_filters + [GcRun.date >= datetime(2018, 3, 1)]
     create_current_json(filtered=filtered, additional_filters=all_filters, type_='final', directory=directory)
 
