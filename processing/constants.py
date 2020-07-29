@@ -29,5 +29,7 @@ DAILY_ATTRS = ('date', 'ads_xfer_temp', 'valves_temp', 'gc_xfer_temp', 'ebox_tem
 # detection limits for any compounds given (in pptv)
 DETECTION_LIMITS = {
     'hexane': .5,
-    'isoprene': 1
+    'isoprene': 1,
+    'benzene': 1,
+    'toluene': 1
 }
