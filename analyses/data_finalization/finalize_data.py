@@ -18,7 +18,7 @@ import pandas as pd
 
 from settings import JSON_PUBLIC_DIR
 from analyses.data_finalization.daily_averaging import get_average_two_sample_data
-from IO.db import GcRun, Compound
+from IO.db import DBConnection, GcRun, Compound, OldData
 from IO import get_standard_quants, ambient_filters
 from reporting import abstract_query
 from processing.constants import DETECTION_LIMITS
@@ -132,6 +132,20 @@ def join_and_filter_data():
     for date, compounds in filter_data.items():
         for compound in compounds:
             final_data[compound][1][final_data[compound][0].index(date)] = None
+
+    with DBConnection() as session:
+        # connect to db and grab old data from previous project
+        for compound in final_data:
+            old_results = (session.query(OldData.date, OldData.mr)
+                          .filter(OldData.name == compound)
+                          .order_by(OldData.date)
+                          .all())
+
+            dates = [o.date for o in old_results]
+            mrs = [o.mr for o in old_results]
+
+            # prepend older dates and mrs
+            final_data[compound] = dates + final_data[compound][0], mrs + final_data[compound][1]
 
     jsonify_data(final_data, '/home/brendan/PycharmProjects/Zugspitze/DataSelectors/FinalDataSelector/data')
 
