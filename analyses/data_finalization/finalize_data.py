@@ -119,20 +119,6 @@ def join_and_filter_data():
             filepath=f'plots/{compound}_final.png'
         ).plot()
 
-
-    filter_data = defaultdict(list)
-
-    for filter_file in Path('manual_filtering').iterdir():
-        if filter_file.suffix == '.json':
-            filters = json.loads(filter_file.read_text())
-
-            for date, compounds in filters.items():
-                filter_data[datetime.strptime(date, '%Y-%m-%d %H:%M')].extend(compounds)
-
-    for date, compounds in filter_data.items():
-        for compound in compounds:
-            final_data[compound][1][final_data[compound][0].index(date)] = None
-
     with DBConnection() as session:
         # connect to db and grab old data from previous project
         for compound in final_data:
@@ -146,6 +132,23 @@ def join_and_filter_data():
 
             # prepend older dates and mrs
             final_data[compound] = dates + final_data[compound][0], mrs + final_data[compound][1]
+
+    filter_data = defaultdict(list)
+
+    for filter_file in Path('manual_filtering').iterdir():
+        if filter_file.suffix == '.json':
+            filters = json.loads(filter_file.read_text())
+
+            for date, compounds in filters.items():
+                filter_data[datetime.strptime(date, '%Y-%m-%d %H:%M')].extend(compounds)
+
+    for date, compounds in filter_data.items():
+        for compound in compounds:
+            print(
+                f'Filtering {compound} for {date}, which was '
+                + f'{final_data[compound][1][final_data[compound][0].index(date)]}'
+            )
+            final_data[compound][1][final_data[compound][0].index(date)] = None
 
     jsonify_data(final_data, '/home/brendan/PycharmProjects/Zugspitze/DataSelectors/FinalDataSelector/data')
 
