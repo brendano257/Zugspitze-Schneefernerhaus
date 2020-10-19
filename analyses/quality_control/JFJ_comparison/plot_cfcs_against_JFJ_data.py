@@ -1,3 +1,7 @@
+"""
+DEPRECATED -- Left for postertity, but see analyses/JFJ_overlays/parse_and_plot.py for all compound plotting w/ updated
+data.
+"""
 import json
 from collections import namedtuple
 from datetime import datetime
@@ -69,3 +73,5 @@ for compound, jfj_dataset in zip(('CFC-11', 'CFC-12', 'CFC-113'), (jfj_CFC_11, j
         )
 
         p.plot()
+
+raise DeprecationWarning("This file has been deprecated; see see analyses/JFJ_overlays/parse_and_plot.py instead.")
