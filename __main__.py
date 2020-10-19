@@ -9,6 +9,7 @@ from settings import PROCESSOR_LOGS_DIR
 from utils import configure_logger
 from processing.processors import *
 from reporting.json import create_current_json, create_current_semifinal_json, create_current_all_data_selector_json
+from reporting.json import create_current_final_data_selector_json
 
 # get a logger and log to a file with the current datetime of the run start
 logger = configure_logger(PROCESSOR_LOGS_DIR, datetime.now().strftime('%Y_%m_%d_%H%M_run'))
@@ -135,6 +136,8 @@ def json(ergs):
         create_current_semifinal_json(filtered=ergs.filtered)
     elif ergs.dataselector:
         create_current_all_data_selector_json(filtered=ergs.filtered)
+    elif ergs.finalselector:
+        create_current_final_data_selector_json()
     else:
         create_current_json(filtered=ergs.filtered)
 
@@ -176,6 +179,9 @@ parser_json.add_argument('--final', action='store_true', dest='final',
 
 parser_json.add_argument('-D', '--dataselector', action='store_true', dest='dataselector',
                          help='Create final filtered json files; applies additional filters.')
+
+parser_json.add_argument('-H', '--finaldataselector', action='store_true', dest='finalselector',
+                         help='Create final averaged data for FinalDataSelector.')
 
 parser_json.set_defaults(func=json)
 
