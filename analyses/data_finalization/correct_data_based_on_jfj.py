@@ -2,6 +2,8 @@
 For CFCs -11, -12, and -113, we have JFJ data to correct by for the period we have only one skewed sample per day.
 That is addressed here.
 """
+raise DeprecationWarning("Most of this functionality has been moved to reporting.finalization.<...>.")
+
 import statistics as stats
 from collections import namedtuple, defaultdict
 from datetime import datetime, timedelta
@@ -174,7 +176,7 @@ def compare_double_samples():
                                          .filter(not_(Integration.filename.ilike('%/___a/_02.D', escape='/')),)
                                          .filter(Integration.filename.ilike('%/___/_02.D', escape='/'),)
                                          .filter(GcRun.date >= datetime(2018, 12, 20))
-                                         .filter(GcRun.date < datetime(2020, 1, 1))).all()
+                                         .filter(GcRun.date < datetime(2021, 1, 1))).all()
 
         # filter for dates where the pattern IS _xxa_02.D, which is second ambient samples
         zug_second_sample_data = (session.query(GcRun)
@@ -182,7 +184,7 @@ def compare_double_samples():
                                  .filter(GcRun.type == 5)
                                  .filter(Integration.filename.ilike('%/___a/_02.D', escape='/'))
                                  .filter(GcRun.date >= datetime(2018, 12, 20))
-                                 .filter(GcRun.date < datetime(2020, 1, 1))).all()
+                                 .filter(GcRun.date < datetime(2021, 1, 1))).all()
 
         first_sample_dates = [run.date for run in zug_first_sample_data]
         second_sample_dates = [run.date for run in zug_second_sample_data]
@@ -267,6 +269,7 @@ def compare_double_samples():
 
 
 if __name__ == '__main__':
+    read_jfj_file('JFJ.txt', sort=True)
     compare_single_samples()
     print()
     compare_double_samples()

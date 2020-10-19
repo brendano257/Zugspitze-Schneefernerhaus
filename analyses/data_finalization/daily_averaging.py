@@ -62,6 +62,7 @@ def get_average_two_sample_data(start_date, end_date, compounds_to_average):
     for _, sample_pair in sample_sets.items():
         # only proceed if there's two samples
         if len(sample_pair) == 2:
+            # print(f"Sample1: {sample_pair[0].date} Sample2: {sample_pair[1].date}")
             average_date = (sample_pair[0].date + ((sample_pair[1].date - sample_pair[0].date) / 2))
             averaged_dates[average_date] = sample_pair
 
@@ -87,8 +88,8 @@ def get_average_two_sample_data(start_date, end_date, compounds_to_average):
                         compound_mrs.append(None)
                         compound_ratios.append(None)
                     else:
-                        compound_mrs.append(first_compound.mr + ((first_compound.mr - second_compound.mr) / 2))
-                        compound_ratios.append(first_compound.mr / (first_compound.mr + ((first_compound.mr - second_compound.mr) / 2)))
+                        compound_mrs.append((first_compound.mr + second_compound.mr) / 2)
+                        compound_ratios.append(first_compound.mr / ((first_compound.mr + second_compound.mr) / 2))
 
         compounds[compound] = (dates, compound_mrs)
         ratios[compound] = (dates, compound_ratios)

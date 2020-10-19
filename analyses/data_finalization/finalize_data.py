@@ -16,7 +16,6 @@ from collections import defaultdict
 
 import pandas as pd
 
-from settings import JSON_PUBLIC_DIR
 from analyses.data_finalization.daily_averaging import get_average_two_sample_data
 from IO.db import DBConnection, GcRun, Compound, OldData
 from IO import get_standard_quants, ambient_filters
@@ -87,7 +86,7 @@ def join_and_filter_data():
 
     single_sample_data = get_final_single_sample_data(compounds_to_output)
     two_sample_data, ratios = get_average_two_sample_data(datetime(2018, 12, 20),
-                                                          datetime(2020, 1, 1),
+                                                          datetime(2021, 1, 1),
                                                           compounds_to_output)
 
     # print_stats_on_ratios_by_compound(ratios)
@@ -151,6 +150,14 @@ def join_and_filter_data():
             final_data[compound][1][final_data[compound][0].index(date)] = None
 
     jsonify_data(final_data, '/home/brendan/PycharmProjects/Zugspitze/DataSelectors/FinalDataSelector/data')
+
+    for compound in compounds_to_output:
+        MixingRatioPlot(
+            {compound: final_data[compound]},
+            show=False,
+            save=True,
+            filepath=f'history_plots/{compound}_final.png'
+        ).plot()
 
     return final_data
 
