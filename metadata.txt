@@ -26,3 +26,5 @@ Detection Limits:
     Compounds below their detection limits have those values set to half the detection limit. Detection limits were found necessary for only the following compounds:
         Isoprene: 1 pptv
         Hexane: .5 pptv
+        Benzene: 1 pptv
+        Toluene: 1 pptv
