@@ -12,6 +12,20 @@ ALL_COMPOUNDS = ('PFC-116', 'ethene', 'SF6', 'CFC-13', 'ethane', 'SO2F2', 'HFC-1
                  'n-heptane', 'toluene', 'perchloroethylene', 'iso-octane', 'CHBr3', 'octane', 'ethylbenzene',
                  'm-xylene', 'o-xylene', '1,2,4-trimethylbenzene', '1,3,5-trimethylbenzene')
 
+QUANTIFIED_COMPOUNDS = ('PFC-116', 'SF6', 'CFC-13', 'ethane', 'SO2F2', 'HFC-143a', 'PFC-218', 'HFC-125', 'OCS',
+                        'H-1301', 'HFC-134a', 'HFC-152a', 'HCFC-22', 'CFC-115', 'methyl_chloride', 'propane',
+                        'PFC-318', 'CFC-12', 'HCFC-142b', 'methyl_bromide', 'HCFC-124', 'HFC-245fa', 'i-butane',
+                        'H-1211', 'CFC-114', 'n-butane', 'CH2Cl2', 'methyl_iodide', 'HFC-365mfc', 'CFC-11', 'HCFC-141b',
+                        'i-pentane', 'isoprene', 'n-pentane', 'CFC-113', 'H-2402', 'chloroform', 'CH2Br2', 'hexane',
+                        'benzene', 'methyl_chloroform', 'CCl4', 'toluene', 'perchloroethylene', 'CHBr3')
+
+EBAS_REPORTING_COMPOUNDS = ('PFC-116', 'CFC-13', 'ethane', 'SO2F2', 'HFC-143a', 'PFC-218', 'HFC-125', 'OCS',
+                        'H-1301', 'HFC-134a', 'HFC-152a', 'HCFC-22', 'CFC-115', 'methyl_chloride', 'propane',
+                        'PFC-318', 'CFC-12', 'HCFC-142b', 'methyl_bromide', 'HCFC-124', 'HFC-245fa', 'i-butane',
+                        'H-1211', 'CFC-114', 'n-butane', 'CH2Cl2', 'methyl_iodide', 'HFC-365mfc', 'CFC-11', 'HCFC-141b',
+                        'i-pentane', 'isoprene', 'n-pentane', 'CFC-113', 'H-2402', 'chloroform', 'CH2Br2', 'hexane',
+                        'benzene', 'methyl_chloroform', 'CCl4', 'toluene', 'perchloroethylene', 'CHBr3')
+
 # list of all attributes to a LogFile object, sans date; used to simplify LogFile init and other bulk operations
 LOG_ATTRS = ('sample_time', 'sample_flow', 'sample_type', 'backflush_time', 'desorb_temp', 'flashheat_time',
              'inject_time', 'bakeout_temp', 'bakeout_time', 'carrier_flow', 'sample_flow_act', 'sample_num', 'ads_trap',
