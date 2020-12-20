@@ -8,12 +8,10 @@ from collections import defaultdict
 import pandas as pd
 
 from settings import JSON_PRIVATE_DIR
-from reporting.finalization.averaging import get_final_average_two_sample_data, get_final_single_sample_data
+from finalization.averaging import get_final_average_two_sample_data, get_final_single_sample_data
 from IO.db import DBConnection, OldData
-from IO import get_standard_quants
-from processing.constants import DETECTION_LIMITS
+from processing.constants import DETECTION_LIMITS, EBAS_REPORTING_COMPOUNDS
 
-COMPOUNDS_TO_OUTPUT = get_standard_quants('quantlist', string=True, set_=False)
 FINAL_FILTERS_DIR = JSON_PRIVATE_DIR / 'filters/final_manual_filtering'
 
 
@@ -52,13 +50,13 @@ def print_stats_on_ratios_by_compound(ratios):
 
 
 def join_new_data():
-    single_sample_data = get_final_single_sample_data(COMPOUNDS_TO_OUTPUT)
+    single_sample_data = get_final_single_sample_data(EBAS_REPORTING_COMPOUNDS)
     two_sample_data = get_final_average_two_sample_data(datetime(2018, 12, 20),
-                                                                datetime(2021, 1, 1),
-                                                                COMPOUNDS_TO_OUTPUT)
+                                                        datetime(2021, 1, 1),
+                                                        EBAS_REPORTING_COMPOUNDS)
     joined_new_data = {}
 
-    for compound in COMPOUNDS_TO_OUTPUT:
+    for compound in EBAS_REPORTING_COMPOUNDS:
         single_samples = single_sample_data.get(compound)
         two_samples = two_sample_data.get(compound)
 
@@ -74,7 +72,7 @@ def prepend_historic_data(new_final_data):
 
     with DBConnection() as session:
         # connect to db and grab old data from previous project
-        for compound in COMPOUNDS_TO_OUTPUT:
+        for compound in EBAS_REPORTING_COMPOUNDS:
             old_results = (session.query(OldData.date, OldData.mr)
                            .filter(OldData.name == compound)
                            .order_by(OldData.date)
@@ -110,7 +108,7 @@ def filter_all_final_data(final_data):
 
             final_data[compound][1][final_data[compound][0].index(date)] = None
 
-    for compound in COMPOUNDS_TO_OUTPUT:
+    for compound in EBAS_REPORTING_COMPOUNDS:
         # iterate explicitly over indices instead of the list! Python Rule #1: Don't iterate over and modify
         for index in range(len(final_data[compound][1])):
             # if the mr is below the detection limit, set to half the limit

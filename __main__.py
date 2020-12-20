@@ -9,7 +9,7 @@ from settings import PROCESSOR_LOGS_DIR
 from utils import configure_logger
 from processing.processors import *
 from reporting.json import create_current_json, create_current_semifinal_json, create_current_all_data_selector_json
-from reporting.json import create_current_final_data_selector_json
+from finalization.json import create_current_final_data_selector_json
 
 # get a logger and log to a file with the current datetime of the run start
 logger = configure_logger(PROCESSOR_LOGS_DIR, datetime.now().strftime('%Y_%m_%d_%H%M_run'))

@@ -5,22 +5,14 @@ from settings import CORE_DIR
 
 from IO.db import DBConnection, Compound, Integration, GcRun
 from IO import scan_and_create_dir_tree, get_standard_quants, final_data_first_sample_only_filter, ambient_filters
-from reporting.finalization.finalization import jsonify_data, get_all_final_data_as_dict
 
-__all__ = ['create_current_json', 'create_current_semifinal_json']
+__all__ = ['create_current_json', 'create_current_semifinal_json', 'create_current_all_data_selector_json']
 
 
 def create_current_all_data_selector_json(filtered=True, additional_filters=final_data_first_sample_only_filter,
                                           directory=CORE_DIR / 'DataSelectors/ZugspitzeDataSelector/data'):
     all_filters = ambient_filters + [GcRun.date >= datetime(2018, 3, 1)]
     create_current_json(filtered=filtered, additional_filters=all_filters, type_='final', directory=directory)
-
-
-def create_current_final_data_selector_json():
-    jsonify_data(
-        get_all_final_data_as_dict(),
-        '/home/brendan/PycharmProjects/Zugspitze/DataSelectors/FinalDataSelector/data'
-    )
 
 
 def create_current_semifinal_json(filtered=True, additional_filters=final_data_first_sample_only_filter):
