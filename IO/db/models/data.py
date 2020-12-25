@@ -697,7 +697,7 @@ class GcRun(Base, BlankSubtractedMixin, metaclass=JoinedMeta):
                         continue
 
                     if ws_compound.corrected_pa is not None:
-                        if ws_compound.corrected_pa is not 0:
+                        if ws_compound.corrected_pa != 0:
                             cpd.mr = (
                                     ((cpd.corrected_pa / ws_compound.corrected_pa) * 2500 * 2.5 * quant.value)
                                     / (self.log.sample_time * self.log.sample_flow)
@@ -913,7 +913,7 @@ class SampleQuant:
                         print(f'No working standard compound found for {quant.name} in GcRun {self.sample.date}')
                         continue
 
-                    if q_compound.corrected_pa is not None and q_compound.corrected_pa is not 0:
+                    if q_compound.corrected_pa is not None and q_compound.corrected_pa != 0:
                         cpd.mr = (
                                 ((cpd.corrected_pa / q_compound.corrected_pa) * self.quantifier.log.sample_time
                                  * self.quantifier.log.sample_flow * quant.value)
