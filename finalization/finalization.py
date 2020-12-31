@@ -1,7 +1,9 @@
 
 import json
+import statistics as s
 
 from pathlib import Path
+from copy import deepcopy
 from datetime import datetime, timezone, timedelta
 from collections import defaultdict
 
@@ -87,6 +89,22 @@ def prepend_historic_data(new_final_data):
     return all_final_data
 
 
+def fork_and_filter_moving_median(final_data, pct=10):
+    """
+    Accepts near-final data, and filters based on a moving median and excludes values according to their deviation from
+    the moving median by some fixed or supplied percentage.
+    :param final_data:
+    :param pct: whole percentage, eg the default of 10 means 10%
+    :return:
+    """
+
+    final_flagged_data = deepcopy(final_data)  # create an entirely separate copy
+
+    # TODO: build medians and then filter both copies, keeping in one, removing from the other
+
+    return final_data, final_flagged_data
+
+
 def filter_all_final_data(final_data):
 
     filter_data = defaultdict(list)
@@ -120,7 +138,9 @@ def filter_all_final_data(final_data):
                 if final_data[compound][1][index] == 0:
                     final_data[compound][1][index] = None
 
-    return final_data
+    final_data, final_flagged_data = fork_and_filter_moving_median(final_data)
+
+    return final_data, final_flagged_data  # TODO: address all prior use cases
 
 
 def get_all_final_data_as_dict():
@@ -129,7 +149,8 @@ def get_all_final_data_as_dict():
     historic data, then applying all manual filter files and applying detection limits after.
     :return:
     """
-    return filter_all_final_data(prepend_historic_data(join_new_data()))
+    final_data_dict, _ = filter_all_final_data(prepend_historic_data(join_new_data()))
+    return final_data_dict
 
 
 def final_data_to_df(data):
@@ -143,7 +164,7 @@ def final_data_to_df(data):
 
 
 def main():
-    final_data = get_all_final_data_as_dict()
+    final_data, _ = get_all_final_data_as_dict()
     df = final_data_to_df(final_data)
     df.to_csv(f'final_data_{datetime.now().strftime("%Y_%m_%d")}.csv', float_format='%.3f')
 
