@@ -2,7 +2,7 @@ import json
 from collections import namedtuple
 from datetime import datetime
 
-from finalization.finalization import get_all_final_data_as_dict
+from finalization.runtime import get_all_final_data_as_dict
 from processing.constants import ALL_COMPOUNDS
 from settings import CORE_DIR, JSON_PUBLIC_DIR
 from plotting import create_monthly_ticks, MixingRatioPlot
@@ -84,7 +84,7 @@ def plot_jfj_overlays(jfj_data, full_plot_dir, new_plot_dir, full=True, new=True
     with PLOT_INFO.open('r') as file:
         compound_limits = json.loads(file.read())
 
-    final_data = get_all_final_data_as_dict()
+    final_clean_data, _ = get_all_final_data_as_dict()
 
     if full:
         months = (END_DATE - FULL_START_DATE).days // 30  # dirty int division that probably works
@@ -101,7 +101,7 @@ def plot_jfj_overlays(jfj_data, full_plot_dir, new_plot_dir, full=True, new=True
             jfj_dates = jfj_data['date'] if jfj_compound else []
 
             MixingRatioPlot(
-                {compound: final_data[compound], 'JFJ ' + compound: [jfj_dates, jfj_compound]},
+                {compound: final_clean_data[compound], 'JFJ ' + compound: [jfj_dates, jfj_compound]},
                 title=f'Zugspitze and JFJ {compound} Plot',
                 limits={**date_limits, **compound_limits[compound]},
                 major_ticks=major_ticks,
@@ -124,7 +124,7 @@ def plot_jfj_overlays(jfj_data, full_plot_dir, new_plot_dir, full=True, new=True
             jfj_dates = jfj_data['date'] if jfj_compound else []
 
             MixingRatioPlot(
-                {compound: final_data[compound], 'JFJ ' + compound: [jfj_dates, jfj_compound]},
+                {compound: final_clean_data[compound], 'JFJ ' + compound: [jfj_dates, jfj_compound]},
                 title=f'Zugspitze and JFJ {compound} Plot',
                 limits={**date_limits, **compound_limits[compound]},
                 major_ticks=major_ticks,

@@ -88,7 +88,7 @@ def get_final_average_two_sample_data(start_date, end_date, compounds_to_average
 
     compounds = {}
 
-    # 'round' down to 0 microseconds and seconds for ALL data
+    # truncate all datetimes to 0 microseconds and seconds for ALL data to remove seconds and microseconds created by averaging
     dates = [date.replace(second=0, microsecond=0) for date in averaged_dates.keys()]
     for compound in compounds_to_average:
         compound_mrs = []

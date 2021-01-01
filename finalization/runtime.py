@@ -9,12 +9,15 @@ from collections import defaultdict
 
 import pandas as pd
 
-from settings import JSON_PRIVATE_DIR
+from settings import JSON_PRIVATE_DIR, CORE_DIR
 from finalization.averaging import get_final_average_two_sample_data, get_final_single_sample_data
 from IO.db import DBConnection, OldData
 from processing.constants import DETECTION_LIMITS, EBAS_REPORTING_COMPOUNDS
+from plotting import MixingRatioPlot
 
 FINAL_FILTERS_DIR = JSON_PRIVATE_DIR / 'filters/final_manual_filtering'
+
+EBAS_REPORTING_COMPOUNDS_SET = frozenset(EBAS_REPORTING_COMPOUNDS)
 
 
 def jsonify_data(data, rel_dir):
@@ -84,25 +87,74 @@ def prepend_historic_data(new_final_data):
             mrs = [o.mr for o in old_results]
 
             # prepend older dates and mrs
-            all_final_data[compound] = dates + new_final_data[compound][0], mrs + new_final_data[compound][1]
+            all_final_data[compound] = [dates + new_final_data[compound][0], mrs + new_final_data[compound][1]]
 
     return all_final_data
 
 
-def fork_and_filter_moving_median(final_data, pct=10):
+def fork_and_filter_with_moving_median(final_data, pct=10, plot=False):
     """
     Accepts near-final data, and filters based on a moving median and excludes values according to their deviation from
     the moving median by some fixed or supplied percentage.
+
     :param final_data:
-    :param pct: whole percentage, eg the default of 10 means 10%
+    :param int | float pct: whole percentage, eg the default of 10 means 10%
     :return:
     """
 
-    final_flagged_data = deepcopy(final_data)  # create an entirely separate copy
+    lower_bound = 1 - pct / 100
+    upper_bound = 1 + pct / 100
 
-    # TODO: build medians and then filter both copies, keeping in one, removing from the other
+    final_flagged_data = deepcopy(final_data)  # create an entirely separate copy to hold flagged-only data
+    final_clean_data = deepcopy(final_data)  # create an entirely separate copy for clean data only
 
-    return final_data, final_flagged_data
+    for compound in EBAS_REPORTING_COMPOUNDS:
+        final_data[compound].append([None] * len(final_data[compound][0]))  # add a new list which will hold the median values
+        for index, (date, mr) in enumerate(zip(final_data[compound][0], final_data[compound][1])):
+            if date is None:
+                continue # TODO: not sure if this is what to do
+
+            date_start = date - timedelta(days=7)
+            date_end = date + timedelta(days=7)
+
+            # this will be slow! It's a linear all-points check every time, but guarantees we get it right
+            # some iterator magic would be faster but riskier without substantial testing
+            median_points = [
+                point for date, point in zip(final_data[compound][0], final_data[compound][1])
+                if date_start <= date < date_end and point is not None
+            ]
+
+            median = None if not median_points else s.median(median_points)
+
+            final_data[compound][2][index] = median
+
+            if mr is not None and median is not None:
+                if median * lower_bound <= mr < median * upper_bound:
+                    # data is consistent with median; remove it from the flagged data
+                    final_flagged_data[compound][1][index] = None
+                else:
+                    # data is outside the bounds; remove from clean data
+                    final_clean_data[compound][1][index] = None
+
+        print(compound)
+        print(final_data[compound][0])
+        print(final_data[compound][2])
+        print(final_clean_data[compound][1])
+        print(final_flagged_data[compound][1])
+
+        if plot:
+            MixingRatioPlot(
+                {
+                    f'{compound} (clean)': (final_clean_data[compound][0], final_clean_data[compound][1]),
+                    f'{compound} (flagged)': (final_flagged_data[compound][0], final_flagged_data[compound][1])
+                },
+                title=f'{compound} Mixing Ratios',
+                show=False,
+                save=True,
+                filepath=Path(CORE_DIR / f'finalization/scratch_plots/flagged_data_comparisons/{compound}_flagged_mrs.png')
+            ).plot()
+
+    return final_clean_data, final_flagged_data
 
 
 def filter_all_final_data(final_data):
@@ -118,6 +170,9 @@ def filter_all_final_data(final_data):
 
     for date, compounds in filter_data.items():
         for compound in compounds:
+            if compound not in EBAS_REPORTING_COMPOUNDS:
+                continue  # ignore any filters that don't apply to final data (eg SF6)
+
             if __name__ == '__main__':  # only write the filter output if run directly in module
                 print(
                     f'Filtering {compound} for {date}, which was '
@@ -138,9 +193,9 @@ def filter_all_final_data(final_data):
                 if final_data[compound][1][index] == 0:
                     final_data[compound][1][index] = None
 
-    final_data, final_flagged_data = fork_and_filter_moving_median(final_data)
+    final_clean_data, final_flagged_data = fork_and_filter_with_moving_median(final_data, plot=__name__ == '__main__')
 
-    return final_data, final_flagged_data  # TODO: address all prior use cases
+    return final_clean_data, final_flagged_data
 
 
 def get_all_final_data_as_dict():
@@ -150,7 +205,7 @@ def get_all_final_data_as_dict():
     :return:
     """
     final_data_dict, _ = filter_all_final_data(prepend_historic_data(join_new_data()))
-    return final_data_dict
+    return final_data_dict, _
 
 
 def final_data_to_df(data):
