@@ -1,4 +1,5 @@
-__all__ = ['ALL_COMPOUNDS', 'LOG_ATTRS', 'DAILY_ATTRS', 'DETECTION_LIMITS']
+__all__ = ['ALL_COMPOUNDS', 'LOG_ATTRS', 'DAILY_ATTRS', 'DETECTION_LIMITS', 'QUANTIFIED_COMPOUNDS',
+           'EBAS_REPORTING_COMPOUNDS']
 
 # list of all compounds processed by system; used frequently throughout for plotting etc
 ALL_COMPOUNDS = ('PFC-116', 'ethene', 'SF6', 'CFC-13', 'ethane', 'SO2F2', 'HFC-143a', 'PFC-218', 'HFC-125', 'OCS',
