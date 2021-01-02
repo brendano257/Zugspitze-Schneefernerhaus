@@ -102,8 +102,6 @@ def fork_and_filter_with_moving_median(final_data, pct=10, plot=False):
     :return:
     """
 
-    lower_bound = 1 - pct / 100
-    upper_bound = 1 + pct / 100
 
     final_flagged_data = deepcopy(final_data)  # create an entirely separate copy to hold flagged-only data
     final_clean_data = deepcopy(final_data)  # create an entirely separate copy for clean data only
@@ -125,22 +123,17 @@ def fork_and_filter_with_moving_median(final_data, pct=10, plot=False):
             ]
 
             median = None if not median_points else s.median(median_points)
+            stdev = None if not len(median_points) > 1 else s.stdev(median_points)
 
-            final_data[compound][2][index] = median
+            final_data[compound][2][index] = stdev
 
-            if mr is not None and median is not None:
-                if median * lower_bound <= mr < median * upper_bound:
+            if mr is not None and median is not None and stdev is not None:
+                if median - (stdev * 2) <= mr < median + (stdev * 2):
                     # data is consistent with median; remove it from the flagged data
                     final_flagged_data[compound][1][index] = None
                 else:
                     # data is outside the bounds; remove from clean data
                     final_clean_data[compound][1][index] = None
-
-        print(compound)
-        print(final_data[compound][0])
-        print(final_data[compound][2])
-        print(final_clean_data[compound][1])
-        print(final_flagged_data[compound][1])
 
         if plot:
             MixingRatioPlot(
