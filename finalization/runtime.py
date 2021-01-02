@@ -108,6 +108,9 @@ def fork_and_filter_with_moving_median(final_data, pct=10, plot=False):
 
     for compound in EBAS_REPORTING_COMPOUNDS:
         final_data[compound].append([None] * len(final_data[compound][0]))  # add a new list which will hold the median values
+
+        stdev = s.stdev([d for d in final_data[compound][1] if d is not None])
+
         for index, (date, mr) in enumerate(zip(final_data[compound][0], final_data[compound][1])):
             if date is None:
                 continue # TODO: not sure if this is what to do
@@ -123,7 +126,6 @@ def fork_and_filter_with_moving_median(final_data, pct=10, plot=False):
             ]
 
             median = None if not median_points else s.median(median_points)
-            stdev = None if not len(median_points) > 1 else s.stdev(median_points)
 
             final_data[compound][2][index] = stdev
 
