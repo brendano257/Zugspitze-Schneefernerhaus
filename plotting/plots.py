@@ -663,7 +663,7 @@ class LinearityPlot(Plot2D):
     """
 
     def __init__(self, y_value_name, x, y, title=None, limits=None, minor_ticks=None, major_ticks=None,
-                 y_label_str='Peak Area', x_label_str='Sample Time (s)', save=False, show=False):
+                 y_label_str='Peak Area', x_label_str='Sample Time (s)', save=False, show=False, filepath=None):
         """
         Create an instance with several defaults if they're not given.
 
@@ -700,6 +700,7 @@ class LinearityPlot(Plot2D):
         self.limits = limits
 
         self.reg_formula = None
+        self.filepath = filepath
 
     def plot(self):
         """Perform all formatting and plot data before saving or showing plot."""
