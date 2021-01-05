@@ -663,7 +663,8 @@ class LinearityPlot(Plot2D):
     """
 
     def __init__(self, y_value_name, x, y, title=None, limits=None, minor_ticks=None, major_ticks=None,
-                 y_label_str='Peak Area', x_label_str='Sample Time (s)', save=False, show=False, filepath=None):
+                 y_label_str='Peak Area', x_label_str='Sample Time (s)', save=False, show=False, filepath=None,
+                 format_spec='.2f'):
         """
         Create an instance with several defaults if they're not given.
 
@@ -686,8 +687,7 @@ class LinearityPlot(Plot2D):
         self.y = y
         self.minor_ticks = minor_ticks
         self.major_ticks = major_ticks
-        self.x_label_str = x_label_str
-        self.y_label_str = y_label_str
+
         self.save = save
         self.show = show
 
@@ -701,6 +701,10 @@ class LinearityPlot(Plot2D):
 
         self.reg_formula = None
         self.filepath = filepath
+        self.format_spec = format_spec
+
+        self.x_label_str = x_label_str
+        self.y_label_str = y_label_str
 
     def plot(self):
         """Perform all formatting and plot data before saving or showing plot."""
@@ -730,7 +734,8 @@ class LinearityPlot(Plot2D):
         self.primary_axis.plot(self.x, y_regression, '-')  # plot regression line
 
         operator = '-' if b < 0 else '+'  # operator to put in formatted regression formula
-        self.reg_formula = f'y={m:.2f}x {operator} {abs(b):.2f}'  # use abs(b) and operator to get proper spacing
+        # use abs(b) and operator to get proper spacing
+        self.reg_formula = f'y={format(m, self.format_spec)}x {operator} {format(abs(b), self.format_spec)}'
 
     def _set_legend(self):
         """Set the legend to the y data's name (y_value_name) and append the regression formula"""
