@@ -680,7 +680,7 @@ class GcRun(Base, BlankSubtractedMixin, metaclass=JoinedMeta):
             if quant.value is None:
                 continue
 
-            cpd = search_for_attr_value(self.compounds, 'name', quant.name)
+            cpd = self.compound.get(quant.name)
 
             if self.working_std is None:
                 print(f'No working standard found for GcRun {self.date}')
@@ -690,7 +690,7 @@ class GcRun(Base, BlankSubtractedMixin, metaclass=JoinedMeta):
                     # print(f'No {quant.name} found in compounds for GcRun {self.date}.')
                     continue
                 else:
-                    ws_compound = search_for_attr_value(self.working_std.compounds, 'name', quant.name)
+                    ws_compound = self.working_std.compound.get(quant.name)
 
                     if not ws_compound:
                         print(f'No working standard compound found for {quant.name} in GcRun {self.date}')
