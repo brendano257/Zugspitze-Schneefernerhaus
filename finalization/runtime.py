@@ -1,3 +1,9 @@
+"""
+TODO:
+    1) Move final data to a real object; needs better and named structure
+    2) Give all data on return; fix connections across project
+    3) Move plotting to a separate optional place
+"""
 
 import json
 import statistics as s
