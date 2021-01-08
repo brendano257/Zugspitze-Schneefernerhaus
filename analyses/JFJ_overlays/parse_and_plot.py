@@ -1,23 +1,16 @@
 import json
-from collections import namedtuple
 from datetime import datetime
 
 from finalization.runtime import get_all_final_data_as_dict
-from processing.constants import ALL_COMPOUNDS
+from processing.constants import EBAS_REPORTING_COMPOUNDS
 from settings import CORE_DIR, JSON_PUBLIC_DIR
 from plotting import create_monthly_ticks, MixingRatioPlot
+
+from analyses.JFJ_overlays.parsers import read_jfj_all_compounds_file, read_jfj_cfc_file
 
 FULL_START_DATE = datetime(2013, 1, 1)
 NEW_START_DATE = datetime(2018, 1, 1)
 END_DATE = datetime(2021, 1, 1)
-
-COMPOUND_NAME_LOOKUP = {
-    'methyl_chloride': 'CH3Cl',
-    'methyl_bromide': 'CH3Br',
-    'chloroform': 'CHCl3',
-    'perchloroethylene': 'PCE',
-    'methyl_chloroform': 'CH3CCl3'
-}
 
 
 def clean_flagged_data(conv, field, clean=False):
@@ -35,44 +28,7 @@ def clean_flagged_data(conv, field, clean=False):
         return None if not clean else conv(field.strip().rstrip('P'))
 
 
-def read_jfj_file(filepath, clean=False):
-    converters = [lambda x, f=func: f(x) for func in
-                  (float, int, int, int, int, int, *([float] * 40))]
-
-    with open(filepath, 'r') as file:
-        t = namedtuple('data', [fieldname.strip().replace('-', '_') for fieldname in next(file).split()])
-
-        data = [
-            t(*[clean_flagged_data(conv, field, clean) for field, conv in zip(line.split(), converters)])
-            for line in file
-        ]
-
-    jfj_data = dict.fromkeys(['date'] + list(ALL_COMPOUNDS), None)
-
-    for k in jfj_data:
-        jfj_data[k] = []
-
-    for d in data:
-        jfj_data['date'].append(datetime(d.YYYY, d.MM, d.DD, d.hh, d.min, 0))
-
-        for compound in ALL_COMPOUNDS:
-            # get the name if there's an alias, otherwise use the name
-            compound_looked_up = COMPOUND_NAME_LOOKUP.get(compound, compound)
-            datum = getattr(d, compound_looked_up.replace('-', '_'), None)
-            jfj_data[compound].append(datum)
-
-    empty = []
-    for k, v in jfj_data.items():
-        if not any(v):
-            empty.append(k)
-
-    for k in empty:
-        del jfj_data[k]
-
-    return jfj_data
-
-
-def plot_jfj_overlays(jfj_data, full_plot_dir, new_plot_dir, full=True, new=True):
+def plot_jfj_overlays(jfj_data, compounds, full_plot_dir, new_plot_dir, full=True, new=True):
     PLOT_INFO = JSON_PUBLIC_DIR / 'zug_long_plot_info.json'
 
     if full and not full_plot_dir.exists():
@@ -92,7 +48,7 @@ def plot_jfj_overlays(jfj_data, full_plot_dir, new_plot_dir, full=True, new=True
 
         major_ticks = major_ticks[::12]
 
-        for compound in ALL_COMPOUNDS:
+        for compound in compounds:
             if compound not in compound_limits:
                 print(f"Compound (full) {compound} not plotted.")
                 continue
@@ -115,7 +71,7 @@ def plot_jfj_overlays(jfj_data, full_plot_dir, new_plot_dir, full=True, new=True
 
         major_ticks = major_ticks[::4]
 
-        for compound in ALL_COMPOUNDS:
+        for compound in compounds:
             if compound not in compound_limits:
                 print(f"Compound (new) {compound} not plotted.")
                 continue
@@ -135,14 +91,23 @@ def plot_jfj_overlays(jfj_data, full_plot_dir, new_plot_dir, full=True, new=True
 
 if __name__ == '__main__':
 
-    unfiltered_jfj_data = read_jfj_file('JFJ.txt', clean=True)
-    filtered_jfj_data = read_jfj_file('JFJ.txt', clean=False)
+    file_choice = input(
+        '''Pick file to read:\n\t1: JFJ.txt -- all compounds up to 2020-9-30\n
+        \t2: JFJ_CFC_Helmig_2020.txt -- CFC-11 and 12 until 2021\n'''
+    )
+
+    filename = 'JFJ.txt' if file_choice == "1" else 'JFJ_CFC_Helmig_2020.txt'
+    reader = read_jfj_all_compounds_file if file_choice == "1" else read_jfj_cfc_file
+    compounds = EBAS_REPORTING_COMPOUNDS if file_choice == "1" else ('CFC-11', 'CFC-12')
+
+    unfiltered_jfj_data = reader(filename, clean=True)
+    filtered_jfj_data = reader(filename, clean=False)
 
     FULL_PLOTDIR = CORE_DIR / 'analyses/JFJ_overlays/plots/unfiltered_JFJ/full'
     NEW_PLOTDIR = CORE_DIR / 'analyses/JFJ_overlays/plots/unfiltered_JFJ/new'
 
-    plot_jfj_overlays(unfiltered_jfj_data, full_plot_dir=FULL_PLOTDIR, new_plot_dir=NEW_PLOTDIR, full=True, new=True,)
+    plot_jfj_overlays(unfiltered_jfj_data, compounds=compounds, full_plot_dir=FULL_PLOTDIR, new_plot_dir=NEW_PLOTDIR, full=True, new=True,)
 
     FULL_PLOTDIR = CORE_DIR / 'analyses/JFJ_overlays/plots/filtered_JFJ/full'
     NEW_PLOTDIR = CORE_DIR / 'analyses/JFJ_overlays/plots/filtered_JFJ/new'
-    plot_jfj_overlays(filtered_jfj_data, full_plot_dir=FULL_PLOTDIR, new_plot_dir=NEW_PLOTDIR, full=True, new=True,)
+    plot_jfj_overlays(filtered_jfj_data, compounds=compounds, full_plot_dir=FULL_PLOTDIR, new_plot_dir=NEW_PLOTDIR, full=True, new=True,)
