@@ -6,7 +6,7 @@ from datetime import datetime
 
 from settings import CORE_DIR, DB_NAME, FILTER_DIRS, JSON_PRIVATE_DIR
 from IO import Base, connect_to_db
-from IO.db.models import Config, Compound, LogFile, Integration, GcRun, Standard, Quantification
+from IO.db.models import Config, Compound, LogFile, Integration, GcRun, Standard, Quantification, OldData
 from processing import match_integrations_to_logs
 from utils import search_for_attr_value, find_closest_date
 
@@ -172,7 +172,9 @@ def process_filters(logger):
     # TODO: Ideally, only process filters when one or more has been changed; but all must be processed, per below
 
     session.query(Compound).update({Compound.filtered: False})
+    session.query(OldData).update({OldData.filtered: False})
     session.commit()  # un-filter ALL data prior to editing
+
     # this is desired since only adding filters means removed ones in the JSON
     # file will still be filtered in the database
 
@@ -207,8 +209,9 @@ def process_filters(logger):
                     if compound == 'all':
                         for matched_compound in gc_run.compounds:
                             matched_compound.filtered = True
+                            session.merge(matched_compound)
                     else:
-                        matched_compound = search_for_attr_value(gc_run.compounds, 'name', compound)
+                        matched_compound = gc_run.compound.get(compound)
 
                         if matched_compound:
                             matched_compound.filtered = True
@@ -217,7 +220,30 @@ def process_filters(logger):
                             logger.warning(f"Compound {compound} was filtered in the JSON file for GcRun with {date} "
                                            + "but was not present in the GcRun.")
             else:
-                logger.warning(f"GcRun with date {date} was not found in the record, "
+
+                old_run = (
+                    session.query(OldData)
+                           .filter(OldData.date >= date, OldData.date <= date + dt.timedelta(minutes=1))
+                           .all()
+                           )
+
+                if old_run:
+                    for compound in compound_list:
+                        if compound == 'all':
+                            for matched_compound in old_run:
+                                matched_compound.filtered = True
+                                session.merge(matched_compound)
+                        else:
+                            matched_compound = search_for_attr_value(old_run, 'name', compound)
+
+                            if matched_compound:
+                                matched_compound.filtered = True
+                                session.merge(matched_compound)
+                            else:
+                                logger.warning(f"Compound {compound} was filtered in the JSON file for OldData with {date} "
+                                               + "but was not present in the GcRun.")
+                else:
+                    logger.warning(f"GcRun with date {date} was not found in the old or new record, "
                                + "but was present in the JSON filter file.")
 
         session.merge(config)

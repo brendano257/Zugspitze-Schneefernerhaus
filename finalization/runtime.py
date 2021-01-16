@@ -19,6 +19,7 @@ from settings import JSON_PRIVATE_DIR, CORE_DIR
 from finalization.averaging import get_final_average_two_sample_data, get_final_single_sample_data
 from IO.db import DBConnection, OldData
 from processing.constants import DETECTION_LIMITS, EBAS_REPORTING_COMPOUNDS
+from finalization.constants import MEDIAN_10_COMPOUNDS, MEDIAN_25_COMPOUNDS, SEASONAL_CYCLE_COMPOUNDS
 from plotting import MixingRatioPlot
 
 FINAL_FILTERS_DIR = JSON_PRIVATE_DIR / 'filters/final_manual_filtering'
@@ -86,6 +87,7 @@ def prepend_historic_data(new_final_data):
         for compound in EBAS_REPORTING_COMPOUNDS:
             old_results = (session.query(OldData.date, OldData.mr)
                            .filter(OldData.name == compound)
+                           .filter(OldData.filtered == False)
                            .order_by(OldData.date)
                            .all())
 
@@ -98,7 +100,7 @@ def prepend_historic_data(new_final_data):
     return all_final_data
 
 
-def fork_and_filter_with_moving_median(final_data, pct=10, plot=False):
+def fork_and_filter_with_moving_median(final_data, plot=False):
     """
     Accepts near-final data, and filters based on a moving median and excludes values according to their deviation from
     the moving median by some fixed or supplied percentage.
@@ -115,7 +117,7 @@ def fork_and_filter_with_moving_median(final_data, pct=10, plot=False):
     for compound in EBAS_REPORTING_COMPOUNDS:
         final_data[compound].append([None] * len(final_data[compound][0]))  # add a new list which will hold the median values
 
-        stdev = s.stdev([d for d in final_data[compound][1] if d is not None])
+        stdev_all = s.stdev([d for d in final_data[compound][1] if d is not None])
 
         for index, (date, mr) in enumerate(zip(final_data[compound][0], final_data[compound][1])):
             if date is None:
@@ -126,30 +128,68 @@ def fork_and_filter_with_moving_median(final_data, pct=10, plot=False):
 
             # this will be slow! It's a linear all-points check every time, but guarantees we get it right
             # some iterator magic would be faster but riskier without substantial testing
-            median_points = [
+            cleaned_points = [
                 point for date, point in zip(final_data[compound][0], final_data[compound][1])
                 if date_start <= date < date_end and point is not None
             ]
 
-            median = None if not median_points else s.median(median_points)
+            median = None if not cleaned_points else s.median(cleaned_points)
+            stdev_moving = None if len(cleaned_points) < 2 else s.stdev(cleaned_points)
 
-            final_data[compound][2][index] = stdev
+            # TODO: Flag by median or stdev depending on the list the compound is in
 
-            if mr is not None and median is not None and stdev is not None:
-                if median - (stdev * 2) <= mr < median + (stdev * 2):
-                    # data is consistent with median; remove it from the flagged data
-                    final_flagged_data[compound][1][index] = None
+            if mr is not None:
+                if compound in SEASONAL_CYCLE_COMPOUNDS and stdev_moving is not None:
+                    if median - (stdev_all * 2) <= mr < median + (stdev_all * 2):
+                        # data is consistent with median; remove it from the flagged data
+                        final_flagged_data[compound][1][index] = None
+                    else:
+                        # data is outside the bounds; remove from clean data
+                        final_clean_data[compound][1][index] = None
+
+                elif compound in MEDIAN_10_COMPOUNDS and median is not None:
+                    if median * .9 <= mr < median * 1.1:
+                        # data is consistent with median; remove it from the flagged data
+                        final_flagged_data[compound][1][index] = None
+                    else:
+                        # data is outside the bounds; remove from clean data
+                        final_clean_data[compound][1][index] = None
+
+                elif compound in MEDIAN_25_COMPOUNDS and median is not None:
+                    pass
                 else:
-                    # data is outside the bounds; remove from clean data
-                    final_clean_data[compound][1][index] = None
+                    pass  # can't apply filter...
+
+            # final_data[compound][2][index] = stdev_all
+            #
+            # if mr is not None and median is not None and stdev_all is not None:
+            #     if median - (stdev_all * 2) <= mr < median + (stdev_all * 2):
+            #         # data is consistent with median; remove it from the flagged data
+            #         final_flagged_data[compound][1][index] = None
+            #     else:
+            #         # data is outside the bounds; remove from clean data
+            #         final_clean_data[compound][1][index] = None
+
+        # TODO: Add flagging to old data...? Needs to be processed somewhere
 
         if plot:
+
+            if compound in SEASONAL_CYCLE_COMPOUNDS:
+                flag_policy = 'stdev'
+            elif compound in MEDIAN_10_COMPOUNDS:
+                flag_policy = 'median 10%'
+            elif compound in MEDIAN_25_COMPOUNDS:
+                flag_policy = 'median 25%'
+            else:
+                flag_policy = 'None'
+
             MixingRatioPlot(
                 {
                     f'{compound} (clean)': (final_clean_data[compound][0], final_clean_data[compound][1]),
-                    f'{compound} (flagged)': (final_flagged_data[compound][0], final_flagged_data[compound][1])
+                    f'{compound} ({flag_policy})': (final_flagged_data[compound][0], final_flagged_data[compound][1])
                 },
                 title=f'{compound} Mixing Ratios',
+                limits={'left': datetime(2013, 1, 1), 'right': datetime(2021, 1, 1)},
                 show=False,
                 save=True,
                 filepath=Path(CORE_DIR / f'finalization/scratch_plots/flagged_data_comparisons/{compound}_flagged_mrs.png')

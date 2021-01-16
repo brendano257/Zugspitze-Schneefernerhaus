@@ -748,6 +748,7 @@ class OldData(Base):
     name = Column(String)
     date = Column(DateTime)
     mr = Column(Float)
+    filtered = Column(Boolean)
 
     def __init__(self, name, date, mr):
         """
@@ -760,6 +761,7 @@ class OldData(Base):
         self.name = name
         self.date = date
         self.mr = mr
+        self.filtered = False
 
     def __repr__(self):
         return f'{self.__class__.__name__}(date={repr(self.date)}, name={repr(self.name)}, mr={self.mr})'
