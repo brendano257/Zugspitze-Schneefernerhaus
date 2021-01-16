@@ -12,6 +12,12 @@ FULL_START_DATE = datetime(2013, 1, 1)
 NEW_START_DATE = datetime(2018, 1, 1)
 END_DATE = datetime(2021, 1, 1)
 
+# manual adjustments to the plot limits per Detlev's request
+LIMIT_CHANGES = {
+    'CFC-11': {'top': 250, 'bottom': 210},
+    'CFC-12': {'top': 540, 'bottom': 480}
+}
+
 
 def clean_flagged_data(conv, field, clean=False):
     """
@@ -39,6 +45,7 @@ def plot_jfj_overlays(jfj_data, compounds, full_plot_dir, new_plot_dir, full=Tru
 
     with PLOT_INFO.open('r') as file:
         compound_limits = json.loads(file.read())
+        compound_limits.update(LIMIT_CHANGES)  # overwrite with new manually-decided limits
 
     final_clean_data, _ = get_all_final_data_as_dict()
 
@@ -92,8 +99,9 @@ def plot_jfj_overlays(jfj_data, compounds, full_plot_dir, new_plot_dir, full=Tru
 if __name__ == '__main__':
 
     file_choice = input(
-        '''Pick file to read:\n\t1: JFJ.txt -- all compounds up to 2020-9-30\n
-        \t2: JFJ_CFC_Helmig_2020.txt -- CFC-11 and 12 until 2021\n'''
+'''Pick file to read:
+\t1: JFJ.txt -- all compounds up to 2020-9-30
+\t2: JFJ_CFC_Helmig_2020.txt -- CFC-11 and 12 until 2021\n'''
     )
 
     filename = 'JFJ.txt' if file_choice == "1" else 'JFJ_CFC_Helmig_2020.txt'
