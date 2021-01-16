@@ -19,7 +19,7 @@ from settings import JSON_PRIVATE_DIR, CORE_DIR
 from finalization.averaging import get_final_average_two_sample_data, get_final_single_sample_data
 from IO.db import DBConnection, OldData
 from processing.constants import DETECTION_LIMITS, EBAS_REPORTING_COMPOUNDS
-from finalization.constants import MEDIAN_10_COMPOUNDS, MEDIAN_25_COMPOUNDS, SEASONAL_CYCLE_COMPOUNDS
+from finalization.constants import MEDIAN_10_COMPOUNDS, MEDIAN_25_COMPOUNDS, SEASONAL_CYCLE_COMPOUNDS, NONE
 from plotting import MixingRatioPlot
 
 FINAL_FILTERS_DIR = JSON_PRIVATE_DIR / 'filters/final_manual_filtering'
@@ -123,8 +123,8 @@ def fork_and_filter_with_moving_median(final_data, plot=False):
             if date is None:
                 continue # TODO: not sure if this is what to do
 
-            date_start = date - timedelta(days=7)
-            date_end = date + timedelta(days=7)
+            date_start = date - timedelta(days=14)
+            date_end = date + timedelta(days=14)
 
             # this will be slow! It's a linear all-points check every time, but guarantees we get it right
             # some iterator magic would be faster but riskier without substantial testing
@@ -136,10 +136,8 @@ def fork_and_filter_with_moving_median(final_data, plot=False):
             median = None if not cleaned_points else s.median(cleaned_points)
             stdev_moving = None if len(cleaned_points) < 2 else s.stdev(cleaned_points)
 
-            # TODO: Flag by median or stdev depending on the list the compound is in
-
             if mr is not None:
-                if compound in SEASONAL_CYCLE_COMPOUNDS and stdev_moving is not None:
+                if compound in SEASONAL_CYCLE_COMPOUNDS and stdev_all is not None:
                     if median - (stdev_all * 2) <= mr < median + (stdev_all * 2):
                         # data is consistent with median; remove it from the flagged data
                         final_flagged_data[compound][1][index] = None
@@ -156,21 +154,14 @@ def fork_and_filter_with_moving_median(final_data, plot=False):
                         final_clean_data[compound][1][index] = None
 
                 elif compound in MEDIAN_25_COMPOUNDS and median is not None:
-                    pass
-                else:
-                    pass  # can't apply filter...
-
-            # final_data[compound][2][index] = stdev_all
-            #
-            # if mr is not None and median is not None and stdev_all is not None:
-            #     if median - (stdev_all * 2) <= mr < median + (stdev_all * 2):
-            #         # data is consistent with median; remove it from the flagged data
-            #         final_flagged_data[compound][1][index] = None
-            #     else:
-            #         # data is outside the bounds; remove from clean data
-            #         final_clean_data[compound][1][index] = None
-
-        # TODO: Add flagging to old data...? Needs to be processed somewhere
+                    if median * .75 <= mr < median * 1.25:
+                        # data is consistent with median; remove it from the flagged data
+                        final_flagged_data[compound][1][index] = None
+                    else:
+                        # data is outside the bounds; remove from clean data
+                        final_clean_data[compound][1][index] = None
+                else:  # is in group NONE or some other non-filtered list
+                    final_flagged_data[compound][1][index] = None
 
         if plot:
 
@@ -180,8 +171,10 @@ def fork_and_filter_with_moving_median(final_data, plot=False):
                 flag_policy = 'median 10%'
             elif compound in MEDIAN_25_COMPOUNDS:
                 flag_policy = 'median 25%'
+            elif compound in NONE:
+                flag_policy = 'no flag'
             else:
-                flag_policy = 'None'
+                flag_policy = 'none given'
 
             MixingRatioPlot(
                 {
