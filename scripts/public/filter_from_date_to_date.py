@@ -10,7 +10,7 @@ Filters created with this script will be read in and filtered on the next pass o
 import json
 from datetime import datetime
 
-from IO.db.models import GcRun
+from IO.db.models import GcRun, OldData
 from IO import connect_to_db
 from settings import CORE_DIR, DB_NAME
 
@@ -24,12 +24,18 @@ end_date = input('What date do you want to filter to? (inclusive mm/dd/yyyy HH:M
 start_date = datetime.strptime(start_date, '%m/%d/%Y %H:%M')
 end_date = datetime.strptime(end_date, '%m/%d/%Y %H:%M')
 
-compounds = ['all']  # can be specific list of compounds
+compounds = ['H-2402']  # can be specific list of compounds
 
 dates = (session.query(GcRun.date)
                 .filter(GcRun.date >= start_date, GcRun.date <= end_date)
                 .filter(GcRun.type == 5)
                 .all())
+
+old_data_dates = (session.query(OldData.date)
+                  .filter(OldData.date >= start_date, OldData.date <= end_date)
+                  .all())
+
+dates.extend(old_data_dates)
 
 dates = [d.date for d in dates]  # unpack from tuples
 
@@ -40,7 +46,7 @@ for d in dates:
 
 json_output = json.dumps(filters).replace('],', '],\n')
 
-file = CORE_DIR / f'filters/final/{filename}.json'
+file = CORE_DIR / f'data/json/private/filters/final/{filename}.json'
 
 if file.exists():
     raise FileExistsError
