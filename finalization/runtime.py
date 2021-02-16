@@ -123,8 +123,13 @@ def fork_and_filter_with_moving_median(final_data, plot=False):
             if date is None:
                 continue # TODO: not sure if this is what to do
 
-            date_start = date - timedelta(days=14)
-            date_end = date + timedelta(days=14)
+            if compound == 'OCS':
+                days = 21
+            else:
+                days = 14
+
+            date_start = date - timedelta(days=days)
+            date_end = date + timedelta(days=days)
 
             # this will be slow! It's a linear all-points check every time, but guarantees we get it right
             # some iterator magic would be faster but riskier without substantial testing

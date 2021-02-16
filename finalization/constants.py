@@ -3,12 +3,12 @@ from processing.constants import EBAS_REPORTING_COMPOUNDS
 
 SEASONAL_CYCLE_COMPOUNDS = frozenset((
     'ethane', 'methyl_chloride', 'propane', 'i-butane', 'n-butane', 'CH2Cl2', 'i-pentane',
-    'n-pentane', 'CH2Br2', 'hexane', 'benzene', 'toluene', 'CHBr3'
+    'n-pentane', 'CH2Br2', 'hexane', 'benzene', 'toluene', 'CHBr3',
 ))
 
 MEDIAN_10_COMPOUNDS = frozenset((
     'HCFC-141b', 'H-1301', 'HFC-143a', 'HCFC-124', 'PFC-116', 'CFC-11', 'methyl_chloroform', 'CCl4', 'SO2F2',
-     'CFC-12', 'HFC-125', 'OCS', 'HCFC-142b', 'CFC-115', 'CFC-13', 'HCFC-22', 'PFC-318',
+     'CFC-12', 'HFC-125', 'HCFC-142b', 'OCS', 'CFC-115', 'CFC-13', 'HCFC-22', 'PFC-318',
      'H-2402', 'PFC-218', 'H-1211', 'methyl_bromide', 'CFC-113',  'HFC-245fa',
     'CFC-114', 'HFC-365mfc', 'HFC-134a'
 ))
