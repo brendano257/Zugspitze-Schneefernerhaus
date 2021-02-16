@@ -19,7 +19,8 @@ from settings import JSON_PRIVATE_DIR, CORE_DIR
 from finalization.averaging import get_final_average_two_sample_data, get_final_single_sample_data
 from IO.db import DBConnection, OldData
 from processing.constants import DETECTION_LIMITS, EBAS_REPORTING_COMPOUNDS
-from finalization.constants import MEDIAN_10_COMPOUNDS, MEDIAN_25_COMPOUNDS, SEASONAL_CYCLE_COMPOUNDS, NONE
+from finalization.constants import (MEDIAN_10_COMPOUNDS, MEDIAN_25_COMPOUNDS, SEASONAL_CYCLE_COMPOUNDS, NONE,
+                                    TWENTY_ONE_DAY)
 from plotting import MixingRatioPlot
 
 FINAL_FILTERS_DIR = JSON_PRIVATE_DIR / 'filters/final_manual_filtering'
@@ -123,7 +124,7 @@ def fork_and_filter_with_moving_median(final_data, plot=False):
             if date is None:
                 continue # TODO: not sure if this is what to do
 
-            if compound == 'OCS':
+            if compound in TWENTY_ONE_DAY:
                 days = 21
             else:
                 days = 14

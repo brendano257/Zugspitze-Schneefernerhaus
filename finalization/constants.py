@@ -13,6 +13,10 @@ MEDIAN_10_COMPOUNDS = frozenset((
     'CFC-114', 'HFC-365mfc', 'HFC-134a'
 ))
 
+TWENTY_ONE_DAY = frozenset((
+    'OCS', 'HFC-141b', 'HFC-142b'
+))
+
 MEDIAN_25_COMPOUNDS = frozenset((
         'perchloroethylene', 'methyl_iodide', 'HFC-152a', 'chloroform',
 ))
