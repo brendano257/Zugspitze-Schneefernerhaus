@@ -41,7 +41,7 @@ for d in dates:
 
 json_output = json.dumps(filters).replace('],', '],\n')
 
-file = CORE_DIR / f'filters/final/{filename}.json'
+file = CORE_DIR / f'data/json/private/filters/final/{filename}.json'
 
 if file.exists():
 	raise FileExistsError
