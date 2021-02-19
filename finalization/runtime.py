@@ -122,12 +122,12 @@ def fork_and_filter_with_moving_median(final_data, plot=False):
 
         for index, (date, mr) in enumerate(zip(final_data[compound][0], final_data[compound][1])):
             if date is None:
-                continue # TODO: not sure if this is what to do
+                continue
 
-            if compound in TWENTY_ONE_DAY:
-                days = 21
-            else:
+            if compound in SEASONAL_CYCLE_COMPOUNDS:
                 days = 14
+            else:
+                days = 28
 
             date_start = date - timedelta(days=days)
             date_end = date + timedelta(days=days)
@@ -212,14 +212,19 @@ def filter_all_final_data(final_data):
         for compound in compounds:
             if compound not in EBAS_REPORTING_COMPOUNDS:
                 continue  # ignore any filters that don't apply to final data (eg SF6)
+            try:
+                if __name__ == '__main__':  # only write the filter output if run directly in module
+                    print(
+                        f'Filtering {compound} for {date}, which was '
+                        + f'{final_data[compound][1][final_data[compound][0].index(date)]}'
+                    )
 
-            if __name__ == '__main__':  # only write the filter output if run directly in module
-                print(
-                    f'Filtering {compound} for {date}, which was '
-                    + f'{final_data[compound][1][final_data[compound][0].index(date)]}'
-                )
-
-            final_data[compound][1][final_data[compound][0].index(date)] = None
+                final_data[compound][1][final_data[compound][0].index(date)] = None
+            except ValueError:
+                # if compound isn't found in the list, we can't/won't bother to filter it
+                # this can happen is something was wholesale-filtered beforehand, and no longer appears in some
+                # manual filter that was created specifically while finalizing data; it's perfectly okay
+                continue
 
     for compound in EBAS_REPORTING_COMPOUNDS:
         # iterate explicitly over indices instead of the list! Python Rule #1: Don't iterate over and modify
