@@ -65,7 +65,7 @@ def print_stats_on_ratios_by_compound(ratios):
 def join_new_data():
     single_sample_data = get_final_single_sample_data(EBAS_REPORTING_COMPOUNDS)
     two_sample_data = get_final_average_two_sample_data(datetime(2018, 12, 20),
-                                                        datetime(2021, 1, 1),
+                                                        datetime(2021, 3, 1),
                                                         EBAS_REPORTING_COMPOUNDS)
     joined_new_data = {}
 
@@ -188,10 +188,29 @@ def fork_and_filter_with_moving_median(final_data, plot=False):
                     f'{compound} ({flag_policy})': (final_flagged_data[compound][0], final_flagged_data[compound][1])
                 },
                 title=f'{compound} Mixing Ratios',
-                limits={'left': datetime(2013, 1, 1), 'right': datetime(2021, 1, 1)},
+                limits={'left': datetime(2013, 1, 1), 'right': datetime(2021, 3, 1)},
                 show=False,
                 save=True,
                 filepath=Path(CORE_DIR / f'finalization/scratch_plots/flagged_data_comparisons/{compound}_flagged_mrs.png')
+            ).plot()
+
+            clean = [v for v in final_clean_data[compound][1] if v is not None]
+            flagged = [v for v in final_flagged_data[compound][1] if v is not None]
+            try:
+                top_limit = 1.15 * max(max(clean), max(flagged))
+            except ValueError:
+                top_limit = None
+
+            MixingRatioPlot(
+                {
+                    f'{compound} (clean)': (final_clean_data[compound][0], final_clean_data[compound][1]),
+                    f'{compound} ({flag_policy})': (final_flagged_data[compound][0], final_flagged_data[compound][1])
+                },
+                title=f'{compound} Mixing Ratios',
+                limits={'left': datetime(2013, 1, 1), 'right': datetime(2021, 3, 1), 'bottom': 0, 'top': top_limit},
+                show=False,
+                save=True,
+                filepath=Path(CORE_DIR / f'finalization/scratch_plots/flagged_data_comparisons_zeroed/{compound}_flagged_mrs_zero.png')
             ).plot()
 
     return final_clean_data, final_flagged_data
