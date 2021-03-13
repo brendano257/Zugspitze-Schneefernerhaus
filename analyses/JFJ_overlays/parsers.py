@@ -2,7 +2,7 @@ import json
 from collections import namedtuple
 from datetime import datetime
 
-from finalization.runtime import get_all_final_data_as_dict
+from finalization.runtime import get_all_final_data_as_dicts
 from processing.constants import ALL_COMPOUNDS
 from settings import CORE_DIR, JSON_PUBLIC_DIR
 from plotting import create_monthly_ticks, MixingRatioPlot

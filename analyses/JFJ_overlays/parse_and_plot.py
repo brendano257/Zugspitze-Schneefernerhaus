@@ -1,7 +1,7 @@
 import json
 from datetime import datetime
 
-from finalization.runtime import get_all_final_data_as_dict
+from finalization.runtime import get_all_final_data_as_dicts
 from processing.constants import EBAS_REPORTING_COMPOUNDS
 from settings import CORE_DIR, JSON_PUBLIC_DIR
 from plotting import create_monthly_ticks, MixingRatioPlot
@@ -47,7 +47,7 @@ def plot_jfj_overlays(jfj_data, compounds, full_plot_dir, new_plot_dir, full=Tru
         compound_limits = json.loads(file.read())
         compound_limits.update(LIMIT_CHANGES)  # overwrite with new manually-decided limits
 
-    final_clean_data, _ = get_all_final_data_as_dict()
+    final_clean_data, _ = get_all_final_data_as_dicts()
 
     if full:
         months = (END_DATE - FULL_START_DATE).days // 30  # dirty int division that probably works
