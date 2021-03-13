@@ -19,7 +19,10 @@ Data for HCFC-141b and HCFC-142b for the period between 3/1/2018 and 10/15/2018 
 
 Data for HFC-152a prior to 8/15/2018 were removed due to contamination from gas diffusion through teflon ferrules in the instrument room.
 
-Data starting 11/13/2019 use the NOAA scale and thus have slightly different mixing ratios going forward. This reflects the real difference between the prior NOAA scale and the EMPA scale.
+Data for i-pentane, n-pentane, isoprene, HCFC-141b and HCFC-142b have been removed from 2013 - 1/1/2018 due to concerns over
+sampling line quality and results.
+
+Data starting 11/13/2019 use the NOAA GMD measurement scale and thus have slightly different mixing ratios going forward. This reflects the real difference between the prior NOAA scale and the EMPA scale.
     Compounds affected by this change are: HCFC-142b, H-1301, HFC-125, and HCFC-22
     
 Detection Limits:
