@@ -19,8 +19,7 @@ from settings import JSON_PRIVATE_DIR, CORE_DIR
 from finalization.averaging import get_final_average_two_sample_data, get_final_single_sample_data
 from IO.db import DBConnection, OldData
 from processing.constants import DETECTION_LIMITS, EBAS_REPORTING_COMPOUNDS
-from finalization.constants import (MEDIAN_10_COMPOUNDS, MEDIAN_25_COMPOUNDS, SEASONAL_CYCLE_COMPOUNDS, NONE,
-                                    TWENTY_ONE_DAY)
+from finalization.constants import (MEDIAN_10_COMPOUNDS, MEDIAN_25_COMPOUNDS, SEASONAL_CYCLE_COMPOUNDS, NONE)
 from plotting import MixingRatioPlot
 
 FINAL_FILTERS_DIR = JSON_PRIVATE_DIR / 'filters/final_manual_filtering'
@@ -62,7 +61,7 @@ def print_stats_on_ratios_by_compound(ratios):
         print(f'{name}: {data}')
 
 
-def join_new_data():
+def join_2018_and_newer_data():
     single_sample_data = get_final_single_sample_data(EBAS_REPORTING_COMPOUNDS)
     two_sample_data = get_final_average_two_sample_data(datetime(2018, 12, 20),
                                                         datetime(2021, 3, 1),
@@ -80,6 +79,12 @@ def join_new_data():
 
 
 def prepend_historic_data(new_final_data):
+    """
+    Add data from prior to 2018 (more or less, 2013 - 2017 data), which are stored as "OldData" objects in the database.
+
+    :param new_final_data:
+    :return:
+    """
 
     all_final_data = {}
 
@@ -103,11 +108,10 @@ def prepend_historic_data(new_final_data):
 
 def fork_and_filter_with_moving_median(final_data, plot=False):
     """
-    Accepts near-final data, and filters based on a moving median and excludes values according to their deviation from
-    the moving median by some fixed or supplied percentage.
+    Accepts near-final data, and filters based on a moving median or stdev, and excludes values according to their
+    deviation from the moving median by some fixed or supplied percentage.
 
     :param final_data:
-    :param int | float pct: whole percentage, eg the default of 10 means 10%
     :return:
     """
 
@@ -140,7 +144,6 @@ def fork_and_filter_with_moving_median(final_data, plot=False):
             ]
 
             median = None if not cleaned_points else s.median(cleaned_points)
-            stdev_moving = None if len(cleaned_points) < 2 else s.stdev(cleaned_points)
 
             if mr is not None:
                 if compound in SEASONAL_CYCLE_COMPOUNDS and stdev_all is not None:
@@ -180,7 +183,7 @@ def fork_and_filter_with_moving_median(final_data, plot=False):
             elif compound in NONE:
                 flag_policy = 'no flag'
             else:
-                flag_policy = 'none given'
+                flag_policy = 'none given'  # just in case
 
             MixingRatioPlot(
                 {
@@ -191,15 +194,19 @@ def fork_and_filter_with_moving_median(final_data, plot=False):
                 limits={'left': datetime(2013, 1, 1), 'right': datetime(2021, 3, 1)},
                 show=False,
                 save=True,
-                filepath=Path(CORE_DIR / f'finalization/scratch_plots/flagged_data_comparisons/{compound}_flagged_mrs.png')
+                filepath=Path(
+                    CORE_DIR /
+                    f'finalization/scratch_plots/flagged_data_comparisons/{compound}_flagged_mrs.png'
+                )
             ).plot()
 
             clean = [v for v in final_clean_data[compound][1] if v is not None]
             flagged = [v for v in final_flagged_data[compound][1] if v is not None]
-            try:
-                top_limit = 1.15 * max(max(clean), max(flagged))
-            except ValueError:
-                top_limit = None
+
+            clean_max = max(clean) if clean else 0
+            flagged_max = max(flagged) if flagged else 0
+
+            top_limit = max((clean_max, flagged_max))
 
             MixingRatioPlot(
                 {
@@ -207,11 +214,26 @@ def fork_and_filter_with_moving_median(final_data, plot=False):
                     f'{compound} ({flag_policy})': (final_flagged_data[compound][0], final_flagged_data[compound][1])
                 },
                 title=f'{compound} Mixing Ratios',
-                limits={'left': datetime(2013, 1, 1), 'right': datetime(2021, 3, 1), 'bottom': 0, 'top': top_limit},
+                limits={'left': datetime(2013, 1, 1), 'right': datetime(2021, 3, 1), 'bottom': 0, 'top': top_limit * 1.25},
                 show=False,
                 save=True,
-                filepath=Path(CORE_DIR / f'finalization/scratch_plots/flagged_data_comparisons_zeroed/{compound}_flagged_mrs_zero.png')
+                filepath=Path(
+                    CORE_DIR /
+                    f'finalization/scratch_plots/flagged_data_comparisons_zeroed/{compound}_flagged_mrs_zero.png'
+                )
             ).plot()
+
+    # after plotting; strip all mr-as-None entries from flagged data
+    final_flagged_data = {
+        c: [
+            [date for date, mr in zip(final_flagged_data[c][0], final_flagged_data[c][1]) if mr is not None],
+            [mr for mr in final_flagged_data[c][1] if mr is not None]
+        ]
+        for c in final_flagged_data.keys()
+    }
+
+    # print(f'FINAL FLAGGED DATA:')
+    # print(final_flagged_data)
 
     return final_clean_data, final_flagged_data
 
@@ -257,19 +279,53 @@ def filter_all_final_data(final_data):
                 if final_data[compound][1][index] == 0:
                     final_data[compound][1][index] = None
 
+    # filter data and plot it if this script is being run directly, ie __name__ == '__main__'
     final_clean_data, final_flagged_data = fork_and_filter_with_moving_median(final_data, plot=__name__ == '__main__')
 
     return final_clean_data, final_flagged_data
 
 
-def get_all_final_data_as_dict():
+def get_all_final_data_as_dicts():
     """
-    Sequentially build the final data by joining the single sample data to averaged two sample data, adding in the old,
+    Sequentially build the final data by joining the single sample data to averaged two sample data, adding in the old
     historic data, then applying all manual filter files and applying detection limits after.
+
+    :return: tuple[dict, dict]: (final_data, final_filtered_data)
+    """
+    return filter_all_final_data(prepend_historic_data(join_2018_and_newer_data()))
+
+
+def rejoin_all_final_data(final_data, final_filtered_data):
+    """
+    Takes two dictionaries of final data, one clean and the other filtered, and rejoins them, but with a boolean flag
+    to denote those that have been flagged.
+
+    :param dict final_data: final data as {'comp': (dates, mrs), 'comp2': (dates, mrs)}
+    :param dict final_filtered_data: final data that's been filtered as {'comp': (dates, mrs), 'comp2': (dates, mrs)}
     :return:
     """
-    final_data_dict, _ = filter_all_final_data(prepend_historic_data(join_new_data()))
-    return final_data_dict, _
+
+    final_joined_data = {}
+
+    for compound, (dates, mrs) in final_data.items():
+        filtered_dates, filtered_mrs = final_filtered_data.get(compound, ([], []))
+
+        # add False flags to all clean data
+        dates, mrs, flags = dates, mrs, [False] * len(dates)
+
+        # add True flags to all filtered data
+        filtered_dates, filtered_mrs, filtered_flags = filtered_dates, filtered_mrs, [True] * len(filtered_dates)
+
+        # join with simple concatenation
+        joined_dates, joined_mrs, joined_flags = dates + filtered_dates, mrs + filtered_mrs, flags + filtered_flags
+
+        joined_dates, joined_mrs, joined_flags = [
+            list(tple) for tple in zip(*sorted(zip(joined_dates, joined_mrs, joined_flags), key=lambda x: x[0]))
+        ]
+
+        final_joined_data[compound] = (joined_dates, joined_mrs, joined_flags)
+
+    return final_joined_data
 
 
 def final_data_to_df(data):
@@ -278,13 +334,26 @@ def final_data_to_df(data):
     :param dict data: comes in as {'compound_name': [dates, mrs], ...} where dates and mrs are iterables of equal length
     :return:
     """
-    return pd.DataFrame().join([pd.DataFrame({'date': dates, compound: mrs}).set_index('date', drop=True)
-                                for compound, (dates, mrs) in data.items()], how='outer')
+
+    all_data = defaultdict(dict)
+
+    # unpack all compounds, either creating an entry for date (defaultdict behavior), or adding f'{compound}_mr' and
+    #   f'{compound}_flag' entries to each date
+    for compound, (dates, mrs, flags) in data.items():
+        for date, mr, flag in zip(dates, mrs, flags):
+            all_data[date][f'{compound}_mr'] = mr
+            all_data[date][f'{compound}_flag'] = flag
+
+    # create a df, using the index (dates) as index/rows
+    final_df = pd.DataFrame.from_dict(all_data, orient='index')
+
+    return final_df
 
 
 def main():
-    final_data, _ = get_all_final_data_as_dict()
-    df = final_data_to_df(final_data)
+    final_data, final_filtered_data = get_all_final_data_as_dicts()
+    final_joined_data = rejoin_all_final_data(final_data, final_filtered_data)
+    df = final_data_to_df(final_joined_data).sort_index()
     df.to_csv(f'final_data_{datetime.now().strftime("%Y_%m_%d")}.csv', float_format='%.3f')
 
 
