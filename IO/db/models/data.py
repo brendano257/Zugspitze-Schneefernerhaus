@@ -99,6 +99,7 @@ class LogFile(Base):
         p: pressure
         ads: adsorbent trap
         act: denotes measured value of 'whatever_flow_act', whereas 'whatever_flow' indicates the set point
+        ...
     """
     __tablename__ = 'logfiles'
 
