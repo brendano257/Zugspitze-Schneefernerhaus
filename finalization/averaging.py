@@ -1,3 +1,4 @@
+import statistics as stats
 from datetime import datetime
 from bisect import bisect_right
 from collections import defaultdict
@@ -6,6 +7,7 @@ from sqlalchemy.sql.expression import not_
 
 from IO import ambient_filters
 from reporting import abstract_query
+from settings import CORE_DIR
 from IO.db import DBConnection, GcRun, Integration, Compound
 
 
@@ -87,11 +89,13 @@ def get_final_average_two_sample_data(start_date, end_date, compounds_to_average
             averaged_dates[average_date] = sample_pair
 
     compounds = {}
+    two_sample_stdevs = {}
 
     # truncate all datetimes to 0 microseconds and seconds for ALL data to remove seconds and microseconds created by averaging
     dates = [date.replace(second=0, microsecond=0) for date in averaged_dates.keys()]
     for compound in compounds_to_average:
         compound_mrs = []
+        compound_stdevs = []
         for sample_pair in averaged_dates.values():
             first_compound, second_compound = [s.compound.get(compound) for s in sample_pair]
 
@@ -105,7 +109,15 @@ def get_final_average_two_sample_data(start_date, end_date, compounds_to_average
                         compound_mrs.append(None)
                     else:
                         compound_mrs.append((first_compound.mr + second_compound.mr) / 2)
+                        compound_stdevs.append(stats.stdev((first_compound.mr, second_compound.mr)))
 
         compounds[compound] = (dates, compound_mrs)
+        two_sample_stdevs[compound] = compound_stdevs
+
+    with open(CORE_DIR / f'finalization/{datetime.now().strftime("%Y-%m-%d")}_stdevs.csv', 'w') as f:
+        f.write(f'compound\tstdev mean\tstdev median\n')
+
+        for compound, stdevs in two_sample_stdevs.items():
+            f.write(f'{compound}\t{stats.mean(stdevs)}\t{stats.median(stdevs)}\n')
 
     return compounds
