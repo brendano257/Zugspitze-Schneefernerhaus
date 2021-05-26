@@ -18,7 +18,7 @@ import pandas as pd
 from settings import JSON_PRIVATE_DIR, CORE_DIR
 from finalization.averaging import get_final_average_two_sample_data, get_final_single_sample_data
 from IO.db import DBConnection, OldData
-from processing.constants import DETECTION_LIMITS, EBAS_REPORTING_COMPOUNDS
+from processing.constants import DETECTION_LIMITS, EBAS_REPORTING_COMPOUNDS, PROPOSED_AUTOMATIC_DETECTION_LIMITS
 from finalization.constants import (MEDIAN_10_COMPOUNDS, MEDIAN_25_COMPOUNDS, SEASONAL_CYCLE_COMPOUNDS, NONE)
 from plotting import MixingRatioPlot
 
@@ -267,17 +267,41 @@ def filter_all_final_data(final_data):
                 # manual filter that was created specifically while finalizing data; it's perfectly okay
                 continue
 
+    non_null_data = defaultdict(int)
+    detection_limit_occurences = defaultdict(int)
+
     for compound in EBAS_REPORTING_COMPOUNDS:
         # iterate explicitly over indices instead of the list! Python Rule #1: Don't iterate over and modify
         for index in range(len(final_data[compound][1])):
             # if the mr is below the detection limit, set to half the limit
-            if (final_data[compound][1][index] is not None
-                    and final_data[compound][1][index] < DETECTION_LIMITS.get(compound, 0)):
-                final_data[compound][1][index] = DETECTION_LIMITS.get(compound, 0) / 2
+            if final_data[compound][1][index] is not None:
 
-                # if something has no DL, but is set to 0, mark as None/Null
-                if final_data[compound][1][index] == 0:
-                    final_data[compound][1][index] = None
+                # track a per-compound number of valid data points
+                non_null_data[compound] += 1
+
+                # proposed detection limit testing; see how many of each compound are below dl
+                if final_data[compound][1][index] < PROPOSED_AUTOMATIC_DETECTION_LIMITS.get(compound, 0):
+                    detection_limit_occurences[compound] += 1
+
+                if final_data[compound][1][index] < DETECTION_LIMITS.get(compound, 0):
+
+                    final_data[compound][1][index] = DETECTION_LIMITS.get(compound, 0) / 2
+
+                    # if something has no DL, but is set to 0, mark as None/Null
+                    if final_data[compound][1][index] == 0:
+                        final_data[compound][1][index] = None
+
+    with open('detection_limits_calculated.csv', 'w') as f:
+        f.write('compound\tdetection_limit\tpercent below DL\n')
+
+        for compound in EBAS_REPORTING_COMPOUNDS:
+            print(
+                f'{compound} had {detection_limit_occurences[compound]} below detection limit values out of '
+                + f'{non_null_data[compound]}, or {detection_limit_occurences[compound] / non_null_data[compound]:.2%}'
+            )
+            f.write(
+                f'{compound}\t{PROPOSED_AUTOMATIC_DETECTION_LIMITS[compound]:.3f}\t{detection_limit_occurences[compound] / non_null_data[compound]:.2%}\n'
+            )
 
     # filter data and plot it if this script is being run directly, ie __name__ == '__main__'
     final_clean_data, final_flagged_data = fork_and_filter_with_moving_median(final_data, plot=__name__ == '__main__')
