@@ -283,13 +283,9 @@ def filter_all_final_data(final_data):
                 if final_data[compound][1][index] < PROPOSED_AUTOMATIC_DETECTION_LIMITS.get(compound, 0):
                     detection_limit_occurences[compound] += 1
 
-                if final_data[compound][1][index] < DETECTION_LIMITS.get(compound, 0):
-
-                    final_data[compound][1][index] = DETECTION_LIMITS.get(compound, 0) / 2
-
-                    # if something has no DL, but is set to 0, mark as None/Null
-                    if final_data[compound][1][index] == 0:
-                        final_data[compound][1][index] = None
+                # if something is set to 0, set it to half the detection limit
+                if final_data[compound][1][index] == 0:
+                    final_data[compound][1][index] = final_data[compound][1][index] = PROPOSED_AUTOMATIC_DETECTION_LIMITS.get(compound, 0) / 2
 
     with open('detection_limits_calculated.csv', 'w') as f:
         f.write('compound\tdetection_limit\tpercent below DL\n')
